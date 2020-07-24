@@ -1,9 +1,27 @@
-__all__ = ('create_logger', 'create_formatter',
-           'create_stream_handler', 'create_file_handler')
+__all__ = (
+    'create_logger', 'create_formatter', 'log_folder',
+    'create_file_handler', 'create_stream_handler')
+
 import logging
+import os
+from pathlib import Path
 
 DEFAULT_MSG_FMT = "[{name}:{levelname}:{funcName}:{asctime}] {message}"
 DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
+
+
+def create_folder(folder_name: str = 'logs') -> Path:
+    """ Create folder named 'logs' and return path to it.
+
+    :param folder_name: str, name of folder.
+    :return: None.
+    """
+    folder_path = Path(folder_name)
+    if folder_path.exists():
+        return folder_path
+
+    os.mkdir(folder_path)
+    return folder_path
 
 
 def create_formatter(message_format: str = DEFAULT_MSG_FMT,
@@ -13,10 +31,10 @@ def create_formatter(message_format: str = DEFAULT_MSG_FMT,
 
     :param message_format: str, way to format message.
     :param date_format: str, way to format date.
-     Str with %, because it need for time.strftime()
+     Str with %, because it needed for time.strftime()
     :param style: str, % or {. Whether message_format
      contains % or { way to format.
-    :return: logging.Formatter
+    :return: logging.Formatter.
     """
     formatter = logging.Formatter(
         fmt=message_format,
@@ -82,3 +100,6 @@ def create_logger(name: str,
         logger.addHandler(handler)
 
     return logger
+
+
+log_folder = create_folder()
