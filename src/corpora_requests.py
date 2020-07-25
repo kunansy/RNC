@@ -3,7 +3,6 @@ __all__ = 'get_htmls', 'is_request_correct'
 
 import asyncio
 import logging
-from pathlib import Path
 from typing import List
 
 import aiohttp
@@ -11,9 +10,7 @@ import bs4
 
 import src.corpora_logging as clog
 
-log_folder = Path("logs")
-log_file = log_folder / f"{__name__}.log"
-
+log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
 
 stream_handler = clog.create_stream_handler(
@@ -135,7 +132,7 @@ def get_htmls(url: str,
     :exception aiohttp.ServerTimeoutError:
     :exception Exception: another one.
     """
-    logger.debug(f"Requested: {url}, ({p_index_start};{p_index_stop}), "
+    logger.debug(f"Requested: ({p_index_start};{p_index_stop}), "
                  f"with params {kwargs}")
     html_codes = asyncio.run(
         get_htmls_coro(url, p_index_start, p_index_stop, **kwargs))

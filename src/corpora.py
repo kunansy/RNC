@@ -3,10 +3,10 @@ __all__ = (
 )
 
 import csv
-import hashlib
 import json
 import logging
 import random
+import string
 import time
 import webbrowser
 from pathlib import Path
@@ -18,11 +18,7 @@ import src.corpora_logging as clog
 import src.corpora_requests as creq
 import src.examples as expl
 
-# import src.additional as ad
-
-log_folder = Path("logs")
-log_file = log_folder / f"{__name__}.log"
-
+log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
 
 stream_handler = clog.create_stream_handler(
@@ -42,40 +38,57 @@ logger = clog.create_logger(
 RNC_URL = "http://processing.ruscorpora.ru/search.xml"
 
 
-def hash_filename(name: str,
-                  length: int = 12) -> str:
-    """ Get MD5 hash from str to create filename.
+class Subcorpus:
+    class Person:
+        Pushkin = 'JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il19'
+        Dostoyevsky = 'JSONeyJkb2NfYXV0aG9yIjogWyLQpC7QnC4g0JTQvtGB0YLQvtC10LLRgdC60LjQuSJdfQ%3D%3D'
+        TolstoyLN = 'JSONeyJkb2NfYXV0aG9yIjogWyLQmy7QnS4g0KLQvtC70YHRgtC-0LkiXX0%3D'
+        Chekhov = 'JSONeyJkb2NfYXV0aG9yIjogWyLQkC7Qny4g0KfQtdGF0L7QsiJdfQ%3D%3D'
+        Gogol = 'JSONeyJkb2NfYXV0aG9yIjogWyLQnS7Qki4g0JPQvtCz0L7Qu9GMIl19'
+        Turgenev = 'JSONeyJkb2NfYXV0aG9yIjogWyLQmC7QoS4g0KLRg9GA0LPQtdC90LXQsiJdfQ%3D%3D'
 
-    :param name: str, name to hash.
-    :param length: int, length of result str (12 by default).
-    :return: str, hash's first and last (length // 2) symbols.
+    class Parallel:
+        English = 'JSONeyJkb2NfbGFuZyI6IFsiZW5nIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Armenian = 'JSONeyJkb2NfbGFuZyI6IFsiYXJtIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Bashkir = 'JSONeyJkb2NfbGFuZyI6IFsiYmFzaCJdLCAiaXNfcGFyYV9ib3RoX3BhaXJzIjogW3RydWVdfQ=='
+        Belarusian = 'JSONeyJkb2NfbGFuZyI6IFsiYmVsIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Bulgarian = 'JSONeyJkb2NfbGFuZyI6IFsiYnVsIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Buryatian = 'JSONeyJkb2NfbGFuZyI6IFsiYnVhIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Spanish = 'JSONeyJkb2NfbGFuZyI6IFsiZXNwIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Italian = 'JSONeyJkb2NfbGFuZyI6IFsiaXRhIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        # In developing, wait some time...
+        # Chinese = ''
+        Latvian = 'JSONeyJkb2NfbGFuZyI6IFsibGF2Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Lithuanian = 'JSONeyJkb2NfbGFuZyI6IFsibGl0Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        German = 'JSONeyJkb2NfbGFuZyI6IFsiZ2VyIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Polish = 'JSONeyJkb2NfbGFuZyI6IFsicG9sIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Ukrainian = 'JSONeyJkb2NfbGFuZyI6IFsidWtyIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        French = 'JSONeyJkb2NfbGFuZyI6IFsiZnJhIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Finnish = 'JSONeyJkb2NfbGFuZyI6IFsiZmluIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Czech = 'JSONeyJkb2NfbGFuZyI6IFsiY3plIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Swedish = 'JSONeyJkb2NfbGFuZyI6IFsic3ZlIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Estonian = 'JSONeyJkb2NfbGFuZyI6IFsiZXN0Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+
+
+def create_filename(length: int = 12) -> str:
+    """ Create random filename.
+
+    :param length: int, length of result (12 by default).
+    :return: str, random symbols.
     """
-    name = hashlib.md5(name.encode()).hexdigest()
-    len_half = length // 2
-    return f"{name[:len_half]}{name[-len_half:]}"
+    name = random.sample(string.ascii_letters, length)
+    return ''.join(name)
 
 
-def create_unique_filename(class_name: str,
-                           requested_forms: List[str],
-                           p_count: int) -> Path:
-    """ Create a unique csv filename, means the file doesn't exist.
-    Name is created by using hash.
+def create_unique_filename() -> Path:
+    """ Create a random unique csv filename,
+    means the file doesn't exist.
 
-    :param class_name: str, name of class.
-    :param requested_forms: list of str, requested forms.
-    :param p_count: int, count of requested pages.
     :return: Path, unique filename. len = 12.
     """
-    r_forms = '_'.join(requested_forms)
-    doc_num = 1
-
-    f_name = f"{class_name}_{r_forms}_{p_count}_{doc_num}"
-    path = Path(f"{hash_filename(f_name)}.csv")
-
+    path = Path(f"{create_filename()}.csv")
     while path.exists():
-        doc_num += 1
-        f_name = f"{class_name}_{r_forms}_{p_count}_{doc_num}"
-        path = path.with_name(f"{hash_filename(f_name)}.csv")
+        path = path.with_name(f"{create_filename()}.csv")
     return path
 
 
@@ -109,6 +122,7 @@ def join_with_plus(item: str) -> str:
     return '+'.join(res)
 
 
+# TODO: additional info from the first corpus page
 class Corpus:
     """ Base class for Corpora """
     # default params
@@ -131,7 +145,7 @@ class Corpus:
     def __init__(self,
                  query: dict or str = None,
                  p_count: int = None,
-                 f_path: str or Path = None,
+                 file: str or Path = None,
                  **kwargs) -> None:
         """ There're no checking arguments valid.
 
@@ -141,7 +155,7 @@ class Corpus:
          {word1: {properties}, word2: {properties}...}.
          If you chose 'lexform' as a 'text' param, you must give here a string.
         :param p_count: int, count of pages to request.
-        :param f_path: str or Path, filename of a local database.
+        :param file: str or Path, filename of a local database.
         :keyword dpp: str or int, documents per page.
         :keyword spd: str or int, sentences per document.
         :keyword text: str, search format: 'lexgramm' or 'lexform'.
@@ -162,24 +176,19 @@ class Corpus:
         self._params = {}
         # found wordforms with their frequency
         self._found_wordforms = {}
-
-        self._query = query
-        self._p_count = p_count
-        if p_count <= 0:
-            msg = "Page count must be > 0"
-            logger.error(msg)
-            raise ValueError(msg)
-
+        self._query = {}
+        self._p_count = 0
         # type of example should be defined after params init
-        self._ex_type = kwargs.pop('ex_type')
+        # it always should be given
+        self._ex_type = kwargs.pop('ex_type', None)
+        self._marker = kwargs.pop('marker', None)
 
         # path to local database
-        _f_path = create_unique_filename(
-            self.__class__.__name__, self.forms_in_query, self.p_count)
-        filename = f_path or _f_path
+        path = file or create_unique_filename()
+        path = f"{path}{'.csv' * (not str(path).endswith('.csv'))}"
 
         # to these files the data and req params will be dumped
-        self._csv_path = Path(filename)
+        self._csv_path = Path(path)
         self._config_path = Path(f"{self._csv_path.stem}.json")
 
         if self._csv_path.exists():
@@ -188,7 +197,15 @@ class Corpus:
             except FileExistsError as e:
                 logger.exception(f"There's no config file found")
                 raise e
+            self._page_parser_and_ex_type()
             return
+
+        self._query = query
+        self._p_count = p_count
+        if p_count <= 0:
+            msg = "Page count must be > 0"
+            logger.error(msg)
+            raise ValueError(msg)
 
         # base params
         self._params['env'] = 'alpha'
@@ -214,18 +231,10 @@ class Corpus:
             self._params['expand'] = kwargs.pop('expand')
 
         self._query_to_http()
-        self._marker = kwargs.pop('marker', None)
 
         # parsing depends on 'out' value
         self._page_parser = None
         self._page_parser_and_ex_type()
-
-    def _page_parser_and_ex_type(self):
-        if self.params['out'] == 'normal':
-            self._page_parser = self._parse_page_normal
-        elif self.params['out'] == 'kwic':
-            self._page_parser = self._parse_page_kwic
-            self._ex_type = expl.KwicExample
 
     @property
     def data(self) -> List:
@@ -259,7 +268,7 @@ class Corpus:
         return self._p_count
 
     @property
-    def file_path(self) -> Path:
+    def file(self) -> Path:
         """
         :return: Path, path to local database file.
         """
@@ -299,6 +308,19 @@ class Corpus:
         )
         return f"{RNC_URL}?{params}"
 
+    def _page_parser_and_ex_type(self) -> None:
+        """ Add 'parser' and 'ex_type' params.
+        They are depended on 'out' tag.
+
+        :return: None
+        """
+        if self.params['out'] == 'normal':
+            # ex_type is defined above in this case
+            self._page_parser = self._parse_page_normal
+        elif self.params['out'] == 'kwic':
+            self._page_parser = self._parse_page_kwic
+            self._ex_type = expl.KwicExample
+
     def open_url(self) -> None:
         """ Open first page of Coprus results in the new
         tab of the default browser.
@@ -307,15 +329,11 @@ class Corpus:
         :exception ValueError: if url is wrong.
         :exception: if sth went wrong.
         """
-        if not self.url.startswith('http'):
-            logger.error(
-                f"Tried to open doc with wrong url: {self.doc_url}")
-            raise ValueError(f"Wrong URL: {self.doc_url}")
         try:
-            webbrowser.open_new_tab(self.doc_url)
+            webbrowser.open_new_tab(self.url)
         except Exception as e:
             logger.exception(
-                f"Error while opening doc with url: {self.doc_url}")
+                f"Error while opening doc with url: {self.url}")
             raise e
 
     def add_pages(self,
@@ -377,7 +395,7 @@ class Corpus:
         """
         data = [i.items for i in self.data]
         columns = self[0].columns
-        with self.file_path.open('w', encoding='utf-16', newline='') as f:
+        with self.file.open('w', encoding='utf-16', newline='') as f:
             writer = csv.writer(
                 f, delimiter='\t', quotechar='\n', quoting=csv.QUOTE_MINIMAL)
             writer.writerows([columns] + data)
@@ -398,6 +416,12 @@ class Corpus:
         with self._config_path.open('w', encoding='utf-16') as f:
             json.dump(to_write, f, indent=4, ensure_ascii=False)
 
+    def copy(self) -> Any:
+        """
+        :return: copied object.
+        """
+        return self[:]
+
     def dump(self) -> None:
         """ Write the data to csv file, request params to json file.
 
@@ -409,13 +433,16 @@ class Corpus:
             raise RuntimeError("There're no data to write")
         if not (self.query and self.p_count and self.params):
             logger.error("Tried to write empty config to file")
-            raise RuntimeError("There're no request params to write")
+            raise RuntimeError("There're no data to write")
+        if self._config_path.exists() and self.file.exists():
+            logger.error("Tried to write data, however it even exists")
+            raise RuntimeError("Files with data still exist")
 
         self._data_to_csv()
         self._params_to_json()
 
         logger.debug(
-            f"Data was wrote to files: {self.file_path} and {self._config_path}")
+            f"Data was wrote to files: {self.file} and {self._config_path}")
 
     def sort(self,
              **kwargs) -> None:
@@ -443,15 +470,11 @@ class Corpus:
         """
         return self._data.pop(index)
 
-    def shuffle(self) -> Any:
-        """ Create new obj with shuffled data.
-
-        :return: new Corpus obj.
+    def shuffle(self) -> None:
+        """ Shuffle list of examples.
+        :return: None.
         """
-        new_obj = self[:]
-        random.shuffle(new_obj._data)
-
-        return new_obj
+        random.shuffle(self._data)
 
     def _get_ambiguation(self,
                          tag: bs4.element.Tag) -> str:
@@ -512,7 +535,7 @@ class Corpus:
         src = src[1:-1].strip()
         return src
 
-    # TODO: probably, converting the symbols to their code doesn't need
+    # TODO: probably, converting the symbols to their code doesn't needed
     def _parse_lexgramm_params(self,
                                params: dict or str,
                                join_inside_symbol: str,
@@ -742,7 +765,7 @@ class Corpus:
 
         :return: list of examples.
         """
-        with self.file_path.open('r', encoding='utf-16') as f:
+        with self.file.open('r', encoding='utf-16') as f:
             reader = csv.reader(f, delimiter='\t', quotechar='\n')
 
             # first row contains headers
@@ -761,7 +784,7 @@ class Corpus:
         """ Load data and params from local databases.
 
         :return: None.
-        :exception FileExistsError: if a file doesn't exist.
+        :exception FileExistsError: if the file doesn't exist.
         """
         if not (self._csv_path.exists() and self._config_path.exists()):
             msg = "Data and config file must exist together"
@@ -773,7 +796,10 @@ class Corpus:
         self._p_count = params.get('p_count', None)
         self._params = params.get('params', None)
 
-        # it these params must be defined here too
+        # TODO
+        # assert self.params['mode'] == self.__MODE
+
+        # these params must be defined here too
         self._page_parser_and_ex_type()
 
         self._data = self._load_data()
@@ -791,7 +817,7 @@ class Corpus:
         """
         res = f"{self.__class__.__name__}\n" \
               f"{len(self)}\n" \
-              f"{self.file_path}\n" \
+              f"{self.file}\n" \
               f"{self.params}\n" \
               f"{self.p_count}\n" \
               f"{self.query}\n" \
@@ -873,7 +899,7 @@ class Corpus:
 
         new_data = self.data[item]
         new_obj = self.__class__(
-            self.query, self.p_count, self.file_path,
+            self.query, self.p_count, self.file,
             **self.params, marker=self.marker)
         new_obj._data = new_data.copy()
         return new_obj
@@ -1039,6 +1065,7 @@ class PaperCorpus(Corpus):
 
 
 class ParallelCorpus(Corpus):
+    # TODO: working with csv
     def __init__(self, *args, **kwargs):
         """ There're no checking arguments valid.
 
@@ -1097,8 +1124,6 @@ class ParallelCorpus(Corpus):
                    doc: bs4.element.Tag) -> List:
         # TODO: NamedTuple
         res = []
-        # cache to handle cases with the same lang in pair
-        cache = None
         for fst, sec in zip(doc[::2], doc[1::2]):
             f_lang, f_txt, f_src, f_url, f_amb, f_fw = self._parse_example(fst)
             s_lang, s_txt, s_src, s_url, s_amb, s_fw = self._parse_example(sec)
@@ -1106,24 +1131,13 @@ class ParallelCorpus(Corpus):
             src = self._best_src(f_src, s_src)
             fw = f_fw + s_fw
 
-            if f_lang == s_lang and not cache:
-                cache = f_lang, f"{f_txt} {s_txt}", src, f_url, f_amb, fw
-                continue
-            elif cache:
-                c_sec = f_lang, f"{f_txt} {s_txt}", src, f_url, f_amb, fw
+            # TODO: fix it
+            assert f_lang != s_lang, "Languages should be different"
 
-                src = self._best_src(c_sec[2], cache[2])
-
-                new_ex = self._ex_type({cache[0]: cache[1], c_sec[0]: c_sec[1]},
-                                       src, cache[4], fw + cache[5], cache[3])
-                res += [new_ex]
-                cache = None
-                continue
-
-            self._add_wordform(f_fw + s_fw)
+            self._add_wordform(fw)
 
             new_ex = self._ex_type(
-                {f_lang: f_txt, s_lang: s_txt}, src, f_amb, f_fw + s_fw, f_url)
+                {f_lang: f_txt, s_lang: s_txt}, src, f_amb, fw, f_url)
             new_ex.mark_found_words(self.marker)
             res += [new_ex]
 
@@ -1183,30 +1197,3 @@ class MultiparkCorpus(Corpus):
 
 class HistoricalCorpus(Corpus):
     pass
-
-
-# TODO: написать предупреждения в документах, чего стоит и не стоит делать:
-#  вот это или тот факт, что нужно передавать при lexgram начальную форму
-# &spd=1 убивает остальные примеры слова, которые могли быть в этом документе; т.е. если
-# всего примеров слова 5 на 3 документах: 2 в первом документе, 1 – во втором, 2 – в третьем,
-# то это значение позволит получить всего 3 примера, по одному на документ.
-# Например, слова parse или васкуляризация
-
-# %2C – &
-# %7C – |
-# %28 – (
-# %29 – )
-# %3A – :
-# TODO: create log folder in corpora_logging
-# TODO: проблемы при выводе в файл kwic, если одного из контекстов нет
-# TODO: move initting f_path above, after another params to give
-#  only one f_path param.
-
-stream_handler.setLevel(logging.DEBUG)
-if __name__ == '__main__':
-    en = ParallelCorpus(f_path='e82265715301.csv')
-    # en.request_examples()
-    print(len(en))
-    # en.dump()
-    # print(en)
-

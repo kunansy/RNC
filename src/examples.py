@@ -8,14 +8,11 @@ __all__ = (
 import logging
 import re
 import webbrowser
-from pathlib import Path
 from typing import List, Callable, Dict
 
 import src.corpora_logging as clog
 
-log_folder = Path("logs")
-log_file = log_folder / f"{__name__}.log"
-
+log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
 
 stream_handler = clog.create_stream_handler(
@@ -52,6 +49,11 @@ def mark_found_words(txt: str,
     # re.findall(r'(\W+я\W+)|(^я\W+)|(\W+я$)|(^я$)', string)
 
 
+# TODO
+class TextInfo:
+    pass
+
+
 class Example:
     """ Base examples class """
     __slots__ = (
@@ -62,21 +64,25 @@ class Example:
                  txt: str,
                  src: str,
                  ambiguation: str,
-                 found_wordforms: List[str],
+                 found_wordforms: List[str] or str,
                  doc_url: str) -> None:
         """
         :param txt: str, the text in example.
         :param src: str, example source.
         :param ambiguation: str, whether the example disambiguated.
-        :param found_wordforms: list of str, for these words request was.
+        :param found_wordforms: list of str or str joined with ', ',
+        for these words request was.
         :param doc_url: str, url to the doc.
         :return: None.
         """
         self.__txt = txt
         self.__src = src
         self.__ambiguation = ambiguation
-        self.__found_wordforms = found_wordforms or []
         self.__doc_url = doc_url
+
+        wf = found_wordforms or []
+        wf = found_wordforms.split(', ') if isinstance(wf, str) else wf
+        self.__found_wordforms = wf
 
     @property
     def txt(self) -> str:
@@ -131,7 +137,7 @@ class Example:
         # ATTENTION: these values order must
         # be the same as in constructor
         return [self.txt, self.src, self.ambiguation,
-                self.found_wordforms, self.doc_url]
+                ', '.join(self.found_wordforms), self.doc_url]
 
     def open_doc(self) -> None:
         """ Open the doc in the new tab of the default browser.
@@ -217,6 +223,8 @@ class Example:
 
 
 class KwicExample(Example):
+    __slots__ = ('__left', '__center', '__right')
+
     def __init__(self,
                  left: str,
                  center: str,
