@@ -1,27 +1,26 @@
 #### Corpora
-* Main 
-  * bigrams
-  * threegrams
-  * 4-grams
-  * 5-grams
-* Syntax
-* Paper
-  * Media 2000 years
-  * Local media
-* Parallel
+* Main – class **MainCorpus**
+  * bigrams – **in developing...**
+  * threegrams – **in developing...**
+  * 4-grams – **in developing...**
+  * 5-grams – **in developing...**
+* Syntax – **in developing...**
+* Paper – **in developing...**
+  * Media 2000 years – **in developing...**
+  * Local media – **in developing...**
+* Parallel – **in developing...**
   * English 
   * Armenian
-  * Bashkir
-  * Belarusian
+  * Bashkir 
+  * Belarusian 
   * Bulgarian
-  * Buryatian 
+  * Buryatian
   * Spanish
   * Italian
   * Chinese
   * Latvian
   * Lithuanian
   * German
-  * Russian classics in German translations
   * Polish
   * Ukrainian
   * French
@@ -29,21 +28,22 @@
   * Czech
   * Swedish
   * Estonian 
-  * Multilingual 
-* Tutoring
-* Dialect
-* Poetry
-* Speech
-* Accentology
-* Multimedia
-* Multipark
-  * «Ревизор»
-  * English-Russian
-* Historical
-  * Age-Old Russian
-  * bounty letters
-  * old Russian
-  * Church Slavonic
+* Russian classics in German translations – **in developing...**
+* Multilingual – **in developing...**
+* Tutoring – **in developing...**
+* Dialect – **in developing...** 
+* Poetry – **in developing...**
+* Speech – **in developing...**
+* Accentology – **in developing...**
+* Multimedia – **in developing...**
+* Multipark – **in developing...**
+  * «Ревизор» – **in developing...**
+  * English-Russian – **in developing...**
+* Historical – **in developing...**
+  * Age-Old Russian – **in developing...**
+  * Bounty letters – **in developing...**
+  * Old Russian – **in developing...**
+  * Church Slavonic – **in developing...**
 
 
 
@@ -54,8 +54,6 @@
 страницы, запрашивать 5-6 страниц, близких к ориентировочной, проверять, какая из них оказалась 
 действительно последней, затем основной запрос страниц до неё
 * Mаркировка слов: re, \W вокруг слова, group. Поставить assert, что слово в group == слову из списка искомых. 
-* Пространство имён subcorpus со стандартными подкорппусами: тексты А.С. Пушкина (Л.Н. Толстого, Ф.М. Достоевского etc), снятая/неснятая грамматическая омонимия.
-i, *** etc для маркировки примеров.
 * Некоторые примеры теряются: запрос 'лексема', dpp=5, spd=10, 4th page, 16 example. 
 В.В. Седов. Этногенез ранних славян.
 * Неверная работа маркера, где есть ударение: запрос 'ты', dpp=5, spd=10, 2684-й пример – 
