@@ -16,10 +16,10 @@
 ```
 
 #### KwicExample
-* `expl.left` – left context of the example.
-* `expl.center` – center context of the example.
-* `expl.right` – right context of the example.
-* `expl.txt` – text in the examples, sum all contexts.
+* `expl.left` – examples left context.
+* `expl.center` – examples center context.
+* `expl.right` – examples right context.
+* `expl.txt` – examples text, sum all contexts.
 * print format:
 ```
     LEFT: ...
