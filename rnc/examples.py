@@ -1,6 +1,6 @@
 __all__ = (
     'MainExample', 'SyntaxExample', 'PaperExample', 'ParallelExample',
-    'TutoringExample', 'DialectExample', 'PoetryExample', 'SpeechExample',
+    'TutoringExample', 'DialectExample', 'PoetryExample', 'SpokenExample',
     'AccentologyExample', 'MultimediaExample', 'MultiparkExample',
     'HistoricalExample', 'KwicExample'
 )
@@ -349,7 +349,11 @@ class SyntaxExample(Example):
     pass
 
 
-class PaperExample(Example):
+class Paper2000Example(Example):
+    pass
+
+
+class PaperRegionalExample(Example):
     pass
 
 
@@ -443,7 +447,7 @@ class PoetryExample(Example):
     pass
 
 
-class SpeechExample(Example):
+class SpokenExample(Example):
     pass
 
 

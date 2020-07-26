@@ -1067,8 +1067,18 @@ class SyntaxCorpus(Corpus):
     pass
 
 
-class PaperCorpus(Corpus):
-    pass
+class Paper2000Corpus(MainCorpus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._params['mode'] = 'paper'
+        self._ex_type = expl.Paper2000Example
+
+
+class PaperRegionalCorpus(MainCorpus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._params['mode'] = 'regional'
+        self._ex_type = expl.PaperRegionalExample
 
 
 class ParallelCorpus(Corpus):
@@ -1178,20 +1188,31 @@ class LearningCorpus(Corpus):
     pass
 
 
-class DialectCorpus(Corpus):
-    pass
+# TODO: add gram tags to docs
+class DialectCorpus(MainCorpus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._params['mode'] = 'dialect'
+        self._ex_type = expl.DialectExample
 
 
+# save lines
 class PoetryCorpus(Corpus):
     pass
 
 
-class SpeechCorpus(Corpus):
-    pass
+class SpokenCorpus(MainCorpus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._params['mode'] = 'spoken'
+        self._ex_type = expl.SpokenExample
 
 
-class AccentologyCorpus(Corpus):
-    pass
+class AccentologyCorpus(MainCorpus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._params['mode'] = 'accent'
+        self._ex_type = expl.AccentologyExample
 
 
 class MultimediaCorpus(Corpus):
@@ -1204,13 +1225,3 @@ class MultiparkCorpus(Corpus):
 
 class HistoricalCorpus(Corpus):
     pass
-
-
-if __name__ == '__main__':
-    ru = MainCorpus('нету', 1, dpp=5, spd=1, marker=str.upper)
-    ru.request_examples()
-    print(ru)
-    print('_' * 100)
-    print(ru.pop(0))
-    print('_' * 100)
-    print(ru)

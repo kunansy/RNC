@@ -5,9 +5,9 @@
   * 4-grams – **in developing...**
   * 5-grams – **in developing...**
 * Syntax – **in developing...**
-* Paper – **in developing...**
-  * Media 2000 years – **in developing...**
-  * Local media – **in developing...**
+* Paper
+  * Media 2000 years – class **Paper2000Corpus**
+  * Local media – class **PaperRegionalCorpus**
 * Parallel – **in developing...**
   * English 
   * Armenian
@@ -31,10 +31,10 @@
 * Russian classics in German translations – **in developing...**
 * Multilingual – **in developing...**
 * Tutoring – **in developing...**
-* Dialect – **in developing...** 
+* Dialect – class **DialectCorpus** 
 * Poetry – **in developing...**
-* Speech – **in developing...**
-* Accentology – **in developing...**
+* Spoken – class **SpokenCorpus**
+* Accentology – class **AccentologyCorpus**
 * Multimedia – **in developing...**
 * Multipark – **in developing...**
   * «Ревизор» – **in developing...**
