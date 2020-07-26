@@ -2,7 +2,7 @@
 
 #### Installation
 ```bash
-pip install rnc
+pip install bs4 aiohttp lxml rnc
 ```
 
 #### Structure
@@ -156,7 +156,7 @@ for r in corp:
 #### ATTENTION
 * Don't forget to call this function
 ```python
-ru.reques_examples()
+corp.request_examples()
 ```
 * If you've requested more than 10 pages, Corpus returns 429 error (Too many requests).
 For example requesting 100 pages you should wait about 3 minutes: 

@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 
 if sys.version_info < (3, 6):
-    raise RuntimeError('Python > 3.6 required')
+    raise RuntimeError('Python >= 3.6 required')
 
 HERE = pathlib.Path(__file__).parent
 
@@ -25,10 +25,10 @@ setup(
     packages=find_packages(exclude='tests'),
     python_requires='>=3.6',
     license='MIT',
-    install_requires=['bs4>=0.0.1',
-                      'beautifulsoup4>=4.9.1',
-                      'aiohttp>=3.6.2',
-                      'lxml>=4.5.2'],
+    install_requires=['bs4',
+                      'beautifulsoup4',
+                      'aiohttp',
+                      'lxml'],
     author="Kolobov Kirill, Python beginner",
     author_email='alniconim@gmail.com',
     description='API for National Russian Corpus',

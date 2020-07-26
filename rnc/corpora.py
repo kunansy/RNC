@@ -1204,3 +1204,13 @@ class MultiparkCorpus(Corpus):
 
 class HistoricalCorpus(Corpus):
     pass
+
+
+if __name__ == '__main__':
+    ru = MainCorpus('нету', 1, dpp=5, spd=1, marker=str.upper)
+    ru.request_examples()
+    print(ru)
+    print('_' * 100)
+    print(ru.pop(0))
+    print('_' * 100)
+    print(ru)

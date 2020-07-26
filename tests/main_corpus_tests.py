@@ -1,5 +1,5 @@
 import pytest
-from src.corpora import MainCorpus
+from rnc.corpora import MainCorpus
 
 
 def test_correct_req_with_lexform():
