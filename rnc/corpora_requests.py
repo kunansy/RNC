@@ -8,7 +8,7 @@ from typing import List
 import aiohttp
 import bs4
 
-import src.corpora_logging as clog
+import rnc.corpora_logging as clog
 
 log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()

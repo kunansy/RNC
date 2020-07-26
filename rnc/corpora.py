@@ -14,9 +14,9 @@ from typing import Dict, Callable, List, Any
 
 import bs4
 
-import src.corpora_logging as clog
-import src.corpora_requests as creq
-import src.examples as expl
+import rnc.corpora_logging as clog
+import rnc.corpora_requests as creq
+import rnc.examples as expl
 
 log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
@@ -308,6 +308,13 @@ class Corpus:
         )
         return f"{RNC_URL}?{params}"
 
+    @property
+    def ex_type(self) -> Any:
+        """
+        :return: example type of the Corpus.
+        """
+        return self._ex_type
+
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
         They are depended on 'out' tag.
@@ -426,7 +433,7 @@ class Corpus:
         """ Write the data to csv file, request params to json file.
 
         :return: None.
-        :exception RuntimeError: If there're no data or params.
+        :exception RuntimeError: If there're no data, params or files exist.
         """
         if not self.data:
             logger.error("Tried to write empty data to file")
@@ -845,7 +852,7 @@ class Corpus:
 
     def __bool__(self) -> bool:
         """
-        :return: bool, does data exist.
+        :return: bool, whether data exist.
         """
         return bool(self.data)
 

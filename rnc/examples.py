@@ -10,7 +10,7 @@ import re
 import webbrowser
 from typing import List, Callable, Dict
 
-import src.corpora_logging as clog
+import rnc.corpora_logging as clog
 
 log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
@@ -81,7 +81,8 @@ class Example:
         self.__doc_url = doc_url
 
         wf = found_wordforms or []
-        wf = found_wordforms.split(', ') if isinstance(wf, str) else wf
+        if isinstance(wf, str):
+            wf = found_wordforms.split(', ')
         self.__found_wordforms = wf
 
     @property
@@ -175,6 +176,7 @@ class Example:
 
         :return: this str.
         """
+        # TODO: get_data as a separate function
         data = {
             'text': self.txt,
             'source': self.src,
@@ -282,8 +284,10 @@ class KwicExample(Example):
 
         :return: list of str or list, values of columns.
         """
-        return [self.left, self.center, self.right,
-                self.src, self.found_wordforms, self.doc_url]
+        return [
+            self.left, self.center, self.right, self.src,
+            ', '.join(self.found_wordforms), self.doc_url
+        ]
 
     def mark_found_words(self,
                          marker: Callable) -> None:
