@@ -1,7 +1,7 @@
 ### Some of Corpus HTTP keys:
 
 
-**I.** Sorting, key &sort
+**I.** Sorting.
 1. i_grtagging – by default.
 2. random – randomly.
 3. i_grauthor – by author.
@@ -11,20 +11,12 @@
 7. i_grbirthday – by author's birth date in reversed order.
 
 
-**II.** Searching method, key &text:
+**II.** Searching method.
 1. lexgramm – lexical and grammatical search.
 2. lexform – search for exact forms, words via &req.
 
 
-**III.** Showing format, key &out: 
-1. normal – usual.
+**III.** Showing format. 
+1. normal – normal.
 2. kwic – Key Word In Context.
-   2.1 &kwsz – count of words in context.
-
-
-**IV.** Count of examples in the document, key &spd
-1. &spd – int value
-
-
-**V.** Docs per page, key &dpp
-1. &dpp – int value
+   2.1 kwsz – count of words in context.
