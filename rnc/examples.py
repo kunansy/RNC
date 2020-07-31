@@ -1,8 +1,18 @@
 __all__ = (
-    'MainExample', 'SyntaxExample', 'PaperExample', 'ParallelExample',
-    'TutoringExample', 'DialectExample', 'PoetryExample', 'SpokenExample',
-    'AccentologyExample', 'MultimediaExample', 'MultiparkExample',
-    'HistoricalExample', 'KwicExample'
+    'MainExample',
+    'SyntaxExample',
+    'Paper2000Example',
+    'PaperRegionalExample',
+    'ParallelExample',
+    'TutoringExample',
+    'DialectExample',
+    'PoetryExample',
+    'SpokenExample',
+    'AccentologyExample',
+    'MultimediaExample',
+    'MultiparkExample',
+    'HistoricalExample',
+    'KwicExample'
 )
 
 import logging
@@ -15,38 +25,30 @@ import rnc.corpora_logging as clog
 log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
 
-stream_handler = clog.create_stream_handler(
-    level=logging.WARNING,
-    formatter=formatter)
+stream_handler = clog.create_stream_handler(formatter=formatter)
 file_handler = clog.create_file_handler(
-    log_path=log_file,
-    formatter=formatter,
-    delay=True,
-    encoding='utf-8')
+    log_path=log_file, formatter=formatter)
 
 logger = clog.create_logger(
     __name__, logging.DEBUG, file_handler, stream_handler)
 
 
 def mark_found_words(txt: str,
-                     found_wordforms: List[str],
+                     words: List[str],
                      marker: Callable) -> str:
+    """ Mark words in the text.
+
+    :param txt: str, text.
+    :param words: list of str, words to mark.
+    :param marker: callable, function to mark words with it.
+    :return: str with marked words.
+    """
     if marker is None:
         return txt
-    # TODO: correct it
-    for word in found_wordforms:
-        repls = re.findall(
-            fr'(\W+{word}\W+)|(^{word}\W+)|(\W+{word}$)|(^{word}$)', txt)
-        for group in repls:
-            for num, i in enumerate(group, 1):
-                if num is 3 and i:
-                    txt = f"{txt[:txt.rindex(i)]}{marker(i)}"
-                elif num is not 3:
-                    txt = txt.replace(i, marker(i), 1)
+
+    for word in words:
+        txt = re.sub(fr'\b{word}\b', marker(word), txt)
     return txt
-    # проблемный вариант, '. {w}' может встретиться не в конце
-    # "я Решения, . яма я такое: ,я,готовится . я"
-    # re.findall(r'(\W+я\W+)|(^я\W+)|(\W+я$)|(^я$)', string)
 
 
 # TODO
@@ -67,12 +69,12 @@ class Example:
                  found_wordforms: List[str] or str,
                  doc_url: str) -> None:
         """
-        :param txt: str, the text in example.
-        :param src: str, example source.
-        :param ambiguation: str, whether the example disambiguated.
+        :param txt: str, example's text.
+        :param src: str, example's source.
+        :param ambiguation: str, example's ambiguation.
         :param found_wordforms: list of str or str joined with ', ',
-        for these words request was.
-        :param doc_url: str, url to the doc.
+        example's found wordforms.
+        :param doc_url: str, example's url.
         :return: None.
         """
         self.__txt = txt
@@ -88,57 +90,86 @@ class Example:
     @property
     def txt(self) -> str:
         """
-        :return: str, text in the example.
+        :return: str, example's text.
         """
         return self.__txt
 
     @property
     def src(self) -> str:
         """
-        :return: str, source of the example.
+        :return: str, example's source.
         """
         return self.__src
 
     @property
     def ambiguation(self) -> str:
         """
-        :return: str, ambiguation in the example.
+        :return: str, example's ambiguation.
         """
         return self.__ambiguation
 
     @property
     def doc_url(self) -> str:
         """
-        :return: str, URL of the example.
+        :return: str, example's URL.
         """
         return self.__doc_url
 
     @property
     def found_wordforms(self) -> List[str]:
         """
-        :return: list of str, found wordforms in the example.
+        :return: list of str, example's found wordforms.
         """
         return self.__found_wordforms
 
     @property
     def columns(self) -> List[str]:
-        """ For csv writing, names of columns.
+        """ For csv writing.
 
         :return: list of str, names of columns.
         """
-        return ['text', 'source', 'ambiguation',
-                'found_wordforms', 'URL']
+        return list(self.data.keys()) + ['URL']
 
     @property
     def items(self) -> List[str or list]:
-        """ For csv writing, values of columns.
+        """ For csv writing.
 
         :return: list of str or list, values of columns.
         """
-        # ATTENTION: these values order must
-        # be the same as in constructor
-        return [self.txt, self.src, self.ambiguation,
-                ', '.join(self.found_wordforms), self.doc_url]
+        # ATTENTION:
+        # these order must be the same as in the constructor
+        return list(self.data.values()) + [self.doc_url]
+
+    @property
+    def data(self) -> Dict:
+        """ Found wordforms joined with ', '.
+
+        :return: dict with fields names and their values.
+        There're all fields except for doc_url.
+        """
+        data = {
+            'text': self.txt,
+            'source': self.src,
+            'ambiguation': self.ambiguation,
+            'found wordforms': ', '.join(self.found_wordforms)
+        }
+        return data
+
+    @txt.setter
+    def txt(self, other) -> None:
+        """ Set text.
+
+        :return: None.
+        """
+        self.__txt = other
+
+    @ambiguation.setter
+    def ambiguation(self, other) -> None:
+        """ Set ambiguation.
+
+        :return: None.
+        """
+        self.__ambiguation = other
 
     def open_doc(self) -> None:
         """ Open the doc in the new tab of the default browser.
@@ -153,10 +184,10 @@ class Example:
             raise ValueError(f"Wrong URL: {self.doc_url}")
         try:
             webbrowser.open_new_tab(self.doc_url)
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"Error while opening doc with url: {self.doc_url}")
-            raise e
+            raise
 
     def mark_found_words(self,
                          marker: Callable) -> None:
@@ -168,73 +199,61 @@ class Example:
         self.__txt = mark_found_words(self.txt, self.found_wordforms, marker)
 
     def __str__(self) -> str:
-        """ Str format:
-                    TEXT: examples text
-                    SOURCE: examples source
-                    AMBIGUATION: examples ambiguation
-                    FOUND WORDFORMS: examples found wordforms
+        """ Str format depends on the descendant.
 
         :return: this str.
         """
-        # TODO: get_data as a separate function
-        data = {
-            'text': self.txt,
-            'source': self.src,
-            'ambiguation': self.ambiguation,
-            'found wordforms': ', '.join(self.found_wordforms)
-        }
         res = '\n'.join(
             f"{key.upper()}: {val}"
-            for key, val in data.items()
+            for key, val in self.data.items()
         )
         return res
 
     def __repr__(self) -> str:
-        """ Str format:
-                Text: ...
-                Source: ...
-                Ambiguation: ...
-                Found wordforms: ...
-                URL: ...
+        """ Str format depends on the descendant.
 
         :return: this str.
         """
-        res = f"Text: {self.txt}\n" \
-              f"Source: {self.src}\n" \
-              f"Found wordforms: {self.found_wordforms}\n" \
-              f"Ambiguation: {self.ambiguation}\n" \
-              f"URL: {self.doc_url}"
-        return res
+        fields = '\n'.join(
+            f"{key}: {val}"
+            for key, val in self.data.items()
+        )
+        url = f"URL: {self.doc_url}"
+        return f"{fields}\n{url}"
 
     def __hash__(self) -> int:
         """ Hash str with all example fields.
 
         :return: int, hash.
         """
-        data = f"{self.txt}{self.src}{self.ambiguation}" \
-               f"{self.found_wordforms}{self.doc_url}"
-        return hash(data)
+        return hash(repr(self))
 
     def __bool__(self) -> bool:
-        """ Whether fields (expect for found_wordforms) exist.
-
-        :return: bool.
+        """ .
+        :return: bool, whether fields (expect for url) exist
         """
-        return bool(self.txt and self.src and
-                    self.doc_url and self.ambiguation)
+        return all(val for val in self.data.values())
 
 
 class KwicExample(Example):
-    __slots__ = ('__left', '__center', '__right')
+    __slots__ = '__left', '__center', '__right'
 
     def __init__(self,
                  left: str,
                  center: str,
                  right: str,
                  src: str,
-                 found_wordforms: List[str],
+                 found_wordforms: List[str] or str,
                  doc_url: str) -> None:
-        """ There's no ambiguation, it set with ''."""
+        """ There's no ambiguation, it set with ''.
+
+        :param left: str, example's left context.
+        :param center: str, example's center context.
+        :param right: str, example's right context.
+        :param src: str, example's source.
+        :param found_wordforms: list of str or str, example's found wordforms.
+        :param doc_url: str, example's URL.
+        """
         self.__left = left
         self.__center = center
         self.__right = right
@@ -243,40 +262,38 @@ class KwicExample(Example):
     @property
     def left(self) -> str:
         """
-        :return: str, left context.
+        :return: str, example's left context.
         """
         return self.__left
 
     @property
     def center(self) -> str:
         """
-        :return: str, center context.
+        :return: str, example's center context.
         """
         return self.__center
 
     @property
     def right(self) -> str:
         """
-        :return: str, right context.
+        :return: str, example's right context.
         """
         return self.__right
 
     @property
     def txt(self) -> str:
         """
-        :return: str, joined left, center and right contexts
-        with removed duplicate spaces.
+        :return: str, joined left, center and right contexts.
         """
-        txt = f"{self.left} {self.center} {self.right}"
-        return ' '.join(txt.split())
+        return f"{self.left} {self.center} {self.right}"
 
     @property
     def columns(self) -> List[str]:
-        """ For csv writing, names of columns.
+        """ For csv writing.
 
         :return: list of str, names of columns.
         """
-        return ['left', 'center', 'right', 'source', 'found_wordforms', 'URL']
+        return list(self.data.keys()) + ['URL']
 
     @property
     def items(self) -> List[str]:
@@ -284,10 +301,55 @@ class KwicExample(Example):
 
         :return: list of str or list, values of columns.
         """
-        return [
-            self.left, self.center, self.right, self.src,
-            ', '.join(self.found_wordforms), self.doc_url
-        ]
+        return list(self.data.values()) + [self.doc_url]
+
+    @property
+    def data(self) -> Dict:
+        """
+        :return: dict with fields names and their values.
+        """
+        data = {
+            'left': self.left,
+            'center': self.center,
+            'right': self.right,
+            'source': self.src,
+            'found wordforms': ', '.join(self.found_wordforms)
+        }
+        return data
+
+    @left.setter
+    def left(self, other) -> None:
+        """ Set left context.
+
+        :param other: new left context.
+        :return: None.
+        """
+        self.__left = other
+
+    @center.setter
+    def center(self, other) -> None:
+        """ Set center context.
+
+        :param other: new center context.
+        :return: None.
+        """
+        self.__center = other
+
+    @right.setter
+    def right(self, other) -> None:
+        """ Set right context.
+
+        :param other: new right context.
+        :return: None.
+        """
+        self.__right = other
+
+    @txt.setter
+    def txt(self, other) -> None:
+        """ Exception, text setter not implemented to kwic """
+        msg = "txt setter not implemented to kwic"
+        logger.error(msg)
+        raise NotImplementedError(msg)
 
     def mark_found_words(self,
                          marker: Callable) -> None:
@@ -302,43 +364,50 @@ class KwicExample(Example):
 
     def __str__(self) -> str:
         """ Str format:
-                LEFT: examples left context.
-                CENTER: examples center context.
-                RIGHT: examples right context.
-                SOURCE: examples source.
-                FOUND WORDFORMS: examples found wordforms.
+                LEFT: example's left context.
+                CENTER: example's center context.
+                RIGHT: example's right context.
+                SOURCE: example's source.
+                FOUND WORDFORMS: example's found wordforms.
 
         :return: this str.
         """
-        data = {
-            'left': self.left,
-            'center': self.center,
-            'right': self.right,
-            'source': self.src,
-            'found wordforms': ', '.join(self.found_wordforms)
-        }
         res = '\n'.join(
             f"{key.upper()}: {val}"
-            for key, val in data.items()
+            for key, val in self.data.items()
         )
         return res
+
+    def __repr__(self) -> str:
+        """ Str format:
+                    left: example's left context.
+                    center: example's center context.
+                    right: example's right context.
+                    source: example's source.
+                    found wordforms: example's found wordforms.
+                    URL: example's URL.
+
+        :return: this str.
+        """
+        res = '\n'.join(
+            f"{key}: {val}"
+            for key, val in self.data.items()
+        )
+        url = f"URL: {self.doc_url}"
+        return f"{res}\n{url}"
 
     def __hash__(self) -> int:
         """ Hash str with all example fields.
 
         :return: int, hash.
         """
-        data = f"{self.left}{self.center}{self.right}{self.src}{self.doc_url}"
-        return hash(data)
+        return hash(repr(self))
 
     def __bool__(self) -> bool:
-        """ Whether fields (expect for found_wordforms) exist.
-
-        :return: bool.
         """
-        txt = self.left and self.center and self.right
-        metadata = self.src and self.doc_url
-        return bool(txt and metadata)
+        :return: bool, whether fields (expect for URL) exist.
+        """
+        return all(val for val in self.data.values())
 
 
 class MainExample(Example):

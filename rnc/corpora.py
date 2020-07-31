@@ -1,5 +1,12 @@
 __all__ = (
-    'MainCorpus'
+    'Subcorpus',
+    'MainCorpus',
+    'DialectCorpus',
+    'AccentologyCorpus',
+    'SpokenCorpus',
+    'PaperRegionalCorpus',
+    'Paper2000Corpus',
+    ''
 )
 
 import csv
@@ -21,14 +28,9 @@ import rnc.examples as expl
 log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
 
-stream_handler = clog.create_stream_handler(
-    level=logging.WARNING,
-    formatter=formatter)
+stream_handler = clog.create_stream_handler(formatter=formatter)
 file_handler = clog.create_file_handler(
-    log_path=log_file,
-    formatter=formatter,
-    delay=True,
-    encoding='utf-8')
+    log_path=log_file, formatter=formatter)
 
 logger = clog.create_logger(
     __name__, logging.DEBUG, file_handler, stream_handler)
@@ -108,6 +110,8 @@ def create_doc_url(doc_url: str) -> str:
     :param doc_url: str, doc url to extend.
     :return: str, extended url.
     """
+    if not doc_url:
+        return doc_url
     rnc_url = RNC_URL[:RNC_URL.rindex('/')]
     return f"{rnc_url}/{doc_url}"
 
@@ -141,6 +145,8 @@ class Corpus:
     # distance between n and (n + 1) words
     __MIN = 1
     __MAX = 3
+    # count of examples to print
+    __RESTRICT_SHOW = 50
 
     def __init__(self,
                  query: dict or str = None,
@@ -194,9 +200,9 @@ class Corpus:
         if self._csv_path.exists():
             try:
                 self._load()
-            except FileExistsError as e:
+            except FileExistsError:
                 logger.exception(f"There's no config file found")
-                raise e
+                raise
             self._page_parser_and_ex_type()
             return
 
@@ -235,6 +241,55 @@ class Corpus:
         # parsing depends on 'out' value
         self._page_parser = None
         self._page_parser_and_ex_type()
+
+    @classmethod
+    def set_dpp(cls, value: int) -> None:
+        if not isinstance(value, int):
+            logger.error("DPP must be int")
+            raise TypeError("DPP must be int")
+        cls.__DPP = value
+
+    @classmethod
+    def set_spd(cls, value: int) -> None:
+        if not isinstance(value, int):
+            logger.error("SPD must be int")
+            raise TypeError("SPD must be int")
+        cls.__SPD = value
+
+    @classmethod
+    def set_text(cls, value: str) -> None:
+        if not isinstance(value, str):
+            logger.error("Text must be str")
+            raise TypeError("Text must be str")
+        cls.__TEXT = value
+
+    @classmethod
+    def set_sort(cls, value: str) -> None:
+        if not isinstance(value, str):
+            logger.error("Sort key must be str")
+            raise TypeError("Sort key must be str")
+        cls.__SORT = value
+
+    @classmethod
+    def set_min(cls, value: int) -> None:
+        if not isinstance(value, int):
+            logger.error("min must be int")
+            raise TypeError("min must be int")
+        cls.__MIN = value
+
+    @classmethod
+    def set_max(cls, value: int) -> None:
+        if not isinstance(value, int):
+            logger.error("max must be int")
+            raise TypeError("max must be int")
+        cls.__MAX = value
+
+    @classmethod
+    def set_restrict_show(cls, value: int or bool) -> None:
+        if not isinstance(value, (int, bool)):
+            logger.error("Restrict count must be int or bool")
+            raise TypeError("Restrict count must be int or bool")
+        cls.__RESTRICT_SHOW = value
 
     @property
     def data(self) -> List:
@@ -338,10 +393,10 @@ class Corpus:
         """
         try:
             webbrowser.open_new_tab(self.url)
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"Error while opening doc with url: {self.url}")
-            raise e
+            raise
 
     def add_pages(self,
                   p_count: int) -> None:
@@ -372,10 +427,10 @@ class Corpus:
 
         try:
             creq.is_request_correct(RNC_URL, self.p_count, **self.params)
-        except Exception as e:
+        except Exception:
             msg = f"Query = {self.forms_in_query}, {self.p_count}, {self.params}"
             logger.exception(msg)
-            raise e
+            raise
 
         start, stop = 0, self.p_count
         coro_start = time.time()
@@ -386,9 +441,9 @@ class Corpus:
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
             parsing_stop = time.time()
-        except Exception as e:
+        except Exception:
             logger.exception(f"Error while parsing, query = {self.params}")
-            raise e
+            raise
         else:
             logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
             logger.info(f"Overall time: {parsing_stop - coro_start:.2f}")
@@ -441,9 +496,6 @@ class Corpus:
         if not (self.query and self.p_count and self.params):
             logger.error("Tried to write empty config to file")
             raise RuntimeError("There're no data to write")
-        if self._config_path.exists() and self.file.exists():
-            logger.error("Tried to write data, however it even exists")
-            raise RuntimeError("Files with data still exist")
 
         self._data_to_csv()
         self._params_to_json()
@@ -483,8 +535,15 @@ class Corpus:
         """
         random.shuffle(self._data)
 
-    def _get_ambiguation(self,
-                         tag: bs4.element.Tag) -> str:
+    def clear(self) -> None:
+        """ Clear examples list.
+
+        :return: None.
+        """
+        self._data.clear()
+
+    @staticmethod
+    def _get_ambiguation(tag: bs4.element.Tag) -> str:
         """ Get pretty ambiguation from example.
 
         :param tag: bs4.element.Tag, example.
@@ -499,8 +558,8 @@ class Corpus:
         ambiguation = ambiguation[1:-1].strip()
         return ambiguation
 
-    def _get_text(self,
-                  tag: bs4.element.Tag) -> str:
+    @staticmethod
+    def _get_text(tag: bs4.element.Tag) -> str:
         """ Get pretty text from example and remove
         from there duplicate spaces.
 
@@ -514,8 +573,8 @@ class Corpus:
         # remove duplicate spaces
         return clean_text_up(txt)
 
-    def _get_doc_url(self,
-                     tag: bs4.element.Tag) -> str:
+    @staticmethod
+    def _get_doc_url(tag: bs4.element.Tag) -> str:
         """ Get pretty doc url from example.
 
         :param tag: bs4.element.Tag, example.
@@ -527,8 +586,8 @@ class Corpus:
         doc_url = doc_url.attrs['href']
         return create_doc_url(doc_url)
 
-    def _get_source(self,
-                    tag: bs4.element.Tag) -> str:
+    @staticmethod
+    def _get_source(tag: bs4.element.Tag) -> str:
         """ Get pretty source from example.
 
         :param tag: bs4.element.Tag, example.
@@ -618,8 +677,8 @@ class Corpus:
             if gramm:
                 try:
                     gram_props = self._parse_lexgramm_params(gramm, '%7C', True)
-                except Exception as e:
-                    raise e
+                except Exception:
+                    raise
                 self._params[f"gramm{word_num}"] = gram_props
 
             # additional properties
@@ -627,8 +686,8 @@ class Corpus:
             if flags:
                 try:
                     flag_prop = self._parse_lexgramm_params(flags, '+')
-                except Exception as e:
-                    raise e
+                except Exception:
+                    raise
                 self._params[f"flags{word_num}"] = flag_prop
 
             # TODO: semantic properties
@@ -636,8 +695,8 @@ class Corpus:
             if sem:
                 try:
                     sem_prop = self._parse_lexgramm_params(sem, '')
-                except Exception as e:
-                    raise e
+                except Exception:
+                    raise
                 # self.__params фильтр1 и фильтр2
 
             word_num += 1
@@ -661,12 +720,14 @@ class Corpus:
             self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
 
     def _parse_doc(self,
-                   doc: bs4.element.ResultSet) -> List:
+                   doc: bs4.element.ResultSet):
         """ Parse the doc to list of Examples.
 
         Parsing depends on subcorpus, the method redefined at descendants.
         """
-        pass
+        msg = "The func not implemented to the parent Corpus class"
+        logger.error(msg)
+        raise NotImplementedError(msg)
 
     def _parse_page_kwic(self,
                          page: str) -> List[expl.KwicExample]:
@@ -693,7 +754,7 @@ class Corpus:
             l_txt = clean_text_up(left.text)
             c_txt = clean_text_up(center.text)
             # remove ←…→ symbol too
-            r_txt = clean_text_up(right.text)[:-4]
+            r_txt = clean_text_up(right.text)[:-4].strip()
 
             found_wordforms = self._find_searched_words(left)
             found_wordforms += self._find_searched_words(center)
@@ -705,13 +766,14 @@ class Corpus:
                 url = right.a.attrs['href']
             except Exception:
                 logger.exception("Source or url not found")
-            else:
-                url = create_doc_url(url)
+                src = url = ''
 
-                new_ex = expl.KwicExample(
-                    l_txt, c_txt, r_txt, src, found_wordforms, url)
-                new_ex.mark_found_words(self.marker)
-                res += [new_ex]
+            url = create_doc_url(url)
+
+            new_ex = expl.KwicExample(
+                l_txt, c_txt, r_txt, src, found_wordforms, url)
+            new_ex.mark_found_words(self.marker)
+            res += [new_ex]
         return res
 
     def _parse_page_normal(self,
@@ -745,14 +807,15 @@ class Corpus:
         parsed = [self._page_parser(page) for page in pages]
         return sum(parsed, [])
 
-    def _find_searched_words(self,
-                             tag: bs4.element.Tag) -> List[str]:
+    @staticmethod
+    def _find_searched_words(tag: bs4.element.Tag) -> List[str]:
         """ Get searched words from tag, they are marked with 'g-em'
         parameter in the class name. Strip them.
 
         :param tag: bs4.element.Tag, tag with result.
         :return: list of string, words to which request was.
         """
+        # TODO: simplify
         # params of the classes and word if 'class' is
         class_params = [
             (i.attrs.get('class', ''), i.text)
@@ -819,7 +882,7 @@ class Corpus:
                 Request params
                 Pages count
                 Request
-                Marker
+
         :return: str with the format.
         """
         res = f"{self.__class__.__name__}\n" \
@@ -827,22 +890,26 @@ class Corpus:
               f"{self.file}\n" \
               f"{self.params}\n" \
               f"{self.p_count}\n" \
-              f"{self.query}\n" \
-              f"{self.marker}"
+              f"{self.query}\n"
         return res
 
     def __str__(self) -> str:
         """
         :return: str, classname, length and enumerated examples.
         """
-        res = f"Russian National Corpus (https://ruscorpora.ru)\n" \
-              f"Class: {self.__class__.__name__}, len = {len(self)}\n" \
-              f"{self.p_count} pages requested\n\n"
-        res += '\n\n'.join(
+        metainfo = f"Russian National Corpus (https://ruscorpora.ru)\n" \
+                   f"Class: {self.__class__.__name__}, len = {len(self)}\n" \
+                   f"{self.p_count} pages of '{self.forms_in_query}' requested"
+
+        data = self.data
+        if self.__RESTRICT_SHOW is not False:
+            data = self.data[:self.__RESTRICT_SHOW]
+
+        examples = '\n\n'.join(
             f"{num}.\n{str(example)}"
-            for num, example in enumerate(self, 1)
+            for num, example in enumerate(data, 1)
         )
-        return res
+        return f"{metainfo}\n\n{examples}"
 
     def __len__(self) -> int:
         """
@@ -910,6 +977,28 @@ class Corpus:
             **self.params, marker=self.marker)
         new_obj._data = new_data.copy()
         return new_obj
+
+    def __setitem__(self,
+                    key: int,
+                    value: Any) -> None:
+        """ Change the example.
+
+        :param key: int, index of the example.
+        :param value: ex_type, new example.
+        :return: None.
+        :exception TypeError: if wrong type given.
+        """
+        if not isinstance(value, self.ex_type):
+            msg = f"Wrong type {type(value)}, " \
+                  f"{type(self.ex_type)} expected"
+            logger.error(msg)
+            raise TypeError(msg)
+
+        try:
+            self._data[key] = value
+        except Exception:
+            logger.exception('')
+            raise
 
     def __copy__(self) -> Any:
         """ Copy self.
@@ -1017,22 +1106,23 @@ class MainCorpus(Corpus):
 
         :param doc: bs4.element.ResultSet,
         """
+        # TODO: remake this func to generator?
         if not doc:
             logger.info(f"Empty doc found, params: {self.params}")
             return []
 
         res = []
         # one doc – one source
-        src = self._get_source(doc[0])
+        src = Corpus._get_source(doc[0])
         for ex in doc:
-            txt = self._get_text(ex)
+            txt = Corpus._get_text(ex)
             txt = txt[:txt.index(src)]
             txt = txt[:txt.rindex('[')].strip()
 
-            doc_url = self._get_doc_url(ex)
-            ambiguation = self._get_ambiguation(ex)
+            doc_url = Corpus._get_doc_url(ex)
+            ambiguation = Corpus._get_ambiguation(ex)
 
-            found_words = self._find_searched_words(ex)
+            found_words = Corpus._find_searched_words(ex)
             self._add_wordform(found_words)
 
             new_ex = self._ex_type(txt, src, ambiguation, found_words, doc_url)
@@ -1069,44 +1159,19 @@ class SyntaxCorpus(Corpus):
 
 class Paper2000Corpus(MainCorpus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, ex_type=expl.Paper2000Example)
         self._params['mode'] = 'paper'
-        self._ex_type = expl.Paper2000Example
 
 
 class PaperRegionalCorpus(MainCorpus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, ex_type=expl.ParallelExample)
         self._params['mode'] = 'regional'
-        self._ex_type = expl.PaperRegionalExample
 
 
 class ParallelCorpus(Corpus):
     # TODO: working with csv
     def __init__(self, *args, **kwargs):
-        """ There're no checking arguments valid.
-
-        If the file exists, working with a local database.
-
-        :param query: dict of str, words to search;
-         {word1: {properties}, word2: {properties}...}.
-         If you chose 'lexform' as a 'text' param, you must give here a string.
-        :param p_count: int, count of pages to request.
-        :param f_path: str or Path, filename of a local database.
-        :keyword dpp: str or int, documents per page.
-        :keyword spd: str or int, sentences per document.
-        :keyword text: str, search format: 'lexgramm' or 'lexform'.
-        :keyword out: str, output format: 'normal' or 'kwic'.
-        :keyword kwsz: str or int, count of words in context;
-         Optional param if 'out' is 'kwic'.
-        :keyword sort: str, sort show order. See docs how to set it.
-        :keyword subcorpus: str, subcorpus. See docs how to set it.
-        :keyword expand: str, if 'full', all part of doc will be shown.
-        :keyword accent: str or int, with accents on words or not:
-         1 – with, 0 – without.
-
-        :keyword marker: function, with which found words will be marked.
-        """
         super().__init__(*args, **kwargs, ex_type=expl.ParallelExample)
         self._params['mode'] = 'para'
 
@@ -1118,18 +1183,19 @@ class ParallelCorpus(Corpus):
         """
         lang = tag.span['l'].strip()
 
-        src = self._get_source(tag)
-        ambiguation = self._get_ambiguation(tag)
-        doc_url = self._get_doc_url(tag)
-        txt = self._get_text(tag)
+        src = Corpus._get_source(tag)
+        ambiguation = Corpus._get_ambiguation(tag)
+        doc_url = Corpus._get_doc_url(tag)
+        txt = Corpus._get_text(tag)
         # remove source from text
         txt = txt[:txt.index(src)]
         txt = txt[:txt.rindex('[')].strip()
 
-        found_words = self._find_searched_words(tag)
+        found_words = Corpus._find_searched_words(tag)
 
         return lang, txt, src, doc_url, ambiguation, found_words
 
+    # TODO: в оператор + ParallelExample
     def _best_src(self,
                   f_src: str,
                   s_src: str) -> str:
@@ -1191,9 +1257,8 @@ class LearningCorpus(Corpus):
 # TODO: add gram tags to docs
 class DialectCorpus(MainCorpus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, ex_type=expl.DialectExample)
         self._params['mode'] = 'dialect'
-        self._ex_type = expl.DialectExample
 
 
 # save lines
@@ -1203,16 +1268,14 @@ class PoetryCorpus(Corpus):
 
 class SpokenCorpus(MainCorpus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, ex_type=expl.SpokenExample)
         self._params['mode'] = 'spoken'
-        self._ex_type = expl.SpokenExample
 
 
 class AccentologyCorpus(MainCorpus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, ex_type=expl.AccentologyExample)
         self._params['mode'] = 'accent'
-        self._ex_type = expl.AccentologyExample
 
 
 class MultimediaCorpus(Corpus):

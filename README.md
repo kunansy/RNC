@@ -1,14 +1,14 @@
-### API for [National Russian Corpus](http://ruscorpora.ru) 
+### API for [Russian National Corpus](http://ruscorpora.ru) 
 
 #### Installation
 ```bash
-pip install bs4 aiohttp lxml rnc
+pip install rnc
 ```
 
 #### Structure
 
 ---
-A Corpus object contains list of obtained examples.
+Corpus object contains list of obtained examples.
 There're two types of example:
 ![](https://github.com/FaustGoethe/RNC/blob/master/docs/Two_ex_types.png?raw=true) <br> 
 * If `out` is `normal`, API uses normal example, which name is equal to the Corpus class name:
@@ -21,7 +21,7 @@ print(type(ru[0]))
 ```
 * if `out` is `kwic`, API uses `KwicExample`.
 
-Example objects [properties](https://github.com/FaustGoethe/RNC/blob/master/docs/Examples.md)   
+Example objects [fields](https://github.com/FaustGoethe/RNC/blob/master/docs/Examples.md)   
 
 #### Usage
 
@@ -33,6 +33,7 @@ ru = rnc.corpus_name(
     query='корпус', 
     p_count=5,
     file='filename.csv',
+    marker=str.upper,
     **kwargs
 )
 
@@ -41,9 +42,10 @@ ru.request_examples()
 * query – one str or dict with tags. Word to found, one should give the vocabulary form of it.
 * p_count – count of PAGES.
 * file – name of local csv file, optional.
+* function, with which found wordforms'll be marked.
 * kwargs – additional params.
 
-[Corpora](https://github.com/FaustGoethe/RNC/blob/master/docs/Corpora.md)
+[Corpora](https://github.com/FaustGoethe/RNC/blob/master/docs/Corpora.md) you can to use.
 
 ##### Full version of query
 ```python
@@ -71,6 +73,7 @@ corp = rnc.corpus_name(
     query=query,
     p_count=5,
     file='filename.csv',
+    marker=str.upper,
     **kwargs
 )
 corp.reques_examples()
@@ -79,20 +82,21 @@ corp.reques_examples()
 
 
 
-##### Additional params
-These params are optional, you can ignore them. 
+##### Additional request params
+These params are optional, you can ignore them. Here the default values is shown.
 ```python
 ru = rnc.corpus_name(
     query=query, 
     p_count=5,
     file='filename.csv',
     marker=str.upper, # function, with which found wordforms'll be marked
+    
     dpp=5, # documents per page
-    spd=1, # sentences per document
+    spd=10, # sentences per document
     text='lexgramm' or 'lexform', # way to search
     out='normal' or 'kwic', # output format
     kwsz=5, # if out=kwic, count of words in context
-    sort='sort_key', # way to sort the results
+    sort='i_grtagging', # way to sort the results
     subcorpus='', # see below how to set it
     accent=0, # with accentology (1) or without (0), if it's available
 )
@@ -143,6 +147,16 @@ Compare corp length with length of another obj or int.
 * `corp < `
 * `corp <= `
 
+Set default values to the all objects you'll create 
+* `corpus_name.set_dpp(value)` – change default `document per page` value.
+* `corpus_name.set_spd(value)` – change default `sentences per document` value.
+* `corpus_name.set_text(value)` – change default search way.
+* `corpus_name.set_sort(value)` – change default sort key.
+* `corpus_name.set_min(value)` – change default min distance between words.
+* `corpus_name.set_max(value)` – change default max distance between words.
+* `corpus_name.set_restrict_show(value)` – change default amount of shown example in print. 
+If is is equal to `False`, Corpus shows all examples. 
+
 Also you can use cycle for. For example we want to see only left context (out=kwic) and source:
 ```python
 corp = rnc.corpus_name('корпус', 5, out='kwic', kwsz=7)
@@ -163,7 +177,7 @@ For example requesting 100 pages you should wait about 3 minutes:
 ![100 pages](https://github.com/FaustGoethe/RNC/blob/master/docs/100_pages.png?raw=true)
 * If you want to see messages like that:
 ```python
-rnc.corpora.stream_handler.setLevel(level='DEBUG')
+rnc.set_stream_handlers_level('DEBUG')
 ```
 
 
@@ -199,3 +213,5 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
 
 ---
 If you found a bug or have an idea to improve the API write to me – alniconim@gmail.com.  
+
+P.S. If your native is Russian or you know it well, please write me in Russian.

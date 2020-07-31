@@ -13,14 +13,9 @@ import rnc.corpora_logging as clog
 log_file = clog.log_folder / f"{__name__}.log"
 formatter = clog.create_formatter()
 
-stream_handler = clog.create_stream_handler(
-    level=logging.WARNING,
-    formatter=formatter)
+stream_handler = clog.create_stream_handler(formatter=formatter)
 file_handler = clog.create_file_handler(
-    log_path=log_file,
-    formatter=formatter,
-    delay=True,
-    encoding='utf-8')
+    log_path=log_file, formatter=formatter)
 
 logger = clog.create_logger(
     __name__, logging.DEBUG, file_handler, stream_handler)
@@ -44,12 +39,10 @@ async def fetch(url: str,
     async with ses.get(url, params=kwargs, timeout=t_out) as resp:
         if resp.status == 200:
             return await resp.text('utf-8')
-
-        if resp.status != 429:
-            resp.raise_for_status()
-
-        await asyncio.sleep(wait)
-        return await fetch(url, ses, **kwargs)
+        elif resp.status == 429:
+            await asyncio.sleep(wait)
+            return await fetch(url, ses, **kwargs)
+        resp.raise_for_status()
 
 
 async def get_htmls_coro(url: str,
@@ -61,7 +54,7 @@ async def get_htmls_coro(url: str,
     URLs will be created for i in range(p_index_start, p_index_stop),
     HTTP tag 'p' (page) is i.
 
-    :param url: str, URL. It must start with http(s)://
+    :param url: str, URL.
     :param p_index_start: int, start page index.
     :param p_index_stop: int, stop page index.
     :param kwargs: HTTP tags.
@@ -85,26 +78,26 @@ async def get_htmls_coro(url: str,
             for future in done:
                 try:
                     page_code = future.result()
-                except aiohttp.ClientResponseError as e:
+                except aiohttp.ClientResponseError:
                     # 5.., 404 etc
-                    logger.exception(e)
-                    raise e
-                except aiohttp.ClientConnectionError as e:
+                    logger.exception(f"Params: {kwargs}")
+                    raise
+                except aiohttp.ClientConnectionError:
                     # there's no connection or access to the site
-                    logger.exception(e)
-                    raise e
-                except aiohttp.InvalidURL as e:
+                    logger.exception(f"Params: {kwargs}")
+                    raise
+                except aiohttp.InvalidURL:
                     # wrong url or params
-                    logger.exception(e)
-                    raise e
-                except aiohttp.ServerTimeoutError as e:
+                    logger.exception(f"Params: {kwargs}")
+                    raise
+                except aiohttp.ServerTimeoutError:
                     # timeout
-                    logger.exception(e)
-                    raise e
-                except Exception as e:
+                    logger.exception(f"Params: {kwargs}")
+                    raise
+                except Exception:
                     # another error
-                    logger.exception(e)
-                    raise e
+                    logger.exception(f"Params: {kwargs}")
+                    raise
                 else:
                     html_codes += [page_code]
             # TODO: return here?
@@ -120,7 +113,7 @@ def get_htmls(url: str,
     URLs will be created for i in range(p_index_start, p_index_stop),
      HTTP tag 'p' (page) is i.
 
-    :param url: str, URL. It must start with http(s)://
+    :param url: str, URL.
     :param p_index_start: int, start page index.
     :param p_index_stop: int, stop page index.
     :param kwargs: HTTP tags.
@@ -150,7 +143,7 @@ def is_http_request_correct(url: str,
     :return: bool, correct the request or not.
     """
     try:
-        # coro writes log if the request if wrong
+        # coro writes logs by itself
         get_htmls(url, **kwargs)
     except Exception:
         return False
@@ -177,8 +170,10 @@ def whether_result_found(url: str,
 def does_page_exist(url: str,
                     p_index: int,
                     **kwargs) -> bool:
-    """ Whether a page at the index exists. It means, the number
-    of the page in 'pager' is equal to expected index.
+    """ Whether a page at the index exists.
+
+    It means, the number of the page in 'pager' is equal to expected index.
+    Corpus redirects to the first page if the page at the number doesn't exist.
     Here it's assumed, that the request's correct.
 
     :param url: str, url.
@@ -189,7 +184,7 @@ def does_page_exist(url: str,
     # indexing starts with 0
     start = p_index
     start = start * (start >= 0)
-    stop = (p_index + 1) or 1
+    stop = p_index + 1
 
     # request is correct → first page exists
     if stop is 1:
@@ -230,6 +225,7 @@ def is_request_correct(url: str,
     :return: True if everything's OK, an exception otherwise.
     :exception ValueError: something's wrong.
     """
+    # TODO: join 'is_http_request_correct' and 'whether_result_found'
     # requesting coro writes log with exceptions by itself
     if not is_http_request_correct(url, **kwargs):
         raise ValueError("Wrong http req")

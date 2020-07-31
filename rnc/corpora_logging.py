@@ -71,11 +71,15 @@ def create_file_handler(level=logging.DEBUG,
     :param formatter: message formatter.
     :param kwargs: params to FileHandler constructor.
     :keyword delay: bool, whether file'll not be opened
-     until the first logger calling.
-    :keyword encoding: str, file encoding.
+     until the first logger calling. True by default.
+    :keyword encoding: str, file encoding. utf-8 by default.
     :return: file handler.
     """
-    file_handler = logging.FileHandler(log_path, **kwargs)
+    delay = kwargs.pop('delay', True)
+    encoding = kwargs.pop('encoding', 'utf-8')
+
+    file_handler = logging.FileHandler(
+        log_path, delay=delay, encoding=encoding, **kwargs)
     file_handler.setLevel(level)
     if formatter:
         file_handler.setFormatter(formatter)
