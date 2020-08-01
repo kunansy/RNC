@@ -9,7 +9,7 @@ pip install rnc
 
 ---
 Corpus object contains list of obtained examples.
-There're two types of example:
+There're two types:
 ![](https://github.com/FaustGoethe/RNC/blob/master/docs/Two_ex_types.png?raw=true) <br> 
 * If `out` is `normal`, API uses normal example, which name is equal to the Corpus class name:
 ```python
@@ -21,7 +21,7 @@ print(type(ru[0]))
 ```
 * if `out` is `kwic`, API uses `KwicExample`.
 
-Example objects [fields](https://github.com/FaustGoethe/RNC/blob/master/docs/Examples.md)   
+Examples' objects [fields](https://github.com/FaustGoethe/RNC/blob/master/docs/Examples.md)   
 
 #### Usage
 
@@ -42,10 +42,10 @@ ru.request_examples()
 * query – one str or dict with tags. Word to found, one should give the vocabulary form of it.
 * p_count – count of PAGES.
 * file – name of local csv file, optional.
-* function, with which found wordforms'll be marked.
+* marker – function, with which found wordforms'll be marked. 
 * kwargs – additional params.
 
-[Corpora](https://github.com/FaustGoethe/RNC/blob/master/docs/Corpora.md) you can to use.
+[Corpora](https://github.com/FaustGoethe/RNC/blob/master/docs/Corpora.md) you can use.
 
 ##### Full version of query
 ```python
@@ -132,8 +132,8 @@ There's an exception if:
 * `corp.sort(key=, reverse=)` – sort the list of examples. Here HTTP keys doesn't work.  
 * `corp.url` – URl to first page of the Corpus result.
 * `corp.open_url()` – open first page of the Corpus result.
-* `corp.add_pages()` – in developing...
-* `str(corp)` – str with info about Corpus, enumerated examples. 
+* `str(corp) or print(corp)` – str with info about Corpus, enumerated examples. By default Corpus shows 
+first 50 examples, but you can change this value or turn restriction off. 
 * `len(corp)` – count if examples.
 * `bool(corp)` – whether data exist.
 * `corp.dpp` or another request param.
@@ -209,8 +209,8 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
 ![4](https://raw.githubusercontent.com/FaustGoethe/RNC/master/docs/How%20to%20set%20subcorpus/4.png)
 
 ---
-[Documentation](https://github.com/FaustGoethe/RNC/tree/master/docs)
-
+[Documentation](https://github.com/FaustGoethe/RNC/tree/master/docs) <br>
+[Source](https://github.com/FaustGoethe/RNC)
 ---
 If you found a bug or have an idea to improve the API write to me – alniconim@gmail.com.  
 

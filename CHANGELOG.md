@@ -44,3 +44,10 @@ One can change this param or turn the restriction off.
 ##### To `Example`
 * `data` property, more changes with this.
 * Setter methods.
+
+
+#### 0.3 – 
+#### Changed
+* Parsing structure corrected.
+
+#### Added
