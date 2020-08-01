@@ -398,14 +398,6 @@ class Corpus:
                 f"Error while opening doc with url: {self.url}")
             raise
 
-    def add_pages(self,
-                  p_count: int) -> None:
-        """ Add new pages in (last_p_count; last_p_count + new_p_count)
-        (Needed for working with local database)
-        """
-        # TODO
-        pass
-
     def request_examples(self) -> None:
         """ Request examples, parse them and update the data.
 
@@ -602,8 +594,8 @@ class Corpus:
         return src
 
     # TODO: probably, converting the symbols to their code doesn't needed
-    def _parse_lexgramm_params(self,
-                               params: dict or str,
+    @staticmethod
+    def _parse_lexgramm_params(params: dict or str,
                                join_inside_symbol: str,
                                with_braces: bool = False) -> str:
         """ Convert lexgramm params such as
@@ -676,7 +668,7 @@ class Corpus:
             gramm = params.get('gramm', '')
             if gramm:
                 try:
-                    gram_props = self._parse_lexgramm_params(gramm, '%7C', True)
+                    gram_props = Corpus._parse_lexgramm_params(gramm, '%7C', True)
                 except Exception:
                     raise
                 self._params[f"gramm{word_num}"] = gram_props
@@ -685,7 +677,7 @@ class Corpus:
             flags = params.get('flags', '')
             if flags:
                 try:
-                    flag_prop = self._parse_lexgramm_params(flags, '+')
+                    flag_prop = Corpus._parse_lexgramm_params(flags, '+')
                 except Exception:
                     raise
                 self._params[f"flags{word_num}"] = flag_prop
@@ -694,15 +686,15 @@ class Corpus:
             sem = params.get('sem', '')
             if sem:
                 try:
-                    sem_prop = self._parse_lexgramm_params(sem, '')
+                    sem_prop = Corpus._parse_lexgramm_params(sem, '')
                 except Exception:
                     raise
                 # self.__params фильтр1 и фильтр2
 
             word_num += 1
 
-    def _add_wordform(self,
-                      forms: List[str]) -> None:
+    def _add_wordforms(self,
+                       forms: List[str]) -> None:
         """ Add found wordforms to counter. Low and strip items.
 
         :param forms: list of str, wordforms to add.
@@ -723,11 +715,52 @@ class Corpus:
                    doc: bs4.element.ResultSet):
         """ Parse the doc to list of Examples.
 
-        Parsing depends on subcorpus, the method redefined at descendants.
+        Parsing depends on the subcorpus,
+        the method redefined at the descendants.
         """
         msg = "The func not implemented to the parent Corpus class"
         logger.error(msg)
         raise NotImplementedError(msg)
+
+    def _parse_example(self,
+                       *args,
+                       **kwargs):
+        """ Parse the example to Example object.
+
+        Parsing depends on the subcorpus,
+        the method redefined at the descendants.
+        """
+        msg = "The func not implemented to the parent Corpus class"
+        logger.error(msg)
+        raise NotImplementedError(msg)
+
+    def _parse_kwic_example(self,
+                            left,
+                            center,
+                            right):
+        l_txt = clean_text_up(left.text)
+        c_txt = clean_text_up(center.text)
+        # remove ←…→ symbol too
+        r_txt = clean_text_up(right.text)[:-4].strip()
+
+        found_wordforms = Corpus._find_searched_words(left)
+        found_wordforms += Corpus._find_searched_words(center)
+        found_wordforms += Corpus._find_searched_words(right)
+
+        try:
+            src = right.a.attrs['msg'].strip()
+            url = right.a.attrs['href']
+        except Exception:
+            logger.exception("Source or url not found")
+            src = url = ''
+
+        url = create_doc_url(url)
+
+        new_ex = expl.KwicExample(
+            l_txt, c_txt, r_txt, src, found_wordforms, url)
+        new_ex.mark_found_words(self.marker)
+
+        return new_ex
 
     def _parse_page_kwic(self,
                          page: str) -> List[expl.KwicExample]:
@@ -751,29 +784,9 @@ class Corpus:
             logger.warning("Len of nobr tags list % 3 != 0")
 
         for left, center, right in zip(nobr[::3], nobr[1::3], nobr[2::3]):
-            l_txt = clean_text_up(left.text)
-            c_txt = clean_text_up(center.text)
-            # remove ←…→ symbol too
-            r_txt = clean_text_up(right.text)[:-4].strip()
-
-            found_wordforms = self._find_searched_words(left)
-            found_wordforms += self._find_searched_words(center)
-            found_wordforms += self._find_searched_words(right)
-            self._add_wordform(found_wordforms)
-
-            try:
-                src = right.a.attrs['msg'].strip()
-                url = right.a.attrs['href']
-            except Exception:
-                logger.exception("Source or url not found")
-                src = url = ''
-
-            url = create_doc_url(url)
-
-            new_ex = expl.KwicExample(
-                l_txt, c_txt, r_txt, src, found_wordforms, url)
-            new_ex.mark_found_words(self.marker)
+            new_ex = self._parse_kwic_example(left, center, right)
             res += [new_ex]
+            self._add_wordforms(new_ex.found_wordforms)
         return res
 
     def _parse_page_normal(self,
@@ -786,10 +799,9 @@ class Corpus:
         soup = bs4.BeautifulSoup(page, 'lxml')
         res = []
 
-        for doc in soup.find_all('ul'):
-            li = doc.find_all('li')
+        for doc in soup.find_all('li'):
             try:
-                parsed_doc = self._parse_doc(li)
+                parsed_doc = self._parse_doc(doc)
             except Exception:
                 logger.exception("Error while parsing doc")
             else:
@@ -845,7 +857,7 @@ class Corpus:
     def _load_params(self) -> Dict:
         """ Load request params from json file.
 
-        :return: json dicc.
+        :return: json dict.
         """
         with self._config_path.open('r', encoding='utf-16') as f:
             return json.load(f)
@@ -1100,8 +1112,29 @@ class MainCorpus(Corpus):
         super().__init__(*args, **kwargs, ex_type=expl.MainExample)
         self._params['mode'] = 'main'
 
+    def _parse_example(self,
+                       example: bs4.element.Tag,
+                       src: str):
+        """ Parse example to Example object.
+
+        :param example: tag, example to parse.
+        :param src: str, source of example.
+        :return: example obj.
+        """
+        txt = Corpus._get_text(example)
+        txt = txt[:txt.index(src)]
+        txt = txt[:txt.rindex('[')].strip()
+
+        doc_url = Corpus._get_doc_url(example)
+        ambiguation = Corpus._get_ambiguation(example)
+        found_words = Corpus._find_searched_words(example)
+
+        new_ex = self.ex_type(txt, src, ambiguation, found_words, doc_url)
+        new_ex.mark_found_words(self.marker)
+        return new_ex
+
     def _parse_doc(self,
-                   doc: bs4.element.ResultSet) -> List[expl.MainExample]:
+                   doc: bs4.element.Tag) -> List[expl.MainExample]:
         """ Parse document to list of examples.
 
         :param doc: bs4.element.ResultSet,
@@ -1110,24 +1143,15 @@ class MainCorpus(Corpus):
         if not doc:
             logger.info(f"Empty doc found, params: {self.params}")
             return []
-
         res = []
+
+        examples = doc.find_all('li')
         # one doc – one source
-        src = Corpus._get_source(doc[0])
-        for ex in doc:
-            txt = Corpus._get_text(ex)
-            txt = txt[:txt.index(src)]
-            txt = txt[:txt.rindex('[')].strip()
-
-            doc_url = Corpus._get_doc_url(ex)
-            ambiguation = Corpus._get_ambiguation(ex)
-
-            found_words = Corpus._find_searched_words(ex)
-            self._add_wordform(found_words)
-
-            new_ex = self._ex_type(txt, src, ambiguation, found_words, doc_url)
-            new_ex.mark_found_words(self.marker)
+        src = Corpus._get_source(examples[0])
+        for ex in examples:
+            new_ex = self._parse_example(ex, src)
             res += [new_ex]
+            self._add_wordforms(new_ex.found_wordforms)
 
         return res
 
@@ -1176,61 +1200,40 @@ class ParallelCorpus(Corpus):
         self._params['mode'] = 'para'
 
     def _parse_example(self,
-                       tag: bs4.element.Tag):
-        """ Parse one sentence
+                       tag: bs4.element.Tag) -> Any:
+        """ Parse one sentence.
 
         :param tag: bs4.element.Tag, sentence to parse.
         """
-        lang = tag.span['l'].strip()
+        result_example = self.ex_type()
 
-        src = Corpus._get_source(tag)
-        ambiguation = Corpus._get_ambiguation(tag)
-        doc_url = Corpus._get_doc_url(tag)
-        txt = Corpus._get_text(tag)
-        # remove source from text
-        txt = txt[:txt.index(src)]
-        txt = txt[:txt.rindex('[')].strip()
+        for text in tag.find_all('li'):
+            lang = text.span['l'].strip()
 
-        found_words = Corpus._find_searched_words(tag)
+            src = Corpus._get_source(text)
+            ambiguation = Corpus._get_ambiguation(text)
+            doc_url = Corpus._get_doc_url(text)
+            txt = Corpus._get_text(text)
+            # remove source from text
+            txt = txt[:txt.index(src)]
+            txt = txt[:txt.rindex('[')].strip()
 
-        return lang, txt, src, doc_url, ambiguation, found_words
+            found_words = Corpus._find_searched_words(text)
 
-    # TODO: в оператор + ParallelExample
-    def _best_src(self,
-                  f_src: str,
-                  s_src: str) -> str:
-        if '|' in s_src:
-            return s_src
-        return f_src
+            new_txt = self.ex_type(
+                {lang: txt}, src, ambiguation, found_words, doc_url)
+
+            result_example += new_txt
+        # TODO: `result_example` became a NoneType obj after cycle end
+        return result_example
 
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> List:
-        # TODO: NamedTuple
         res = []
-        for fst, sec in zip(doc[::2], doc[1::2]):
-            f_lang, f_txt, f_src, f_url, f_amb, f_fw = self._parse_example(fst)
-            s_lang, s_txt, s_src, s_url, s_amb, s_fw = self._parse_example(sec)
-
-            src = self._best_src(f_src, s_src)
-            fw = f_fw + s_fw
-
-            # TODO: fix it
-            assert f_lang != s_lang, "Languages should be different"
-
-            self._add_wordform(fw)
-
-            new_ex = self._ex_type(
-                {f_lang: f_txt, s_lang: s_txt}, src, f_amb, fw, f_url)
-            new_ex.mark_found_words(self.marker)
+        for ex in doc.find_all('table', {'class': 'para'}):
+            new_ex = self._parse_example(ex)
             res += [new_ex]
-
-        return res
-
-    def __str__(self) -> str:
-        res = '\n\n'.join(
-            f"{num}.\n{i}"
-            for num, i in enumerate(self.data, 1)
-        )
+            self._add_wordforms(new_ex.found_wordforms)
         return res
 
 
