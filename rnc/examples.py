@@ -59,8 +59,8 @@ class TextInfo:
 class Example:
     """ Base examples class """
     __slots__ = (
-        '__txt', '__src', '__doc_url',
-        '__ambiguation', '__found_wordforms')
+        '_txt', '_src', '_doc_url',
+        '_ambiguation', '_found_wordforms')
 
     def __init__(self,
                  txt: str,
@@ -77,50 +77,50 @@ class Example:
         :param doc_url: str, example's url.
         :return: None.
         """
-        self.__txt = txt
-        self.__src = src
-        self.__ambiguation = ambiguation
-        self.__doc_url = doc_url
+        self._txt = txt
+        self._src = src
+        self._ambiguation = ambiguation
+        self._doc_url = doc_url
 
         wf = found_wordforms or []
         if isinstance(wf, str):
             wf = found_wordforms.split(', ')
-        self.__found_wordforms = wf
+        self._found_wordforms = wf
 
     @property
     def txt(self) -> str:
         """
         :return: str, example's text.
         """
-        return self.__txt
+        return self._txt
 
     @property
     def src(self) -> str:
         """
         :return: str, example's source.
         """
-        return self.__src
+        return self._src
 
     @property
     def ambiguation(self) -> str:
         """
         :return: str, example's ambiguation.
         """
-        return self.__ambiguation
+        return self._ambiguation
 
     @property
     def doc_url(self) -> str:
         """
         :return: str, example's URL.
         """
-        return self.__doc_url
+        return self._doc_url
 
     @property
     def found_wordforms(self) -> List[str]:
         """
         :return: list of str, example's found wordforms.
         """
-        return self.__found_wordforms
+        return self._found_wordforms
 
     @property
     def columns(self) -> List[str]:
@@ -142,16 +142,16 @@ class Example:
 
     @property
     def data(self) -> Dict:
-        """ Found wordforms joined with ', '.
+        """ There're all fields except for doc_url.
+        Found wordforms joined with ', '.
 
         :return: dict with fields names and their values.
-        There're all fields except for doc_url.
         """
         data = {
-            'text': self.txt,
-            'source': self.src,
-            'ambiguation': self.ambiguation,
-            'found wordforms': ', '.join(self.found_wordforms)
+            'text': self._txt,
+            'source': self._src,
+            'ambiguation': self._ambiguation,
+            'found wordforms': ', '.join(self._found_wordforms)
         }
         return data
 
@@ -161,7 +161,7 @@ class Example:
 
         :return: None.
         """
-        self.__txt = other
+        self._txt = other
 
     @ambiguation.setter
     def ambiguation(self, other) -> None:
@@ -169,7 +169,7 @@ class Example:
 
         :return: None.
         """
-        self.__ambiguation = other
+        self._ambiguation = other
 
     def open_doc(self) -> None:
         """ Open the doc in the new tab of the default browser.
@@ -178,15 +178,15 @@ class Example:
         :exception ValueError: URL is not like 'http...'
         :exception: if something's wrong.
         """
-        if not self.doc_url.startswith('http'):
+        if not self._doc_url.startswith('http'):
             logger.exception(
-                f"Tried to open doc with wrong url: {self.doc_url}")
-            raise ValueError(f"Wrong URL: {self.doc_url}")
+                f"Tried to open doc with wrong url: {self._doc_url}")
+            raise ValueError(f"Wrong URL: {self._doc_url}")
         try:
-            webbrowser.open_new_tab(self.doc_url)
+            webbrowser.open_new_tab(self._doc_url)
         except Exception:
             logger.exception(
-                f"Error while opening doc with url: {self.doc_url}")
+                f"Error while opening doc with url: {self._doc_url}")
             raise
 
     def mark_found_words(self,
@@ -196,7 +196,14 @@ class Example:
         :param marker: function to mark found wordforms.
         :return: None.
         """
-        self.__txt = mark_found_words(self.txt, self.found_wordforms, marker)
+        self._txt = mark_found_words(
+            self._txt, self._found_wordforms, marker)
+
+    def copy(self):
+        """
+        :return: copied obj.
+        """
+        return self.__class__(*self.data.values(), self.doc_url)
 
     def __str__(self) -> str:
         """ Str format depends on the descendant.
@@ -288,22 +295,6 @@ class KwicExample(Example):
         return f"{self.left} {self.center} {self.right}"
 
     @property
-    def columns(self) -> List[str]:
-        """ For csv writing.
-
-        :return: list of str, names of columns.
-        """
-        return list(self.data.keys()) + ['URL']
-
-    @property
-    def items(self) -> List[str]:
-        """ For csv writing, values of columns.
-
-        :return: list of str or list, values of columns.
-        """
-        return list(self.data.values()) + [self.doc_url]
-
-    @property
     def data(self) -> Dict:
         """
         :return: dict with fields names and their values.
@@ -362,53 +353,6 @@ class KwicExample(Example):
         self.__center = mark_found_words(self.center, self.found_wordforms, marker)
         self.__right = mark_found_words(self.right, self.found_wordforms, marker)
 
-    def __str__(self) -> str:
-        """ Str format:
-                LEFT: example's left context.
-                CENTER: example's center context.
-                RIGHT: example's right context.
-                SOURCE: example's source.
-                FOUND WORDFORMS: example's found wordforms.
-
-        :return: this str.
-        """
-        res = '\n'.join(
-            f"{key.upper()}: {val}"
-            for key, val in self.data.items()
-        )
-        return res
-
-    def __repr__(self) -> str:
-        """ Str format:
-                    left: example's left context.
-                    center: example's center context.
-                    right: example's right context.
-                    source: example's source.
-                    found wordforms: example's found wordforms.
-                    URL: example's URL.
-
-        :return: this str.
-        """
-        res = '\n'.join(
-            f"{key}: {val}"
-            for key, val in self.data.items()
-        )
-        url = f"URL: {self.doc_url}"
-        return f"{res}\n{url}"
-
-    def __hash__(self) -> int:
-        """ Hash str with all example fields.
-
-        :return: int, hash.
-        """
-        return hash(repr(self))
-
-    def __bool__(self) -> bool:
-        """
-        :return: bool, whether fields (expect for URL) exist.
-        """
-        return all(val for val in self.data.values())
-
 
 class MainExample(Example):
     pass
@@ -428,11 +372,11 @@ class PaperRegionalExample(Example):
 
 class ParallelExample(Example):
     def __init__(self,
-                 txt: Dict[str, str],
-                 src: str,
-                 ambiguation: str,
-                 found_wordforms: List[str],
-                 doc_url: str) -> None:
+                 txt: Dict[str, str] = None,
+                 src: str = '',
+                 ambiguation: str = '',
+                 found_wordforms: List[str] = None,
+                 doc_url: str = '') -> None:
         """
         :param txt: dict of str, {lang: text}
         :param src: str, examples source.
@@ -440,8 +384,10 @@ class ParallelExample(Example):
         :param found_wordforms: list of str, examples found wordforms.
         :param doc_url: str, examples URL.
         """
-        super().__init__('', src, ambiguation, found_wordforms, doc_url)
-        self.__txt = {lang: text for lang, text in txt.items()}
+        txt = txt or {}
+        found_wordforms = found_wordforms or []
+
+        super().__init__(txt, src, ambiguation, found_wordforms, doc_url)
 
     @property
     def txt(self) -> Dict[str, str]:
@@ -449,7 +395,27 @@ class ParallelExample(Example):
 
         :return: dict of str.
         """
-        return self.__txt
+        return self._txt
+
+    @txt.setter
+    def txt(self, other) -> None:
+        msg = "Try to use ex.lang or ex['lang'] instead"
+        logger.error(msg)
+        raise NotImplementedError(msg)
+
+    @property
+    def data(self) -> Dict:
+        """ There're all fields except for doc_url.
+        Found wordforms joined with ', '.
+
+        :return: dict with fields names and their values.
+        """
+        data = self.txt.copy()
+        data['source'] = self.src
+        data['ambiguation'] = self.ambiguation
+        data['found wordforms'] = ', '.join(self.found_wordforms)
+
+        return data
 
     def mark_found_words(self,
                          marker: Callable) -> None:
@@ -459,11 +425,42 @@ class ParallelExample(Example):
         :return: None.
         """
         for lang, txt in self.txt.items():
-            self.__txt[lang] = mark_found_words(txt, self.found_wordforms, marker)
+            self[lang] = mark_found_words(
+                txt, self.found_wordforms, marker)
 
-    # TODO: working with csv file
-    # def items(self) -> List[str or list]:
-    # def columns(self) -> List[str]:
+    @staticmethod
+    def _best_src(f_src: str,
+                  s_src: str) -> str:
+        """ Choose the best source, means there're
+        two translation in it.
+
+        :param f_src: str, first source.
+        :param s_src: str, second source.
+        :return: str, best of them.
+        """
+        if '|' in s_src:
+            return s_src
+        return f_src
+
+    def copy(self):
+        return self.__class__(
+            self.txt, self.src, self.ambiguation,
+            self.found_wordforms, self.doc_url)
+
+    def __iadd__(self, other) -> None:
+        for lang, txt in other.txt.copy().items():
+            if lang in self.txt:
+                self[lang] = f"{self[lang]} {txt}"
+            else:
+                self[lang] = txt
+
+        # source contains two translations
+        self._src = ParallelExample._best_src(self.src, other.src)
+
+        if 'not' not in other.ambiguation:
+            self._ambiguation = other.ambiguation
+
+        self._found_wordforms += other.found_wordforms
 
     def __getattr__(self,
                     item: str) -> str or None:
@@ -476,32 +473,24 @@ class ParallelExample(Example):
 
     def __getitem__(self,
                     lang: str) -> str or None:
-        """ Get text in language.
+        """ Get text in the language.
 
-        :param item: str, language.
+        :param lang: str, language.
         :return: str or None, text in the language if exists.
         """
-        return self.txt.get(lang, None)
+        return self.lang
 
-    def __str__(self) -> str:
-        """ Str format:
-                LANG: text in the language
-                SOURCE: examples source
-                AMBIGUATION: examples ambiguation
-                FOUND WORDFORMS: examples found wordforms
+    def __setitem__(self,
+                    lang: str,
+                    txt: str) -> None:
+        """ Change text in the lang.
 
-        :return: this str
+        :param lang: str, lang tag.
+        :param txt: str, new text.
+        :return: None.
+        :exception ValueError: if the text in the lang doesn't exist.
         """
-        data = self.txt
-        data['source'] = self.src
-        data['ambiguation'] = self.ambiguation
-        data['found wordforms'] = ', '.join(self.found_wordforms)
-
-        res = '\n'.join(
-            f"{key.upper()}: {value}"
-            for key, value in data.items()
-        )
-        return res
+        self._txt[lang] = txt
 
 
 class TutoringExample(Example):
