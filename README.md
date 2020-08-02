@@ -186,6 +186,13 @@ rnc.set_stream_handlers_level('DEBUG')
 [Here](https://github.com/FaustGoethe/RNC/blob/master/docs/HTTP%20params.md) you can find sort keys and their descriptions.
 
 
+##### How to set language in ParallelCorpus?
+```python
+en = rnc.ParallelCorpus('get', 5, rnc.Subcorpus.Parallel.English)
+```
+If you want to search something by several languages, choose them and set the subcorpus. 
+
+
 ##### How to set subcorpus?
 There're default keys in rnc.Subcorpus.Person – Russian writers and poets: 
 * Pushkin

@@ -1,3 +1,3 @@
 ## Ukrainian Parallel Corpus
 
-**Параметры такие же, как и в Main Corpus**
+**All params the same to MainCorpus**

@@ -16,4 +16,4 @@
 * Причастие II – pf
 
 
-**Остальные параметры такие же, как и в Main Corpus**
+**Other params the same to MainCorpus**

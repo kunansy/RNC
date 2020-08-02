@@ -1,3 +1,3 @@
-## Finnish Parallel Corpus
+## AccentologyCorpus
 
 **All params the same to MainCorpus**

@@ -8,7 +8,8 @@
 * Paper
   * Media 2000 years – class **Paper2000Corpus**
   * Local media – class **PaperRegionalCorpus**
-* Parallel – **in developing...**
+* Parallel – class **ParallelCorpus**. Use `rnc.Subcorpus.Parallel` to set language via `ParallelCorpus(... subcorpus= ...)`
+Docs to all subcorpus see at the [folder](https://github.com/FaustGoethe/RNC/tree/master/docs/Lexgram%20search%20params/Parallel%20Corpus) 
   * English 
   * Armenian
   * Bashkir 

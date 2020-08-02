@@ -18,7 +18,7 @@ __all__ = (
 import logging
 import re
 import webbrowser
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Any
 
 import rnc.corpora_logging as clog
 
@@ -199,7 +199,7 @@ class Example:
         self._txt = mark_found_words(
             self._txt, self._found_wordforms, marker)
 
-    def copy(self):
+    def __copy__(self):
         """
         :return: copied obj.
         """
@@ -337,7 +337,7 @@ class KwicExample(Example):
 
     @txt.setter
     def txt(self, other) -> None:
-        """ Exception, text setter not implemented to kwic """
+        """ Text setter not implemented to kwic """
         msg = "txt setter not implemented to kwic"
         logger.error(msg)
         raise NotImplementedError(msg)
@@ -398,8 +398,9 @@ class ParallelExample(Example):
         return self._txt
 
     @txt.setter
-    def txt(self, other) -> None:
-        msg = "Try to use ex.lang or ex['lang'] instead"
+    def txt(self, other: Any) -> None:
+        """ Text setter not implemented to the ParallelExample """
+        msg = "Try to use ex['lang'] instead"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -432,7 +433,7 @@ class ParallelExample(Example):
     def _best_src(f_src: str,
                   s_src: str) -> str:
         """ Choose the best source, means there're
-        two translation in it.
+        two translations in it.
 
         :param f_src: str, first source.
         :param s_src: str, second source.
@@ -442,25 +443,50 @@ class ParallelExample(Example):
             return s_src
         return f_src
 
-    def copy(self):
-        return self.__class__(
-            self.txt, self.src, self.ambiguation,
-            self.found_wordforms, self.doc_url)
+    def __copy__(self) -> Any:
+        """
+        :return: copied obj.
+        """
+        obj = super().__copy__()
+        obj._txt = self.txt.copy()
+        return obj
 
-    def __iadd__(self, other) -> None:
-        for lang, txt in other.txt.copy().items():
+    def __iadd__(self, other) -> Any:
+        """ Concatenate two examples:
+            – join the texts
+
+            – choose the best source, there're
+            two translations there
+
+            – choose where the text is disambiguated.
+
+            – join found wordforms.
+
+        :param other: instance of the same class.
+        :return: self.
+        :exception TypeError: if wrong type given.
+        """
+        if not isinstance(other, self.__class__):
+            msg = f"'+=' supported only {self.__class__} objects"
+            logger.error(msg)
+            raise TypeError(msg)
+
+        for lang, txt in other.txt.items():
             if lang in self.txt:
-                self[lang] = f"{self[lang]} {txt}"
+                self[lang] = f"{self.txt[lang]} {txt}"
             else:
                 self[lang] = txt
 
         # source contains two translations
         self._src = ParallelExample._best_src(self.src, other.src)
 
-        if 'not' not in other.ambiguation:
+        if not (self.ambiguation and 'not' in other.ambiguation):
             self._ambiguation = other.ambiguation
-
+        if not self.doc_url:
+            self._doc_url = other.doc_url
         self._found_wordforms += other.found_wordforms
+
+        return self
 
     def __getattr__(self,
                     item: str) -> str or None:

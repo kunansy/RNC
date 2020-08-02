@@ -1,4 +1,4 @@
-## Armenian Paralell Corpus
+## Armenian Parallel Corpus
 
 ### Gram
 ##### POS
@@ -50,4 +50,4 @@
 * Сокращение – abbr
 * Разговорная форма – oral
 
-**Остальные параметры такие же, как и в Main Corpus**
+**Other params the same to MainCorpus**

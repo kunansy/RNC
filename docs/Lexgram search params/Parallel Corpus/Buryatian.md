@@ -54,4 +54,4 @@
 * Посессив 2 мн. – poss_2pl
 * Посессив 3 л. – poss_3
 
-**Остальные параметры такие же, как и в Main Corpus**
+**Other params the same to MainCorpus**

@@ -3,7 +3,7 @@ __all__ = 'get_htmls', 'is_request_correct'
 
 import asyncio
 import logging
-from typing import List
+from typing import List, Tuple
 
 import aiohttp
 import bs4
@@ -23,7 +23,7 @@ logger = clog.create_logger(
 
 async def fetch(url: str,
                 ses: aiohttp.ClientSession,
-                **kwargs) -> str:
+                **kwargs) -> Tuple[int, str]:
     """ Coro, obtaining page's html code. There's ClientTimeout.
 
     If response.status == 429 sleep and try again.
@@ -32,13 +32,13 @@ async def fetch(url: str,
     :param url: string, URL to get its html code.
     :param ses: aiohttp.ClientSession.
     :param kwargs: HTTP tags.
-    :return: html code, decoded to UTF-8.
+    :return: p key to sort results and html code, decoded to UTF-8.
     """
     wait = 24
     t_out = aiohttp.ClientTimeout(wait + 1)
     async with ses.get(url, params=kwargs, timeout=t_out) as resp:
         if resp.status == 200:
-            return await resp.text('utf-8')
+            return kwargs['p'], await resp.text('utf-8')
         elif resp.status == 429:
             await asyncio.sleep(wait)
             return await fetch(url, ses, **kwargs)
@@ -100,7 +100,10 @@ async def get_htmls_coro(url: str,
                     raise
                 else:
                     html_codes += [page_code]
+            # TODO: add pages' html codes as they are obtained
             # TODO: return here?
+            html_codes.sort(key=lambda x: x[0])
+            html_codes = [i[1] for i in html_codes]
             return html_codes
 
 
@@ -235,10 +238,10 @@ def is_request_correct(url: str,
     # coro writes logs by itself
     try:
         assert whether_result_found(url, **kwargs) is True
-    except RuntimeError:
-        raise ValueError("Wrong HTTP request")
     except AssertionError:
         raise ValueError("No results found")
+    except RuntimeError:
+        raise ValueError("Wrong HTTP request")
 
     if not does_page_exist(url, p_count - 1, **kwargs):
         raise ValueError("Last page doesn't exist")

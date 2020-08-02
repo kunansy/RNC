@@ -6,7 +6,7 @@ __all__ = (
     'SpokenCorpus',
     'PaperRegionalCorpus',
     'Paper2000Corpus',
-    ''
+    'ParallelCorpus'
 )
 
 import csv
@@ -37,7 +37,7 @@ logger = clog.create_logger(
 
 
 # Russian National Corpus URL
-RNC_URL = "http://processing.ruscorpora.ru/search.xml"
+RNC_URL = "https://processing.ruscorpora.ru/search.xml"
 
 
 class Subcorpus:
@@ -148,6 +148,10 @@ class Corpus:
     # count of examples to print
     __RESTRICT_SHOW = 50
 
+    # symbols to write csv
+    _DATA_W_DELIMITER = '\t'
+    _DATA_W_QUOTCHAR = '\n'
+
     def __init__(self,
                  query: dict or str = None,
                  p_count: int = None,
@@ -182,36 +186,57 @@ class Corpus:
         self._params = {}
         # found wordforms with their frequency
         self._found_wordforms = {}
+        # query, wordforms to found
         self._query = {}
+        # count of PAGES
         self._p_count = 0
-        # type of example should be defined after params init
-        # it always should be given
+        # type of example should be defined before params init
         self._ex_type = kwargs.pop('ex_type', None)
         self._marker = kwargs.pop('marker', None)
 
         # path to local database
-        path = file or create_unique_filename()
-        path = f"{path}{'.csv' * (not str(path).endswith('.csv'))}"
+        file = file or create_unique_filename()
+        path = Path(file)
+        if path.suffix != '.csv':
+            msg = "File must have '.csv' extension"
+            logger.error(msg)
+            raise TypeError(msg)
 
-        # to these files the data and req params will be dumped
-        self._csv_path = Path(path)
-        self._config_path = Path(f"{self._csv_path.stem}.json")
+        # to these files the data and req params'll be dumped
+        self._csv_path = path
+        self._config_path = path.with_suffix('.json')
 
+        # init from file if it exists
         if self._csv_path.exists():
             try:
-                self._load()
+                self._from_file()
             except FileExistsError:
-                logger.exception(f"There's no config file found")
+                logger.exception('')
                 raise
-            self._page_parser_and_ex_type()
-            return
+        # or working with Corpus
+        else:
+            self._from_corpus(query, p_count, **kwargs)
 
+    def _from_corpus(self,
+                     query: dict or str,
+                     p_count: int,
+                     **kwargs) -> None:
+        """ Initting from the given values. If the file doesn't exist.
+        Params the same as in the init method.
+
+        :return: None.
+        """
+        if not query:
+            msg = "Query must be not empty"
+            logger.error(msg)
+            raise ValueError(msg)
         self._query = query
-        self._p_count = p_count
+
         if p_count <= 0:
             msg = "Page count must be > 0"
             logger.error(msg)
             raise ValueError(msg)
+        self._p_count = p_count
 
         # base params
         self._params['env'] = 'alpha'
@@ -241,6 +266,51 @@ class Corpus:
         # parsing depends on 'out' value
         self._page_parser = None
         self._page_parser_and_ex_type()
+
+    def _from_file(self) -> None:
+        """ Load data and params from the local databases.
+        If the file exists.
+
+        :return: None.
+        """
+        if not (self._csv_path.exists() and self._config_path.exists()):
+            raise FileExistsError("Data and config file must exist together")
+
+        params = self._load_params()
+        self._query = params.get('query', None)
+        self._p_count = params.get('p_count', None)
+        self._params = params.get('params', None)
+
+        # these params must be defined here too
+        self._page_parser_and_ex_type()
+
+        self._data = self._load_data()
+
+    def _load_data(self) -> List:
+        """ Load data from csv file.
+
+        :return: list of examples.
+        """
+        with self.file.open('r', encoding='utf-16') as f:
+            dm = self._DATA_W_DELIMITER
+            qch = self._DATA_W_QUOTCHAR
+            reader = csv.reader(f, delimiter=dm, quotechar=qch)
+            # first row contains headers, skip it
+            next(reader)
+
+            data = [self.ex_type(*i) for i in reader]
+            for i in data:
+                self._add_wordforms(i.found_wordforms)
+
+        return data
+
+    def _load_params(self) -> Dict:
+        """ Load request params from json file.
+
+        :return: json dict.
+        """
+        with self._config_path.open('r', encoding='utf-16') as f:
+            return json.load(f)
 
     @classmethod
     def set_dpp(cls, value: int) -> None:
@@ -290,249 +360,6 @@ class Corpus:
             logger.error("Restrict count must be int or bool")
             raise TypeError("Restrict count must be int or bool")
         cls.__RESTRICT_SHOW = value
-
-    @property
-    def data(self) -> List:
-        """
-        :return: list of examples.
-        """
-        return self._data
-
-    @property
-    def query(self) -> Dict[str, dict] or str:
-        """
-        :return: dict or str, requested items.
-        """
-        return self._query
-
-    @property
-    def forms_in_query(self) -> List[str]:
-        """
-        :return: list of str, requested words.
-        """
-        req = self.query
-        if isinstance(req, str):
-            return [req]
-        return list(req.keys())
-
-    @property
-    def p_count(self) -> int:
-        """
-        :return: int, requested count of pages.
-        """
-        return self._p_count
-
-    @property
-    def file(self) -> Path:
-        """
-        :return: Path, path to local database file.
-        """
-        return self._csv_path
-
-    @property
-    def marker(self) -> Callable:
-        """
-        :return: function to mark found wordforms.
-        """
-        return self._marker
-
-    @property
-    def params(self) -> dict:
-        """
-        :return: dict of HTTP params.
-        """
-        return self._params
-
-    @property
-    def found_wordforms(self) -> dict:
-        """ Get info about found wordforms, {form: frequency}.
-
-        :return: dict of str, found wordforms and their frequency.
-        """
-        return self._found_wordforms
-
-    @property
-    def url(self) -> str:
-        """ Return url, first page of Corpus results.
-
-        :return: str, url.
-        """
-        params = '&'.join(
-            f"{key}={val}"
-            for key, val in self.params.items()
-        )
-        return f"{RNC_URL}?{params}"
-
-    @property
-    def ex_type(self) -> Any:
-        """
-        :return: example type of the Corpus.
-        """
-        return self._ex_type
-
-    def _page_parser_and_ex_type(self) -> None:
-        """ Add 'parser' and 'ex_type' params.
-        They are depended on 'out' tag.
-
-        :return: None
-        """
-        if self.params['out'] == 'normal':
-            # ex_type is defined above in this case
-            self._page_parser = self._parse_page_normal
-        elif self.params['out'] == 'kwic':
-            self._page_parser = self._parse_page_kwic
-            self._ex_type = expl.KwicExample
-
-    def open_url(self) -> None:
-        """ Open first page of Coprus results in the new
-        tab of the default browser.
-
-        :return: None.
-        :exception ValueError: if url is wrong.
-        :exception: if sth went wrong.
-        """
-        try:
-            webbrowser.open_new_tab(self.url)
-        except Exception:
-            logger.exception(
-                f"Error while opening doc with url: {self.url}")
-            raise
-
-    def request_examples(self) -> None:
-        """ Request examples, parse them and update the data.
-
-        If there're no results found, last page doesn't exist,
-        params or query is wrong then exception.
-
-        :return: None.
-        :exception aiohttp.ClientResponseError:
-        :exception aiohttp.ClientConnectionError:
-        :exception aiohttp.InvalidURL:
-        :exception aiohttp.ServerTimeoutError:
-        :exception Exception: another one.
-
-        :exception RuntimeError: if the data still exist.
-        """
-        if self.data:
-            logger.error("Tried to request new examples, however data exist")
-            raise RuntimeError("Data still exist")
-
-        try:
-            creq.is_request_correct(RNC_URL, self.p_count, **self.params)
-        except Exception:
-            msg = f"Query = {self.forms_in_query}, {self.p_count}, {self.params}"
-            logger.exception(msg)
-            raise
-
-        start, stop = 0, self.p_count
-        coro_start = time.time()
-        htmls = creq.get_htmls(RNC_URL, start, stop, **self.params)
-        logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
-
-        try:
-            parsing_start = time.time()
-            parsed = self._parse_all_pages(htmls)
-            parsing_stop = time.time()
-        except Exception:
-            logger.exception(f"Error while parsing, query = {self.params}")
-            raise
-        else:
-            logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
-            logger.info(f"Overall time: {parsing_stop - coro_start:.2f}")
-            self._data = parsed[:]
-
-    def _data_to_csv(self) -> None:
-        """ Dump the data to csv file.
-        Here it's assumed that the data exists.
-
-        :return: None.
-        """
-        data = [i.items for i in self.data]
-        columns = self[0].columns
-        with self.file.open('w', encoding='utf-16', newline='') as f:
-            writer = csv.writer(
-                f, delimiter='\t', quotechar='\n', quoting=csv.QUOTE_MINIMAL)
-            writer.writerows([columns] + data)
-
-    def _params_to_json(self) -> None:
-        """ Write the request params: query,
-        p_count and http tags to json file.
-
-        Here it's assumed that these params exist.
-
-        :return: None.
-        """
-        to_write = {
-            'query': self.query,
-            'p_count': self.p_count,
-            'params': self.params
-        }
-        with self._config_path.open('w', encoding='utf-16') as f:
-            json.dump(to_write, f, indent=4, ensure_ascii=False)
-
-    def copy(self) -> Any:
-        """
-        :return: copied object.
-        """
-        return self[:]
-
-    def dump(self) -> None:
-        """ Write the data to csv file, request params to json file.
-
-        :return: None.
-        :exception RuntimeError: If there're no data, params or files exist.
-        """
-        if not self.data:
-            logger.error("Tried to write empty data to file")
-            raise RuntimeError("There're no data to write")
-        if not (self.query and self.p_count and self.params):
-            logger.error("Tried to write empty config to file")
-            raise RuntimeError("There're no data to write")
-
-        self._data_to_csv()
-        self._params_to_json()
-
-        logger.debug(
-            f"Data was wrote to files: {self.file} and {self._config_path}")
-
-    def sort(self,
-             **kwargs) -> None:
-        """ Sort the data by using a key.
-
-        :keyword key: func to sort, called to Example objects, by default – len.
-        :keyword reverse: bool, whether the data'll sort in reversed order,
-         by default – False.
-        :return None.
-        :exception TypeError: if the key is uncallable.
-        """
-        key = kwargs.pop('key', lambda x: len(x))
-        reverse = kwargs.pop('reverse', False)
-
-        if not callable(key):
-            logger.error("Given uncallable key to sort")
-            raise TypeError("Sort key must be callable")
-        self._data.sort(key=key, reverse=reverse)
-
-    def pop(self, index: int) -> Any:
-        """ Remove and return element from data at the index.
-
-        :param index: int, index of the element.
-        :return: Example object.
-        """
-        return self._data.pop(index)
-
-    def shuffle(self) -> None:
-        """ Shuffle list of examples.
-        :return: None.
-        """
-        random.shuffle(self._data)
-
-    def clear(self) -> None:
-        """ Clear examples list.
-
-        :return: None.
-        """
-        self._data.clear()
 
     @staticmethod
     def _get_ambiguation(tag: bs4.element.Tag) -> str:
@@ -632,6 +459,121 @@ class Corpus:
                 raise ValueError(msg)
         return '%2C'.join(res)
 
+    @staticmethod
+    def _find_searched_words(tag: bs4.element.Tag) -> List[str]:
+        """ Get searched words from tag, they are marked with 'g-em'
+        parameter in the class name. Strip them.
+
+        :param tag: bs4.element.Tag, tag with result.
+        :return: list of string, words to which request was.
+        """
+        # TODO: simplify
+        # params of the classes and word if 'class' is
+        class_params = [
+            (i.attrs.get('class', ''), i.text)
+            for i in tag.contents
+            if isinstance(i, bs4.element.Tag)
+        ]
+        # searched words are marked by class parameter 'g-em'
+        searched_words = [
+            i[1].strip()
+            for i in class_params
+            if 'g-em' in i[0]
+        ]
+        return searched_words
+
+    @property
+    def data(self) -> List:
+        """
+        :return: list of examples.
+        """
+        return self._data
+
+    @property
+    def query(self) -> Dict[str, dict] or str:
+        """
+        :return: dict or str, requested items.
+        """
+        return self._query
+
+    @property
+    def forms_in_query(self) -> List[str]:
+        """
+        :return: list of str, requested words.
+        """
+        req = self.query
+        if isinstance(req, str):
+            return [req]
+        return list(req.keys())
+
+    @property
+    def p_count(self) -> int:
+        """
+        :return: int, requested count of pages.
+        """
+        return self._p_count
+
+    @property
+    def file(self) -> Path:
+        """
+        :return: Path, path to local database file.
+        """
+        return self._csv_path
+
+    @property
+    def marker(self) -> Callable:
+        """
+        :return: function to mark found wordforms.
+        """
+        return self._marker
+
+    @property
+    def params(self) -> dict:
+        """
+        :return: dict of HTTP params.
+        """
+        return self._params
+
+    @property
+    def found_wordforms(self) -> dict:
+        """ Get info about found wordforms, {form: frequency}.
+
+        :return: dict of str, found wordforms and their frequency.
+        """
+        return self._found_wordforms
+
+    @property
+    def url(self) -> str:
+        """ Return url, first page of Corpus results.
+
+        :return: str, url.
+        """
+        params = '&'.join(
+            f"{key}={val}"
+            for key, val in self.params.items()
+        )
+        return f"{RNC_URL}?{params}"
+
+    @property
+    def ex_type(self) -> Any:
+        """
+        :return: example type of the Corpus.
+        """
+        return self._ex_type
+
+    def _page_parser_and_ex_type(self) -> None:
+        """ Add 'parser' and 'ex_type' params.
+        They are depended on 'out' tag.
+
+        :return: None
+        """
+        if self.params['out'] == 'normal':
+            # ex_type is defined above in this case
+            self._page_parser = self._parse_page_normal
+        elif self.params['out'] == 'kwic':
+            self._page_parser = self._parse_page_kwic
+            self._ex_type = expl.KwicExample
+
     def _query_to_http(self) -> None:
         """ Convert the query to HTTP tags, add them to params.
 
@@ -707,12 +649,11 @@ class Corpus:
             clean_text_up(form).lower()
             for form in forms
         ]
-
         for form in forms:
             self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
 
     def _parse_doc(self,
-                   doc: bs4.element.ResultSet):
+                   doc: bs4.element.ResultSet) -> Any:
         """ Parse the doc to list of Examples.
 
         Parsing depends on the subcorpus,
@@ -724,7 +665,7 @@ class Corpus:
 
     def _parse_example(self,
                        *args,
-                       **kwargs):
+                       **kwargs) -> Any:
         """ Parse the example to Example object.
 
         Parsing depends on the subcorpus,
@@ -735,13 +676,13 @@ class Corpus:
         raise NotImplementedError(msg)
 
     def _parse_kwic_example(self,
-                            left,
-                            center,
-                            right):
+                            left: bs4.element.Tag,
+                            center: bs4.element.Tag,
+                            right: bs4.element.Tag) -> expl.KwicExample:
         l_txt = clean_text_up(left.text)
         c_txt = clean_text_up(center.text)
         # remove ←…→ symbol too
-        r_txt = clean_text_up(right.text)[:-4].strip()
+        r_txt = clean_text_up(right.text)[:-4].rstrip()
 
         found_wordforms = Corpus._find_searched_words(left)
         found_wordforms += Corpus._find_searched_words(center)
@@ -819,72 +760,161 @@ class Corpus:
         parsed = [self._page_parser(page) for page in pages]
         return sum(parsed, [])
 
-    @staticmethod
-    def _find_searched_words(tag: bs4.element.Tag) -> List[str]:
-        """ Get searched words from tag, they are marked with 'g-em'
-        parameter in the class name. Strip them.
-
-        :param tag: bs4.element.Tag, tag with result.
-        :return: list of string, words to which request was.
-        """
-        # TODO: simplify
-        # params of the classes and word if 'class' is
-        class_params = [
-            (i.attrs.get('class', ''), i.text)
-            for i in tag.contents
-            if isinstance(i, bs4.element.Tag)
-        ]
-        # searched words are marked by class parameter 'g-em'
-        searched_words = [
-            i[1].strip()
-            for i in class_params
-            if 'g-em' in i[0]
-        ]
-        return searched_words
-
-    def _load_data(self) -> List:
-        """ Load data from csv file.
-
-        :return: list of examples.
-        """
-        with self.file.open('r', encoding='utf-16') as f:
-            reader = csv.reader(f, delimiter='\t', quotechar='\n')
-
-            # first row contains headers
-            data = [i for i in reader][1:]
-        return [self._ex_type(*i) for i in data]
-
-    def _load_params(self) -> Dict:
-        """ Load request params from json file.
-
-        :return: json dict.
-        """
-        with self._config_path.open('r', encoding='utf-16') as f:
-            return json.load(f)
-
-    def _load(self) -> None:
-        """ Load data and params from local databases.
+    def _data_to_csv(self) -> None:
+        """ Dump the data to csv file.
+        Here it's assumed that the data exist.
 
         :return: None.
-        :exception FileExistsError: if the file doesn't exist.
         """
-        if not (self._csv_path.exists() and self._config_path.exists()):
-            msg = "Data and config file must exist together"
-            logger.error(msg)
-            raise FileExistsError(msg)
+        data = [i.items for i in self.data]
+        columns = self[0].columns
+        with self.file.open('w', encoding='utf-16', newline='') as f:
+            # class constants
+            dm = self._DATA_W_DELIMITER
+            qch = self._DATA_W_QUOTCHAR
 
-        params = self._load_params()
-        self._query = params.get('query', None)
-        self._p_count = params.get('p_count', None)
-        self._params = params.get('params', None)
+            writer = csv.writer(
+                f, delimiter=dm, quotechar=qch, quoting=csv.QUOTE_MINIMAL)
+            writer.writerows([columns] + data)
 
-        # TODO
-        # assert self.params['mode'] == self.__MODE
+    def _params_to_json(self) -> None:
+        """ Write the request params: query,
+        p_count and http tags to json file.
 
-        # these params must be defined here too
-        self._page_parser_and_ex_type()
+        Here it's assumed that these params exist.
 
-        self._data = self._load_data()
+        :return: None.
+        """
+        to_write = {
+            'query': self.query,
+            'p_count': self.p_count,
+            'params': self.params
+        }
+        with self._config_path.open('w', encoding='utf-16') as f:
+            json.dump(to_write, f, indent=4, ensure_ascii=False)
+
+    def dump(self) -> None:
+        """ Write the data to csv file, request params to json file.
+
+        :return: None.
+        :exception RuntimeError: If there're no data, params or files exist.
+        """
+        if not self.data:
+            logger.error("Tried to write empty data to file")
+            raise RuntimeError("There're no data to write")
+        if not (self.query and self.p_count and self.params):
+            logger.error("Tried to write empty config to file")
+            raise RuntimeError("There're no data to write")
+
+        self._data_to_csv()
+        self._params_to_json()
+
+        logger.debug(
+            f"Data was wrote to files: {self.file} and {self._config_path}")
+
+    def open_url(self) -> None:
+        """ Open first page of Coprus results in the new
+        tab of the default browser.
+
+        :return: None.
+        :exception ValueError: if url is wrong.
+        :exception: if sth went wrong.
+        """
+        try:
+            webbrowser.open_new_tab(self.url)
+        except Exception:
+            logger.exception(
+                f"Error while opening doc with url: {self.url}")
+            raise
+
+    def request_examples(self) -> None:
+        """ Request examples, parse them and update the data.
+
+        If there're no results found, last page doesn't exist,
+        params or query is wrong then exception.
+
+        :return: None.
+        :exception aiohttp.ClientResponseError:
+        :exception aiohttp.ClientConnectionError:
+        :exception aiohttp.InvalidURL:
+        :exception aiohttp.ServerTimeoutError:
+        :exception Exception: another one.
+
+        :exception RuntimeError: if the data still exist.
+        """
+        if self.data:
+            logger.error("Tried to request new examples, however data exist")
+            raise RuntimeError("Data still exist")
+
+        try:
+            creq.is_request_correct(RNC_URL, self.p_count, **self.params)
+        except Exception:
+            msg = f"Query = {self.forms_in_query}, {self.p_count}, {self.params}"
+            logger.exception(msg)
+            raise
+
+        start, stop = 0, self.p_count
+        coro_start = time.time()
+        htmls = creq.get_htmls(RNC_URL, start, stop, **self.params)
+        logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
+
+        try:
+            parsing_start = time.time()
+            parsed = self._parse_all_pages(htmls)
+            parsing_stop = time.time()
+        except Exception:
+            logger.exception(f"Error while parsing, query = {self.params}")
+            raise
+        else:
+            logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
+            logger.info(f"Overall time: {parsing_stop - coro_start:.2f}")
+            self._data = parsed[:]
+
+    def copy(self) -> Any:
+        """
+        :return: copied object.
+        """
+        return self[:]
+
+    def sort(self,
+             **kwargs) -> None:
+        """ Sort the data by using a key.
+
+        :keyword key: func to sort, called to Example objects, by default – len.
+        :keyword reverse: bool, whether the data'll sort in reversed order,
+         by default – False.
+        :return None.
+        :exception TypeError: if the key is uncallable.
+        """
+        key = kwargs.pop('key', lambda x: len(x))
+        reverse = kwargs.pop('reverse', False)
+
+        if not callable(key):
+            logger.error("Given uncallable key to sort")
+            raise TypeError("Sort key must be callable")
+        self._data.sort(key=key, reverse=reverse)
+
+    def pop(self,
+            index: int) -> Any:
+        """ Remove and return element from data at the index.
+
+        :param index: int, index of the element.
+        :return: Example object.
+        """
+        return self._data.pop(index)
+
+    def shuffle(self) -> None:
+        """ Shuffle list of examples.
+        :return: None.
+        """
+        random.shuffle(self._data)
+
+    def clear(self) -> None:
+        """ Clear examples list.
+
+        :return: None.
+        """
+        self._data.clear()
 
     def __repr__(self) -> str:
         """ Format:
@@ -909,18 +939,25 @@ class Corpus:
         """
         :return: str, classname, length and enumerated examples.
         """
+        q_forms = ', '.join(self.forms_in_query)
         metainfo = f"Russian National Corpus (https://ruscorpora.ru)\n" \
                    f"Class: {self.__class__.__name__}, len = {len(self)}\n" \
-                   f"{self.p_count} pages of '{self.forms_in_query}' requested"
+                   f"{self.p_count} pages of '{q_forms}' requested"
 
         data = self.data
-        if self.__RESTRICT_SHOW is not False:
+        is_restricted = False
+        if self.__RESTRICT_SHOW is not False and \
+                len(data) > self.__RESTRICT_SHOW:
             data = self.data[:self.__RESTRICT_SHOW]
+            is_restricted = True
 
         examples = '\n\n'.join(
             f"{num}.\n{str(example)}"
             for num, example in enumerate(data, 1)
         )
+        if is_restricted:
+            examples += '\n...'
+
         return f"{metainfo}\n\n{examples}"
 
     def __len__(self) -> int:
@@ -936,20 +973,7 @@ class Corpus:
         return bool(self.data)
 
     def __call__(self) -> None:
-        """ Request examples, parse them and update the data.
-
-        If there're no results found, last page doesn't exist,
-        params or query is wrong then exception.
-
-        :return: None.
-        :exception aiohttp.ClientResponseError:
-        :exception aiohttp.ClientConnectionError:
-        :exception aiohttp.InvalidURL:
-        :exception aiohttp.ServerTimeoutError:
-        :exception Exception: another one.
-
-        :exception RuntimeError: if the data still exist.
-        """
+        """ All the same to request_examples() """
         self.request_examples()
 
     def __iter__(self) -> iter:
@@ -1083,44 +1107,19 @@ class Corpus:
 
 
 class MainCorpus(Corpus):
-    def __init__(self,
-                 *args,
-                 **kwargs):
-        """ There're no checking arguments valid.
-
-        If the file exists, working with a local database.
-
-        :param query: dict of str, words to search;
-         {word1: {properties}, word2: {properties}...}.
-         If you chose 'lexform' as a 'text' param, you must give here a string.
-        :param p_count: int, count of pages to request.
-        :param f_path: str or Path, filename of a local database.
-        :keyword dpp: str or int, documents per page.
-        :keyword spd: str or int, sentences per document.
-        :keyword text: str, search format: 'lexgramm' or 'lexform'.
-        :keyword out: str, output format: 'normal' or 'kwic'.
-        :keyword kwsz: str or int, count of words in context;
-         Optional param if 'out' is 'kwic'.
-        :keyword sort: str, sort show order. See docs how to set it.
-        :keyword subcorpus: str, subcorpus. See docs how to set it.
-        :keyword expand: str, if 'full', all part of doc will be shown.
-        :keyword accent: str or int, with accents on words or not:
-         1 – with, 0 – without.
-
-        :keyword marker: function, with which found words will be marked.
-        """
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.MainExample)
         self._params['mode'] = 'main'
 
     def _parse_example(self,
-                       example: bs4.element.Tag,
-                       src: str):
+                       example: bs4.element.Tag):
         """ Parse example to Example object.
 
         :param example: tag, example to parse.
         :param src: str, source of example.
         :return: example obj.
         """
+        src = Corpus._get_source(example)
         txt = Corpus._get_text(example)
         txt = txt[:txt.index(src)]
         txt = txt[:txt.rindex('[')].strip()
@@ -1145,11 +1144,8 @@ class MainCorpus(Corpus):
             return []
         res = []
 
-        examples = doc.find_all('li')
-        # one doc – one source
-        src = Corpus._get_source(examples[0])
-        for ex in examples:
-            new_ex = self._parse_example(ex, src)
+        for ex in doc.find_all('li'):
+            new_ex = self._parse_example(ex)
             res += [new_ex]
             self._add_wordforms(new_ex.found_wordforms)
 
@@ -1194,9 +1190,10 @@ class PaperRegionalCorpus(MainCorpus):
 
 
 class ParallelCorpus(Corpus):
-    # TODO: working with csv
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, ex_type=expl.ParallelExample)
+        # for descendants
+        ex_type = kwargs.pop('ex_type', expl.ParallelExample)
+        super().__init__(*args, **kwargs, ex_type=ex_type)
         self._params['mode'] = 'para'
 
     def _parse_example(self,
@@ -1208,6 +1205,7 @@ class ParallelCorpus(Corpus):
         result_example = self.ex_type()
 
         for text in tag.find_all('li'):
+            # TODO: get lang from another place for descendants
             lang = text.span['l'].strip()
 
             src = Corpus._get_source(text)
@@ -1222,9 +1220,8 @@ class ParallelCorpus(Corpus):
 
             new_txt = self.ex_type(
                 {lang: txt}, src, ambiguation, found_words, doc_url)
-
+            new_txt.mark_found_words(self.marker)
             result_example += new_txt
-        # TODO: `result_example` became a NoneType obj after cycle end
         return result_example
 
     def _parse_doc(self,
@@ -1236,6 +1233,34 @@ class ParallelCorpus(Corpus):
             self._add_wordforms(new_ex.found_wordforms)
         return res
 
+    def _load_data(self) -> List:
+        """ Load data from csv file.
+
+        :return: list of examples.
+        """
+        with self.file.open('r', encoding='utf-16') as f:
+            dm = self._DATA_W_DELIMITER
+            qch = self._DATA_W_QUOTCHAR
+            reader = csv.reader(f, delimiter=dm, quotechar=qch)
+
+            columns = next(reader)
+            end_lang_tags = columns.index('source')
+            lang_tags = columns[:end_lang_tags]
+            data = []
+
+            for i in reader:
+                # to create dict {lang: text in the lang}
+                langs = {}
+                for num, lang in enumerate(lang_tags):
+                    langs[lang] = i[num]
+
+                new_ex = self.ex_type(langs, *i[end_lang_tags:])
+                data += [new_ex]
+
+                self._add_wordforms(new_ex.found_wordforms)
+
+        return data
+
 
 class RusGerParaCorpus(ParallelCorpus):
     # mode = para_rus_ger
@@ -1243,9 +1268,7 @@ class RusGerParaCorpus(ParallelCorpus):
 
 
 class MultilingualParaCorpus(ParallelCorpus):
-    # mode = multi
     pass
-
 
 class LearningCorpus(Corpus):
     def __init__(self,

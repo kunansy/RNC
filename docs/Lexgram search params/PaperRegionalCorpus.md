@@ -1,3 +1,3 @@
-## Finnish Parallel Corpus
+## PaperRegionalCorpus
 
 **All params the same to MainCorpus**

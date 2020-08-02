@@ -46,8 +46,14 @@ One can change this param or turn the restriction off.
 * Setter methods.
 
 
-#### 0.3 – 
+#### 0.3 – 02.08.2020
 #### Changed
 * Parsing structure corrected.
+* `is_http_request_correct` and `whether_result_found` joined, amount of operations deteriorated.
+* Order of receiving pages corrected.
+* Corpus init divided: _from_file, _from_Corpus.
+ 
 
 #### Added
+* ParallelCorpus.
+* Adding found wordforms in the Corpus initting from file.

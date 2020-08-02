@@ -1,4 +1,4 @@
-## Main Corpus
+## MainCorpus
 
 ### Gram (grammar tags)
 \* – only in Corpus with disambiguated documents. <br>
