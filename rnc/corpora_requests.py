@@ -142,8 +142,8 @@ def is_http_request_correct(url: str,
     :param kwargs: request HTTP tags.
     :return: bool, correct the request or not.
     """
+    # coro writes logs by itself
     try:
-        # coro writes logs by itself
         get_htmls(url, **kwargs)
     except Exception:
         return False
@@ -154,10 +154,17 @@ def whether_result_found(url: str,
                          **kwargs) -> bool:
     """ Whether the page contains results.
 
+    RuntimeError if the request is wrong.
+
     :param url: str, request url.
     :param kwargs: request HTTP tags.
+    :exception RuntimeError: if HTTP request is wrong.
     """
-    page_html = get_htmls(url, **kwargs)[0]
+    try:
+        page_html = get_htmls(url, **kwargs)[0]
+    except Exception:
+        raise RuntimeError
+
     soup = bs4.BeautifulSoup(page_html, 'lxml')
 
     # TODO: сузить круг поиска
@@ -225,12 +232,12 @@ def is_request_correct(url: str,
     :return: True if everything's OK, an exception otherwise.
     :exception ValueError: something's wrong.
     """
-    # TODO: join 'is_http_request_correct' and 'whether_result_found'
-    # requesting coro writes log with exceptions by itself
-    if not is_http_request_correct(url, **kwargs):
-        raise ValueError("Wrong http req")
-
-    if not whether_result_found(url, **kwargs):
+    # coro writes logs by itself
+    try:
+        assert whether_result_found(url, **kwargs) is True
+    except RuntimeError:
+        raise ValueError("Wrong HTTP request")
+    except AssertionError:
         raise ValueError("No results found")
 
     if not does_page_exist(url, p_count - 1, **kwargs):
