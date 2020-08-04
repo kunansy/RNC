@@ -448,16 +448,15 @@ class Corpus:
                 val = [str(val)]
 
             if isinstance(val, list):
-                val = [i.replace(':', '%3A') for i in val]
-                item = f"{'%28' * with_braces}" \
+                item = f"{'(' * with_braces}" \
                        f"{join_inside_symbol.join(val)}" \
-                       f"{'%29' * with_braces}"
+                       f"{')' * with_braces}"
                 res += [item]
             else:
                 msg = "One should give to tags only str, list or int"
                 logger.error(msg)
                 raise ValueError(msg)
-        return '%2C'.join(res)
+        return ','.join(res)
 
     @staticmethod
     def _find_searched_words(tag: bs4.element.Tag) -> List[str]:
@@ -610,7 +609,7 @@ class Corpus:
             gramm = params.get('gramm', '')
             if gramm:
                 try:
-                    gram_props = Corpus._parse_lexgramm_params(gramm, '%7C', True)
+                    gram_props = Corpus._parse_lexgramm_params(gramm, '|', True)
                 except Exception:
                     raise
                 self._params[f"gramm{word_num}"] = gram_props
@@ -1270,6 +1269,7 @@ class RusGerParaCorpus(ParallelCorpus):
 class MultilingualParaCorpus(ParallelCorpus):
     pass
 
+
 class LearningCorpus(Corpus):
     def __init__(self,
                  *args,
@@ -1280,7 +1280,6 @@ class LearningCorpus(Corpus):
     pass
 
 
-# TODO: add gram tags to docs
 class DialectCorpus(MainCorpus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.DialectExample)

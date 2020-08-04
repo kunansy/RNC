@@ -56,4 +56,8 @@ One can change this param or turn the restriction off.
 
 #### Added
 * ParallelCorpus.
-* Adding found wordforms in the Corpus initting from file.
+* Adding found wordforms to the Corpus initting from file.
+
+
+#### 0.3.1 – 04.08.2020
+Searching with gramm params fixed. 
