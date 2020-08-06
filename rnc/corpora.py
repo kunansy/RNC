@@ -13,6 +13,7 @@ import csv
 import json
 import logging
 import random
+import re
 import string
 import time
 import webbrowser
@@ -72,13 +73,14 @@ class Subcorpus:
         Estonian = 'JSONeyJkb2NfbGFuZyI6IFsiZXN0Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
 
 
-def create_filename(length: int = 12) -> str:
+def create_filename(length: int = 8) -> str:
     """ Create random filename.
 
-    :param length: int, length of result (12 by default).
+    :param length: int, length of result (8 by default).
     :return: str, random symbols.
     """
-    name = random.sample(string.ascii_letters, length)
+    sample = f"{string.ascii_letters}{string.digits}"
+    name = random.sample(sample, length)
     return ''.join(name)
 
 
@@ -86,7 +88,7 @@ def create_unique_filename() -> Path:
     """ Create a random unique csv filename,
     means the file doesn't exist.
 
-    :return: Path, unique filename. len = 12.
+    :return: Path, unique filename. len = 8 .
     """
     path = Path(f"{create_filename()}.csv")
     while path.exists():
@@ -281,6 +283,13 @@ class Corpus:
         self._p_count = params.get('p_count', None)
         self._params = params.get('params', None)
 
+        mode = self.params.get('mode', '')
+        if mode != self._MODE:
+            msg = f"Tried to load data to wrong Corpus: " \
+                  f"{mode} instead of {self._MODE}"
+            logger.error(msg)
+            raise NotImplementedError(msg)
+
         # these params must be defined here too
         self._page_parser_and_ex_type()
 
@@ -420,21 +429,19 @@ class Corpus:
         src = src[1:-1].strip()
         return src
 
-    # TODO: probably, converting the symbols to their code doesn't needed
     @staticmethod
     def _parse_lexgramm_params(params: dict or str,
                                join_inside_symbol: str,
                                with_braces: bool = False) -> str:
-        """ Convert lexgramm params such as
-        gramm and flags to str for HTTP request.
+        """ Convert lexgramm params to str for HTTP request.
 
         :param params: dict, params to convert.
-        :param join_inside_symbol: str, symbol to join params inside.
-        :param with_braces: bool, whether the braces will added around the params.
-        :return: str, joined with '%2C' params.
+        :param join_inside_symbol: str, symbol to join params.
+        :param with_braces: bool, whether the braces'll added around the param.
+        :return: str, joined with ',' params.
         """
         if not (isinstance(params, (str, dict)) and ' ' not in params):
-            msg = "Param must be str without spaces or dict"
+            msg = f"Param must be str without spaces or dict, given: {params}"
             logger.error(msg)
             raise ValueError(msg)
         # let the user to give only one param:
@@ -444,18 +451,18 @@ class Corpus:
 
         res = []
         for val in params.values():
-            if isinstance(val, (str, int)):
-                val = [str(val)]
-
-            if isinstance(val, list):
-                item = f"{'(' * with_braces}" \
-                       f"{join_inside_symbol.join(val)}" \
-                       f"{')' * with_braces}"
-                res += [item]
-            else:
+            if not isinstance(val, (str, int, list)):
                 msg = "One should give to tags only str, list or int"
                 logger.error(msg)
                 raise ValueError(msg)
+
+            if isinstance(val, (str, int)):
+                val = [str(val)]
+
+            item = f"{'(' * with_braces}" \
+                   f"{join_inside_symbol.join(val)}" \
+                   f"{')' * with_braces}"
+            res += [item]
         return ','.join(res)
 
     @staticmethod
@@ -580,30 +587,44 @@ class Corpus:
         :exception ValueError: if wrong type given.
         """
         if self.params['text'] == 'lexform':
-            query = self._query
-            if isinstance(query, str):
-                self._params['req'] = join_with_plus(query)
-                return
-            msg = "One must give str as a query if search is 'lexform'"
-            logger.error(msg)
-            raise ValueError(msg)
+            if not isinstance(self.query, str):
+                msg = "One must give str as a query if search is 'lexform'"
+                logger.error(msg)
+                raise ValueError(msg)
+            self._params['req'] = join_with_plus(self.query)
 
         # in lexgramm search one word may be too
         if isinstance(self.query, str):
-            self._params['lex1'] = join_with_plus(self.query)
+            # working with long query like
+            # 'открыть -открыл дверь -двери настеж'
+            q = re.finditer(r'\b\w+\b( -\b\w+\b)?', self.query)
+            for num, ex in enumerate(q, 1):
+                match = ex.group(0)
+                self._params[f"lex{num}"] = join_with_plus(match)
+                if num > 1:
+                    self._params[f"min{num}"] = self.__MIN
+                    self._params[f"max{num}"] = self.__MAX
             return
 
-        word_num = 1
         # words and their params
-        for word, params in self.query.items():
+        for word_num, (word, params) in enumerate(self.query.items(), 1):
             # add distance
             if word_num > 1:
                 mmin = f'min{word_num}'
                 mmax = f'max{word_num}'
                 # given or default values
-                self._params[mmin] = params.get(mmin, None) or self.__MIN
-                self._params[mmax] = params.get(mmax, None) or self.__MAX
+                if isinstance(params, dict):
+                    self._params[mmin] = params.get('min', None) or self.__MIN
+                    self._params[mmax] = params.get('max', None) or self.__MAX
+                else:
+                    self._params[mmin] = self.__MIN
+                    self._params[mmax] = self.__MAX
+
             self._params[f"lex{word_num}"] = join_with_plus(word)
+
+            if isinstance(params, str):
+                # empty param, skip it
+                continue
 
             # grammar properties
             gramm = params.get('gramm', '')
@@ -627,12 +648,10 @@ class Corpus:
             sem = params.get('sem', '')
             if sem:
                 try:
-                    sem_prop = Corpus._parse_lexgramm_params(sem, '')
+                    logger.warning("Semantic properties doesn't support")
                 except Exception:
                     raise
                 # self.__params фильтр1 и фильтр2
-
-            word_num += 1
 
     def _add_wordforms(self,
                        forms: List[str]) -> None:
@@ -915,6 +934,17 @@ class Corpus:
         """
         self._data.clear()
 
+    def filter(self,
+               key: Callable) -> None:
+        """ Remove some items, that are not satisfied the key.
+
+        :param key: callable, it'll be used to Example
+        objects inside the data list.
+        :return: None.
+        """
+        filtered_data = list(filter(key, self.data))
+        self._data = filtered_data[:]
+
     def __repr__(self) -> str:
         """ Format:
                 Classname
@@ -993,7 +1023,7 @@ class Corpus:
     def __getitem__(self,
                     item: int or slice) -> Any:
         """ Get example from data or create
-        new corpus obj with sliced data.
+        new obj with sliced data.
 
         :param item: int or slice.
         :return: one example or new obj with the same class and sliced data.
@@ -1007,9 +1037,7 @@ class Corpus:
             return self.data[item]
 
         new_data = self.data[item]
-        new_obj = self.__class__(
-            self.query, self.p_count, self.file,
-            **self.params, marker=self.marker)
+        new_obj = self.copy()
         new_obj._data = new_data.copy()
         return new_obj
 
@@ -1032,7 +1060,22 @@ class Corpus:
         try:
             self._data[key] = value
         except Exception:
-            logger.exception('')
+            logger.exception(f'Setting item: {value} to {key}')
+            raise
+
+    def __delitem__(self,
+                    key: int or slice) -> None:
+        """ Delete example at the index or
+        remove several ones using slice.
+
+        :param key: int or slice, address of item(s) to delete.
+        :return: None.
+        :exception: if sth went wrong.
+        """
+        try:
+            del self._data[key]
+        except Exception:
+            logger.exception(f"Deleting item: {key}")
             raise
 
     def __copy__(self) -> Any:
@@ -1106,9 +1149,11 @@ class Corpus:
 
 
 class MainCorpus(Corpus):
+    _MODE = 'main'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.MainExample)
-        self._params['mode'] = 'main'
+        self._params['mode'] = self._MODE
 
     def _parse_example(self,
                        example: bs4.element.Tag):
@@ -1177,23 +1222,29 @@ class SyntaxCorpus(Corpus):
 
 
 class Paper2000Corpus(MainCorpus):
+    _MODE = 'paper'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.Paper2000Example)
-        self._params['mode'] = 'paper'
+        self._params['mode'] = self._MODE
 
 
 class PaperRegionalCorpus(MainCorpus):
+    _MODE = 'regional'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.ParallelExample)
-        self._params['mode'] = 'regional'
+        self._params['mode'] = self._MODE
 
 
 class ParallelCorpus(Corpus):
+    _MODE = 'para'
+
     def __init__(self, *args, **kwargs):
         # for descendants
         ex_type = kwargs.pop('ex_type', expl.ParallelExample)
         super().__init__(*args, **kwargs, ex_type=ex_type)
-        self._params['mode'] = 'para'
+        self._params['mode'] = self._MODE
 
     def _parse_example(self,
                        tag: bs4.element.Tag) -> Any:
@@ -1261,29 +1312,21 @@ class ParallelCorpus(Corpus):
         return data
 
 
-class RusGerParaCorpus(ParallelCorpus):
-    # mode = para_rus_ger
-    pass
-
-
 class MultilingualParaCorpus(ParallelCorpus):
     pass
 
 
 class LearningCorpus(Corpus):
-    def __init__(self,
-                 *args,
-                 **kwargs):
-        super().__init__(*args, **kwargs)
-        self.params['mode'] = 'school'
-
+    _MODE = 'school'
     pass
 
 
 class DialectCorpus(MainCorpus):
+    _MODE = 'dialect'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.DialectExample)
-        self._params['mode'] = 'dialect'
+        self._params['mode'] = self._MODE
 
 
 # save lines
@@ -1292,15 +1335,19 @@ class PoetryCorpus(Corpus):
 
 
 class SpokenCorpus(MainCorpus):
+    _MODE = 'spoken'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.SpokenExample)
-        self._params['mode'] = 'spoken'
+        self._params['mode'] = self._MODE
 
 
 class AccentologyCorpus(MainCorpus):
+    _MODE = 'accent'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, ex_type=expl.AccentologyExample)
-        self._params['mode'] = 'accent'
+        self._params['mode'] = self._MODE
 
 
 class MultimediaCorpus(Corpus):

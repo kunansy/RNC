@@ -388,6 +388,7 @@ class ParallelExample(Example):
         found_wordforms = found_wordforms or []
 
         super().__init__(txt, src, ambiguation, found_wordforms, doc_url)
+        self.sort(lambda x: x[0])
 
     @property
     def txt(self) -> Dict[str, str]:
@@ -398,7 +399,8 @@ class ParallelExample(Example):
         return self._txt
 
     @txt.setter
-    def txt(self, other: Any) -> None:
+    def txt(self,
+            other: Any) -> None:
         """ Text setter not implemented to the ParallelExample """
         msg = "Try to use ex['lang'] instead"
         logger.error(msg)
@@ -443,6 +445,15 @@ class ParallelExample(Example):
             return s_src
         return f_src
 
+    def sort(self,
+             key: Callable) -> None:
+        """ Sort txt dict
+
+        :param key: callable, key to sort.
+        :return: None
+        """
+        self._txt = dict(sorted(self.txt.items(), key=key))
+
     def __copy__(self) -> Any:
         """
         :return: copied obj.
@@ -451,7 +462,8 @@ class ParallelExample(Example):
         obj._txt = self.txt.copy()
         return obj
 
-    def __iadd__(self, other) -> Any:
+    def __iadd__(self,
+                 other) -> Any:
         """ Concatenate two examples:
             – join the texts
 
@@ -476,7 +488,8 @@ class ParallelExample(Example):
                 self[lang] = f"{self.txt[lang]} {txt}"
             else:
                 self[lang] = txt
-
+        # save the order of languages
+        self.sort(lambda x: x[0])
         # source contains two translations
         self._src = ParallelExample._best_src(self.src, other.src)
 

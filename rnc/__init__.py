@@ -1,10 +1,25 @@
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
-from .corpora import MainCorpus
-
-from .corpora import Subcorpus
-from .examples import MainExample
-from .examples import KwicExample
+from .corpora import (
+    Subcorpus,
+    MainCorpus,
+    Paper2000Corpus,
+    PaperRegionalCorpus,
+    ParallelCorpus,
+    DialectCorpus,
+    SpokenCorpus,
+    AccentologyCorpus
+)
+from .examples import (
+    MainExample,
+    Paper2000Example,
+    PaperRegionalExample,
+    ParallelExample,
+    DialectExample,
+    SpokenExample,
+    AccentologyExample,
+    KwicExample
+)
 
 
 def set_stream_handlers_level(level) -> None:
@@ -33,11 +48,24 @@ def set_loggers_level(level) -> None:
 
 __all__ = (
     'MainCorpus',
+    'Paper2000Corpus',
+    'PaperRegionalCorpus',
+    'ParallelCorpus',
+    'DialectCorpus',
+    'SpokenCorpus',
+    'AccentologyCorpus',
     'Subcorpus',
+
     'MainExample',
+    'Paper2000Example',
+    'PaperRegionalExample',
+    'ParallelExample',
+    'DialectExample',
+    'SpokenExample',
+    'AccentologyExample',
     'KwicExample',
+
     'set_loggers_level',
     'set_file_handlers_level',
     'set_stream_handlers_level'
 )
-
