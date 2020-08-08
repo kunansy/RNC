@@ -82,6 +82,11 @@ async def get_htmls_coro(url: str,
             for p_index in range(p_index_start, p_index_stop)
         ]
 
+        if not tasks:
+            msg = "Empty range given"
+            logger.error(msg)
+            raise ValueError(msg)
+
         html_codes = []
         while True:
             done, pending = await asyncio.wait(tasks)
