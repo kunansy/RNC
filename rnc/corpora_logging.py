@@ -1,3 +1,15 @@
+"""
+Module for escape repeating code, creating loggers in another modules.
+Log files are created in the folder named 'logs' by default.
+
+Message format:
+[{logger_name}:{level}:{func_name}:{time}] {message}
+
+Date format:
+day.month.year hours:minutes:seconds
+
+"""
+
 __all__ = (
     'create_logger', 'create_formatter', 'log_folder',
     'create_file_handler', 'create_stream_handler')
@@ -8,12 +20,14 @@ from pathlib import Path
 
 DEFAULT_MSG_FMT = "[{name}:{levelname}:{funcName}:{asctime}] {message}"
 DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
+DEFAULT_LOGFOLDER_NAME = 'logs'
 
 
-def create_folder(folder_name: str = 'logs') -> Path:
-    """ Create folder named 'logs' and return path to it.
+def create_folder(
+        folder_name: str or Path = DEFAULT_LOGFOLDER_NAME) -> Path:
+    """ Create folder and return path to it.
 
-    :param folder_name: str, name of folder.
+    :param folder_name: str, name of folder. 'logs' by default.
     :return: None.
     """
     folder_path = Path(folder_name)
@@ -45,7 +59,7 @@ def create_formatter(message_format: str = DEFAULT_MSG_FMT,
 
 
 def create_stream_handler(level=logging.WARNING,
-                          formatter=None) -> logging.Handler:
+                          formatter=None) -> logging.StreamHandler:
     """ Create stream handler.
 
     :param level: handler level. WARNING by default.
@@ -63,7 +77,7 @@ def create_stream_handler(level=logging.WARNING,
 def create_file_handler(level=logging.DEBUG,
                         log_path: str = None,
                         formatter=None,
-                        **kwargs) -> logging.StreamHandler:
+                        **kwargs) -> logging.FileHandler:
     """ Create file handler.
 
     :param level: handler level.
