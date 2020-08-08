@@ -1,6 +1,5 @@
 ### Some of Corpus HTTP keys:
 
-
 **I.** Sorting.
 1. i_grtagging – by default.
 2. random – randomly.
@@ -19,4 +18,4 @@
 **III.** Showing format. 
 1. normal – normal.
 2. kwic – Key Word In Context.
-   2.1 kwsz – count of words in context.
+   2.1 kwsz – amount of words in context.

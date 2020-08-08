@@ -8,8 +8,9 @@
 * Paper
   * Media 2000 years – class **Paper2000Corpus**
   * Local media – class **PaperRegionalCorpus**
-* Parallel – class **ParallelCorpus**. Use `rnc.Subcorpus.Parallel` to set language via `ParallelCorpus(... subcorpus= ...)`
-Docs to all subcorpus see at the [folder](https://github.com/FaustGoethe/RNC/tree/master/docs/Lexgram%20search%20params/Parallel%20Corpus) 
+* Parallel – class **ParallelCorpus**. Use `rnc.Subcorpus.Parallel.` to set language via 
+`ParallelCorpus(subcorpus=rnc.Subcorpus.Parallel.<language>)`
+Docs to all subcorpora see at the [folder](https://github.com/FaustGoethe/RNC/tree/master/docs/Lexgram%20search%20params/Parallel%20Corpus) 
   * English 
   * Armenian
   * Bashkir 
@@ -29,15 +30,14 @@ Docs to all subcorpus see at the [folder](https://github.com/FaustGoethe/RNC/tre
   * Czech
   * Swedish
   * Estonian 
-* Russian classics in German translations – **in developing...**
-* Multilingual – **in developing...**
-* Tutoring – **in developing...**
-* Dialect – class **DialectCorpus** 
-* Poetry – **in developing...**
+* Multilingual – class **MultilingualParaCorpus**
+* Tutoring – class **TutoringCorpus**
+* Dialectal – class **DialectalCorpus** 
+* Poetic – **in developing...**
 * Spoken – class **SpokenCorpus**
-* Accentology – class **AccentologyCorpus**
-* Multimedia – **in developing...**
-* Multipark – **in developing...**
+* Accentological – class **AccentologicalCorpus**
+* Multimodal – **in developing...**
+* MultiPARC – **in developing...**
   * «Ревизор» – **in developing...**
   * English-Russian – **in developing...**
 * Historical – **in developing...**

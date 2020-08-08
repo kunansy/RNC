@@ -1,12 +1,14 @@
 __all__ = (
     'Subcorpus',
     'MainCorpus',
-    'DialectCorpus',
-    'AccentologyCorpus',
+    'DialectalCorpus',
+    'AccentologicalCorpus',
     'SpokenCorpus',
     'PaperRegionalCorpus',
     'Paper2000Corpus',
-    'ParallelCorpus'
+    'ParallelCorpus',
+    'MultilingualParaCorpus',
+    'TutoringCorpus'
 )
 
 import csv
@@ -152,7 +154,7 @@ class Corpus:
 
     # symbols to write csv
     _DATA_W_DELIMITER = '\t'
-    _DATA_W_QUOTCHAR = '\n'
+    _DATA_W_QUOTCHAR = '"'
 
     def __init__(self,
                  query: dict or str = None,
@@ -260,8 +262,10 @@ class Corpus:
 
         if 'subcorpus' in kwargs:
             self._params['mycorp'] = kwargs.pop('subcorpus')
-        if 'expand' in kwargs:
-            self._params['expand'] = kwargs.pop('expand')
+
+        # TODO:
+        # if 'expand' in kwargs:
+        #     self._params['expand'] = kwargs.pop('expand')
 
         self._query_to_http()
 
@@ -308,8 +312,8 @@ class Corpus:
             next(reader)
 
             data = [self.ex_type(*i) for i in reader]
-            for i in data:
-                self._add_wordforms(i.found_wordforms)
+            wordforms = list(map(lambda x: x.found_wordforms, data))
+            self._add_wordforms(wordforms)
 
         return data
 
@@ -509,7 +513,7 @@ class Corpus:
         """
         req = self.query
         if isinstance(req, str):
-            return [req]
+            return req.split()
         return list(req.keys())
 
     @property
@@ -971,7 +975,7 @@ class Corpus:
         q_forms = ', '.join(self.forms_in_query)
         metainfo = f"Russian National Corpus (https://ruscorpora.ru)\n" \
                    f"Class: {self.__class__.__name__}, len = {len(self)}\n" \
-                   f"{self.p_count} pages of '{q_forms}' requested"
+                   f"Pages: {self.p_count} of '{q_forms}' requested"
 
         data = self.data
         is_restricted = False
@@ -1152,7 +1156,9 @@ class MainCorpus(Corpus):
     _MODE = 'main'
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, ex_type=expl.MainExample)
+        # for descendants
+        ex_type = kwargs.pop('ex_type', expl.MainExample)
+        super().__init__(*args, **kwargs, ex_type=ex_type)
         self._params['mode'] = self._MODE
 
     def _parse_example(self,
@@ -1192,7 +1198,6 @@ class MainCorpus(Corpus):
             new_ex = self._parse_example(ex)
             res += [new_ex]
             self._add_wordforms(new_ex.found_wordforms)
-
         return res
 
 
@@ -1240,42 +1245,61 @@ class PaperRegionalCorpus(MainCorpus):
 class ParallelCorpus(Corpus):
     _MODE = 'para'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # for descendants
         ex_type = kwargs.pop('ex_type', expl.ParallelExample)
         super().__init__(*args, **kwargs, ex_type=ex_type)
         self._params['mode'] = self._MODE
 
+    def _parse_text(self,
+                    lang: str,
+                    text: bs4.element.Tag) -> Any:
+        """ Parse one pair element of pair: original – translation.
+
+        :param lang: str, language of text. This param
+        :return: Example with one translation of text.
+        ParallelExample supports '+=' method.
+        """
+        src = Corpus._get_source(text)
+        ambiguation = Corpus._get_ambiguation(text)
+        doc_url = Corpus._get_doc_url(text)
+        txt = Corpus._get_text(text)
+        # remove source from text
+        txt = txt[:txt.index(src)]
+        txt = txt[:txt.rindex('[')].strip()
+
+        found_words = Corpus._find_searched_words(text)
+
+        new_txt = self.ex_type(
+            {lang: txt}, src, ambiguation, found_words, doc_url)
+        new_txt.mark_found_words(self.marker)
+        return new_txt
+
     def _parse_example(self,
                        tag: bs4.element.Tag) -> Any:
-        """ Parse one sentence.
+        """ Parse a pair: original – translation to Example.
 
-        :param tag: bs4.element.Tag, sentence to parse.
+        :param tag: bs4.element.Tag, pair to parse.
+        :return: Example.
         """
+        # this example's expected to have default args
         result_example = self.ex_type()
 
-        for text in tag.find_all('li'):
-            # TODO: get lang from another place for descendants
-            lang = text.span['l'].strip()
-
-            src = Corpus._get_source(text)
-            ambiguation = Corpus._get_ambiguation(text)
-            doc_url = Corpus._get_doc_url(text)
-            txt = Corpus._get_text(text)
-            # remove source from text
-            txt = txt[:txt.index(src)]
-            txt = txt[:txt.rindex('[')].strip()
-
-            found_words = Corpus._find_searched_words(text)
-
-            new_txt = self.ex_type(
-                {lang: txt}, src, ambiguation, found_words, doc_url)
-            new_txt.mark_found_words(self.marker)
+        langs = tag.find_all('td', {'class': "para-lang"})
+        texts = tag.find_all('li')
+        for lang, text in zip(langs, texts):
+            lang = lang.text.strip()
+            new_txt = self._parse_text(lang, text)
             result_example += new_txt
         return result_example
 
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> List:
+        """ Parse one document.
+
+        :param doc: bs4.element.Tag, document to parse.
+        :return: list of Examples.
+        """
         res = []
         for ex in doc.find_all('table', {'class': 'para'}):
             new_ex = self._parse_example(ex)
@@ -1313,24 +1337,44 @@ class ParallelCorpus(Corpus):
 
 
 class MultilingualParaCorpus(ParallelCorpus):
-    pass
+    _MODE = 'multi'
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs,
+                         ex_type=expl.MultilingualParaExample)
+        self._params['mode'] = self._MODE
+
+    def _from_file(self) -> None:
+        msg = "Working with files doesn't support"
+        logger.error(msg)
+        raise NotImplementedError(msg)
+
+    def dump(self) -> None:
+        msg = "Working with files doesn't support"
+        logger.error(msg)
+        raise NotImplementedError(msg)
 
 
-class LearningCorpus(Corpus):
+class TutoringCorpus(MainCorpus):
     _MODE = 'school'
-    pass
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs,
+                         ex_type=expl.TutoringExample)
+        self._params['mode'] = self._MODE
 
 
-class DialectCorpus(MainCorpus):
+class DialectalCorpus(MainCorpus):
     _MODE = 'dialect'
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, ex_type=expl.DialectExample)
+        super().__init__(*args, **kwargs,
+                         ex_type=expl.DialectalExample)
         self._params['mode'] = self._MODE
 
 
 # save lines
-class PoetryCorpus(Corpus):
+class PoeticCorpus(Corpus):
     pass
 
 
@@ -1338,23 +1382,25 @@ class SpokenCorpus(MainCorpus):
     _MODE = 'spoken'
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, ex_type=expl.SpokenExample)
+        super().__init__(*args, **kwargs,
+                         ex_type=expl.SpokenExample)
         self._params['mode'] = self._MODE
 
 
-class AccentologyCorpus(MainCorpus):
+class AccentologicalCorpus(MainCorpus):
     _MODE = 'accent'
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, ex_type=expl.AccentologyExample)
+        super().__init__(*args, **kwargs,
+                         ex_type=expl.AccentologicalExample)
         self._params['mode'] = self._MODE
 
 
-class MultimediaCorpus(Corpus):
+class MultimodalCorpus(Corpus):
     pass
 
 
-class MultiparkCorpus(Corpus):
+class MultiPARCCorpus(Corpus):
     pass
 
 

@@ -4,14 +4,16 @@ __all__ = (
     'Paper2000Example',
     'PaperRegionalExample',
     'ParallelExample',
+    'MultilingualParaExample',
     'TutoringExample',
-    'DialectExample',
-    'PoetryExample',
+    'DialectalExample',
+    'PoeticExample',
     'SpokenExample',
-    'AccentologyExample',
-    'MultimediaExample',
-    'MultiparkExample',
+    'AccentologicalExample',
+    'MultimodalExample',
+    'MultiPARCExample',
     'HistoricalExample',
+    'TutoringExample',
     'KwicExample'
 )
 
@@ -199,7 +201,7 @@ class Example:
         self._txt = mark_found_words(
             self._txt, self._found_wordforms, marker)
 
-    def __copy__(self):
+    def copy(self):
         """
         :return: copied obj.
         """
@@ -293,6 +295,12 @@ class KwicExample(Example):
         :return: str, joined left, center and right contexts.
         """
         return f"{self.left} {self.center} {self.right}"
+
+    @property
+    def ambiguation(self):
+        msg = "There's no ambiguation"
+        logger.error(msg)
+        raise NotImplementedError(msg)
 
     @property
     def data(self) -> Dict:
@@ -446,19 +454,22 @@ class ParallelExample(Example):
         return f_src
 
     def sort(self,
-             key: Callable) -> None:
-        """ Sort txt dict
+             key: Callable,
+             reverse=False) -> None:
+        """ Sort txt dict, allowing the key to lang tags.
 
         :param key: callable, key to sort.
-        :return: None
+        :param reverse: bool, whether sorting'll be in reversed order.
+        :return: None.
         """
-        self._txt = dict(sorted(self.txt.items(), key=key))
+        data = sorted(self.txt.items(), key=key, reverse=reverse)
+        self._txt = dict(data)
 
-    def __copy__(self) -> Any:
+    def copy(self) -> Any:
         """
         :return: copied obj.
         """
-        obj = super().__copy__()
+        obj = super().copy()
         obj._txt = self.txt.copy()
         return obj
 
@@ -492,6 +503,10 @@ class ParallelExample(Example):
         self.sort(lambda x: x[0])
         # source contains two translations
         self._src = ParallelExample._best_src(self.src, other.src)
+
+        # for MultilingualParaCorpus
+        if not self.src:
+            self._src = other.src
 
         if not (self.ambiguation and 'not' in other.ambiguation):
             self._ambiguation = other.ambiguation
@@ -532,15 +547,19 @@ class ParallelExample(Example):
         self._txt[lang] = txt
 
 
+class MultilingualParaExample(ParallelExample):
+    pass
+
+
 class TutoringExample(Example):
     pass
 
 
-class DialectExample(Example):
+class DialectalExample(Example):
     pass
 
 
-class PoetryExample(Example):
+class PoeticExample(Example):
     pass
 
 
@@ -548,15 +567,15 @@ class SpokenExample(Example):
     pass
 
 
-class AccentologyExample(Example):
+class AccentologicalExample(Example):
     pass
 
 
-class MultimediaExample(Example):
+class MultimodalExample(Example):
     pass
 
 
-class MultiparkExample(Example):
+class MultiPARCExample(Example):
     pass
 
 

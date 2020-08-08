@@ -81,3 +81,18 @@ is equal to the Corpus class type.
 * Order of texts in the ParallelCorpus – **Issue 8** closed.
 
 Other minor fixes and improvements.
+
+
+#### 0.4 – 08.08.2020
+#### Changed
+* Docs changed, extended.
+* Corpora were renamed.
+ 
+#### Added
+* MultilingualParaCorpus
+* TutoringCorpus
+
+#### Fixed
+* Some Corpora inherited from MainCorpus didn't work.
+
+Minor fixes and improvements.

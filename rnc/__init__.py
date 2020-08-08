@@ -1,4 +1,4 @@
-__version__ = '0.3.2'
+__version__ = '0.4'
 
 from .corpora import (
     Subcorpus,
@@ -6,18 +6,22 @@ from .corpora import (
     Paper2000Corpus,
     PaperRegionalCorpus,
     ParallelCorpus,
-    DialectCorpus,
+    DialectalCorpus,
     SpokenCorpus,
-    AccentologyCorpus
+    AccentologicalCorpus,
+    MultilingualParaCorpus,
+    TutoringCorpus
 )
 from .examples import (
     MainExample,
     Paper2000Example,
     PaperRegionalExample,
     ParallelExample,
-    DialectExample,
+    DialectalExample,
     SpokenExample,
-    AccentologyExample,
+    AccentologicalExample,
+    MultilingualParaExample,
+    TutoringExample,
     KwicExample
 )
 
@@ -51,18 +55,22 @@ __all__ = (
     'Paper2000Corpus',
     'PaperRegionalCorpus',
     'ParallelCorpus',
-    'DialectCorpus',
+    'DialectalCorpus',
     'SpokenCorpus',
-    'AccentologyCorpus',
+    'AccentologicalCorpus',
+    'MultilingualParaCorpus',
     'Subcorpus',
+    'TutoringCorpus',
 
     'MainExample',
     'Paper2000Example',
     'PaperRegionalExample',
     'ParallelExample',
-    'DialectExample',
+    'DialectalExample',
     'SpokenExample',
-    'AccentologyExample',
+    'AccentologicalExample',
+    'MultilingualParaExample',
+    'TutoringExample',
     'KwicExample',
 
     'set_loggers_level',

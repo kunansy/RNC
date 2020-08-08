@@ -1,6 +1,6 @@
-## DialectCorpus
+## DialectalCorpus
 
-### Gram (grammar tags)
+### Gram
 ##### Case
 * Диалектные особенности – dialcase
 
@@ -58,4 +58,5 @@
 * Разноспрягаемое – hetrcj
 
 
-**Other params the same to MainCorpus**
+* Turnover search is not supported
+* **Other params the same to MainCorpus**
