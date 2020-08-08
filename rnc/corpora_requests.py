@@ -1,4 +1,14 @@
-""" Module for requesting to URL and get page's html code """
+"""
+Module for requesting to URL and get page's html code.
+
+There's function checking, that:
+– HTTP request is correct, means noe exception catch while requesting.
+– The page exists, means results found.
+– The page at the number exists, means Corpus didn't redirect to the first page,
+
+There's ClientTimeout in the requesting function.
+
+"""
 __all__ = 'get_htmls', 'is_request_correct'
 
 import asyncio
@@ -102,6 +112,7 @@ async def get_htmls_coro(url: str,
                     html_codes += [page_code]
             # TODO: add pages' html codes as they are obtained
             # TODO: return here?
+            # sort pages: 1, 2, ...
             html_codes.sort(key=lambda x: x[0])
             html_codes = [i[1] for i in html_codes]
             return html_codes
@@ -239,7 +250,7 @@ def is_request_correct(url: str,
     try:
         assert whether_result_found(url, **kwargs) is True
     except AssertionError:
-        raise ValueError("No results found")
+        raise ValueError("No result found")
     except RuntimeError:
         raise ValueError("Wrong HTTP request")
 
