@@ -47,7 +47,6 @@ def test_no_results_found():
     assert res is False
 
 
-
 def test_results_found():
     correct_params['lex1'] = 'ты'
     res = req.whether_result_found(RNC_URL, **correct_params)
