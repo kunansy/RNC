@@ -2,13 +2,13 @@
 Module for requesting to URL and get page's html code.
 
 There's function checking, that:
-– HTTP request is correct, means noe exception catch while requesting.
+– HTTP request is correct, means there's no exception catch while requesting.
 – The page exists, means results found.
-– The page at the number exists, means Corpus didn't redirect to the first page,
+– The page at the number exists, means RNC didn't redirect to the first page.
 
 There's ClientTimeout in the requesting function.
-
 """
+
 __all__ = 'get_htmls', 'is_request_correct'
 
 import asyncio
@@ -36,13 +36,13 @@ async def fetch(url: str,
                 **kwargs) -> Tuple[int, str]:
     """ Coro, obtaining page's html code. There's ClientTimeout.
 
-    If response.status == 429 sleep and try again.
-    If response.status != 429 and != 200, raise an exception.
+    If response status == 429 sleep and try again.
+    If response status != 429 and != 200, raise an exception.
 
     :param url: string, URL to get its html code.
     :param ses: aiohttp.ClientSession.
     :param kwargs: HTTP tags.
-    :return: p key to sort results and html code, decoded to UTF-8.
+    :return: 'p' key to sort results and html code, decoded to UTF-8.
     """
     wait = 24
     t_out = aiohttp.ClientTimeout(wait + 1)
@@ -50,6 +50,8 @@ async def fetch(url: str,
         if resp.status == 200:
             return kwargs['p'], await resp.text('utf-8')
         elif resp.status == 429:
+            logger.debug(f"429, {resp.reason}. "
+                         f"Page: {kwargs['p']}, wait {wait}s")
             await asyncio.sleep(wait)
             return await fetch(url, ses, **kwargs)
         resp.raise_for_status()
@@ -78,7 +80,7 @@ async def get_htmls_coro(url: str,
     """
     async with aiohttp.ClientSession() as ses:
         tasks = [
-            asyncio.create_task(fetch(url, ses, p=p_index, **kwargs))
+            asyncio.create_task(fetch(url, ses, **kwargs, p=p_index))
             for p_index in range(p_index_start, p_index_stop)
         ]
 
@@ -116,7 +118,7 @@ async def get_htmls_coro(url: str,
                 else:
                     html_codes += [page_code]
             # TODO: add pages' html codes as they are obtained
-            # TODO: return here?
+            # TODO: return here in the While cycle?
             # sort pages: 1, 2, ...
             html_codes.sort(key=lambda x: x[0])
             html_codes = [i[1] for i in html_codes]
@@ -144,22 +146,22 @@ def get_htmls(url: str,
     :exception aiohttp.ServerTimeoutError:
     :exception Exception: another one.
     """
-    logger.debug(f"Requested: ({p_index_start};{p_index_stop}), "
-                 f"with params {kwargs}")
+    logger.info(f"Requested: ({p_index_start};{p_index_stop}), "
+                f"with params {kwargs}")
     html_codes = asyncio.run(
         get_htmls_coro(url, p_index_start, p_index_stop, **kwargs))
-    logger.debug("Request was completed successfully")
+    logger.info("Request was completed successfully")
     return html_codes
 
 
 def is_http_request_correct(url: str,
                             **kwargs) -> bool:
     """ Whether the request is correct.
-    It's correct If there're no exceptions catch.
+    It's correct If there's no exception catch.
 
     :param url: str, request url.
     :param kwargs: request HTTP tags.
-    :return: bool, correct the request or not.
+    :return: bool, whether the request is correct.
     """
     # coro writes logs by itself
     try:
@@ -173,11 +175,9 @@ def whether_result_found(url: str,
                          **kwargs) -> bool:
     """ Whether the page contains results.
 
-    RuntimeError if the request is wrong.
-
     :param url: str, request url.
     :param kwargs: request HTTP tags.
-    :exception RuntimeError: if HTTP request is wrong.
+    :exception RuntimeError: if HTTP request was wrong.
     """
     try:
         page_html = get_htmls(url, **kwargs)[0]
@@ -199,20 +199,20 @@ def does_page_exist(url: str,
     """ Whether a page at the index exists.
 
     It means, the number of the page in 'pager' is equal to expected index.
-    Corpus redirects to the first page if the page at the number doesn't exist.
+    RNC redirects to the first page if the page at the number doesn't exist.
     Here it's assumed, that the request's correct.
 
-    :param url: str, url.
+    :param url: str, URL.
     :param p_index: int, index of page. Indexing starts with 0.
-    :param kwargs: request HTTP tags..
-    :return: bool, exists page or not.
+    :param kwargs: HTTP tags.
+    :return: bool, whether a page exists.
     """
     # indexing starts with 0
     start = p_index
     start = start * (start >= 0)
     stop = p_index + 1
 
-    # request is correct → first page exists
+    # request's correct → first page exists
     if stop is 1:
         return True
 
@@ -224,11 +224,10 @@ def does_page_exist(url: str,
         p_num = pager.b
         if not p_num:
             return False
-        p_num = p_num.text
-        # page_index from pager should be equal to expected index
-        return p_num == str(stop)
+        # page index from pager should be equal to expected index
+        return p_num.text == str(stop)
 
-    # if there's no pager, but result exists
+    # if there's no pager, but result exists.
     # this might happen if expand=full or out=kwic
     first_page_code = get_htmls(url, 0, 1, **kwargs)[0]
     return page_html != first_page_code
@@ -243,7 +242,7 @@ def is_request_correct(url: str,
         – has there been any result.
 
         – does a page at the number exist (
-        means the Corpus doesn't redirect to first page).
+        means RNC doesn't redirect to the first page).
 
     :param url: str, request url.
     :param p_count: int, request count of pages.
@@ -251,8 +250,10 @@ def is_request_correct(url: str,
     :return: True if everything's OK, an exception otherwise.
     :exception ValueError: something's wrong.
     """
-    # coro writes logs by itself
     try:
+        # to reduce the number of requests
+        # the two checks are combined into one.
+        # coro writes logs by itself
         assert whether_result_found(url, **kwargs) is True
     except AssertionError:
         raise ValueError("No result found")

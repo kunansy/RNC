@@ -90,23 +90,23 @@ class Example:
         self._found_wordforms = wf
 
     @property
-    def txt(self) -> str:
+    def txt(self) -> Any:
         """
-        :return: str, example's text.
+        :return: any type, example's text.
         """
         return self._txt
 
     @property
-    def src(self) -> str:
+    def src(self) -> Any:
         """
-        :return: str, example's source.
+        :return: any type, example's source.
         """
         return self._src
 
     @property
-    def ambiguation(self) -> str:
+    def ambiguation(self) -> Any:
         """
-        :return: str, example's ambiguation.
+        :return: any type, example's ambiguation.
         """
         return self._ambiguation
 
@@ -133,44 +133,73 @@ class Example:
         return list(self.data.keys()) + ['URL']
 
     @property
-    def items(self) -> List[str or list]:
+    def items(self) -> List[Any]:
         """ For csv writing.
 
-        :return: list of str or list, values of columns.
+        :return: list of any types, values of columns.
         """
         # ATTENTION:
         # these order must be the same as in the constructor
         return list(self.data.values()) + [self.doc_url]
 
     @property
-    def data(self) -> Dict:
+    def data(self) -> Dict[str, Any]:
         """ There're all fields except for doc_url.
         Found wordforms joined with ', '.
 
         :return: dict with fields names and their values.
         """
         data = {
-            'text': self._txt,
-            'source': self._src,
-            'ambiguation': self._ambiguation,
-            'found wordforms': ', '.join(self._found_wordforms)
+            'text': self.txt,
+            'source': self.src,
+            'ambiguation': self.ambiguation,
+            'found wordforms': ', '.join(self.found_wordforms)
         }
         return data
 
     @txt.setter
-    def txt(self, other) -> None:
+    def txt(self,
+            other: Any) -> None:
         """ Set text.
 
+        :param other: any type, new txt.
         :return: None.
         """
+        if not isinstance(other, str):
+            class_name = self.__class__.__name__
+            logger.warning(
+                f"As a txt to {class_name} set {type(other)}, str expected")
+
         self._txt = other
 
-    @ambiguation.setter
-    def ambiguation(self, other) -> None:
-        """ Set ambiguation.
+    @src.setter
+    def src(self,
+            other: Any) -> None:
+        """ Set source.
 
+        :param other: any type, new src.
         :return: None.
         """
+        if not isinstance(other, str):
+            if not isinstance(other, str):
+                class_name = self.__class__.__name__
+                logger.warning(
+                    f"As a src to {class_name} set {type(other)}, str expected")
+
+        self._src = other
+
+    @ambiguation.setter
+    def ambiguation(self,
+                    other: Any) -> None:
+        """ Set ambiguation.
+
+        :param other: any type, new ambiguation.
+        :return: None.
+        """
+        if not isinstance(other, str):
+            class_name = self.__class__.__name__
+            logger.warning(f"As a ambiguation to {class_name} "
+                           f"set {type(other)}, str expected")
         self._ambiguation = other
 
     def open_doc(self) -> None:
@@ -201,11 +230,32 @@ class Example:
         self._txt = mark_found_words(
             self._txt, self._found_wordforms, marker)
 
-    def copy(self):
+    def copy(self) -> Any:
         """
         :return: copied obj.
         """
         return self.__class__(*self.data.values(), self.doc_url)
+
+    def __eq__(self,
+               other: Any) -> bool:
+        """ ==
+
+        :param other: other Example object.
+        :return: bool, whether data equal.
+        """
+        return self.items == other.items
+
+    def __contains__(self,
+                     item: Any) -> bool:
+        """ Checking that item is in the text.
+        Registers equaled.
+
+        :param item: any type, item to check.
+        :return: whether item is in text.
+        """
+        if hasattr(item, 'lower') and hasattr(self.txt, 'lower'):
+            return item.lower() in self.txt.lower()
+        return item in self.txt
 
     def __str__(self) -> str:
         """ Str format depends on the descendant.
@@ -269,21 +319,21 @@ class KwicExample(Example):
         super().__init__(self.txt, src, '', found_wordforms, doc_url)
 
     @property
-    def left(self) -> str:
+    def left(self) -> Any:
         """
         :return: str, example's left context.
         """
         return self.__left
 
     @property
-    def center(self) -> str:
+    def center(self) -> Any:
         """
         :return: str, example's center context.
         """
         return self.__center
 
     @property
-    def right(self) -> str:
+    def right(self) -> Any:
         """
         :return: str, example's right context.
         """
@@ -294,17 +344,19 @@ class KwicExample(Example):
         """
         :return: str, joined left, center and right contexts.
         """
+        # it's assumed that all contexts are stripped
         return f"{self.left} {self.center} {self.right}"
 
     @property
-    def ambiguation(self):
-        msg = "There's no ambiguation"
+    def ambiguation(self) -> None:
+        msg = "There's no ambiguation in KWICExamples"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     @property
-    def data(self) -> Dict:
-        """
+    def data(self) -> Dict[str, Any]:
+        """ All fields except for URL.
+
         :return: dict with fields names and their values.
         """
         data = {
@@ -317,36 +369,52 @@ class KwicExample(Example):
         return data
 
     @left.setter
-    def left(self, other) -> None:
+    def left(self,
+             other: Any) -> None:
         """ Set left context.
 
-        :param other: new left context.
+        :param other: any type, new left context.
         :return: None.
         """
+        if not isinstance(other, str):
+            class_name = self.__class__.__name__
+            logger.warning(f"As a left context to {class_name} "
+                           f"set {type(other)}, str expected")
         self.__left = other
 
     @center.setter
-    def center(self, other) -> None:
+    def center(self,
+               other: Any) -> None:
         """ Set center context.
 
-        :param other: new center context.
+        :param other: any type, new center context.
         :return: None.
         """
+        if not isinstance(other, str):
+            class_name = self.__class__.__name__
+            logger.warning(f"As a center context to {class_name} "
+                           f"set {type(other)}, str expected")
         self.__center = other
 
     @right.setter
-    def right(self, other) -> None:
+    def right(self,
+              other: Any) -> None:
         """ Set right context.
 
-        :param other: new right context.
+        :param other: any type, new right context.
         :return: None.
         """
+        if not isinstance(other, str):
+            class_name = self.__class__.__name__
+            logger.warning(f"As a right context to {class_name} "
+                           f"set {type(other)}, str expected")
         self.__right = other
 
     @txt.setter
-    def txt(self, other) -> None:
+    def txt(self,
+            other: Any) -> None:
         """ Text setter not implemented to kwic """
-        msg = "txt setter not implemented to kwic"
+        msg = "Text setter not implemented to KWICExamples"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -357,9 +425,10 @@ class KwicExample(Example):
         :param marker: function to mark found wordforms.
         :return: None.
         """
-        self.__left = mark_found_words(self.left, self.found_wordforms, marker)
-        self.__center = mark_found_words(self.center, self.found_wordforms, marker)
-        self.__right = mark_found_words(self.right, self.found_wordforms, marker)
+        words = self.found_wordforms
+        self.__left = mark_found_words(self.left, words, marker)
+        self.__center = mark_found_words(self.center, words, marker)
+        self.__right = mark_found_words(self.right, words, marker)
 
 
 class MainExample(Example):
@@ -383,7 +452,7 @@ class ParallelExample(Example):
                  txt: Dict[str, str] = None,
                  src: str = '',
                  ambiguation: str = '',
-                 found_wordforms: List[str] = None,
+                 found_wordforms: List[str] or str = None,
                  doc_url: str = '') -> None:
         """
         :param txt: dict of str, {lang: text}
@@ -399,10 +468,10 @@ class ParallelExample(Example):
         self.sort(lambda x: x[0])
 
     @property
-    def txt(self) -> Dict[str, str]:
-        """ Get dict with all variants.
+    def txt(self) -> Dict[str, Any]:
+        """ Get dict with texts.
 
-        :return: dict of str.
+        :return: dict of any types.
         """
         return self._txt
 
@@ -410,12 +479,13 @@ class ParallelExample(Example):
     def txt(self,
             other: Any) -> None:
         """ Text setter not implemented to the ParallelExample """
-        msg = "Try to use ex['lang'] instead"
+        msg = "Text setter not implemented to ParallelExamples. " \
+              "Try to use ex['lang'] instead"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     @property
-    def data(self) -> Dict:
+    def data(self) -> Dict[str, Any]:
         """ There're all fields except for doc_url.
         Found wordforms joined with ', '.
 
@@ -454,14 +524,15 @@ class ParallelExample(Example):
         return f_src
 
     def sort(self,
-             key: Callable,
-             reverse=False) -> None:
+             key: Callable = None,
+             reverse: bool = False) -> None:
         """ Sort txt dict, allowing the key to lang tags.
 
         :param key: callable, key to sort.
         :param reverse: bool, whether sorting'll be in reversed order.
         :return: None.
         """
+        key = key or (lambda x: x)
         data = sorted(self.txt.items(), key=key, reverse=reverse)
         self._txt = dict(data)
 
@@ -469,12 +540,26 @@ class ParallelExample(Example):
         """
         :return: copied obj.
         """
-        obj = super().copy()
-        obj._txt = self.txt.copy()
-        return obj
+        txt_copy = self.txt.copy()
+        return self.__class__(
+            txt_copy, self.src, self.ambiguation,
+            self.found_wordforms, self.doc_url)
+
+    def __contains__(self,
+                     item: Any) -> bool:
+        """ Checking that item is in the text.
+        Registers equaled.
+
+        :param item: any type, item to check.
+        :return: whether item is in text.
+        """
+        if (hasattr(item, 'lower') and
+                all(hasattr(i, 'lower') for i in self.txt.values())):
+            return any(item.lower() in i.lower() for i in self.txt.values())
+        return any(item in i for i in self.txt.values())
 
     def __iadd__(self,
-                 other) -> Any:
+                 other: Any) -> Any:
         """ Concatenate two examples:
             – join the texts
 
@@ -490,26 +575,26 @@ class ParallelExample(Example):
         :exception TypeError: if wrong type given.
         """
         if not isinstance(other, self.__class__):
-            msg = f"'+=' supported only {self.__class__} objects"
+            msg = f"'+=' supported only with '{self.__class__}' " \
+                  f"objects, but {type(other)} given"
             logger.error(msg)
             raise TypeError(msg)
 
         for lang, txt in other.txt.items():
-            if lang in self.txt:
-                self[lang] = f"{self.txt[lang]} {txt}"
-            else:
-                self[lang] = txt
+            new_txt = f"{self.txt.get(lang, '')} {txt}"
+            self[lang] = new_txt.lstrip()
         # save the order of languages
         self.sort(lambda x: x[0])
         # source contains two translations
-        self._src = ParallelExample._best_src(self.src, other.src)
+        self._src = self.__class__._best_src(self.src, other.src)
 
         # for MultilingualParaCorpus
         if not self.src:
             self._src = other.src
 
-        if not (self.ambiguation and 'not' in other.ambiguation):
-            self._ambiguation = other.ambiguation
+        o_amb = other.ambiguation
+        if not self.ambiguation or o_amb and 'not' not in o_amb:
+            self._ambiguation = o_amb
         if not self.doc_url:
             self._doc_url = other.doc_url
         self._found_wordforms += other.found_wordforms
@@ -517,7 +602,7 @@ class ParallelExample(Example):
         return self
 
     def __getattr__(self,
-                    item: str) -> str or None:
+                    item: str) -> Any:
         """ Get text in language.
 
         :param item: str, language.
@@ -526,24 +611,28 @@ class ParallelExample(Example):
         return self.txt.get(item, None)
 
     def __getitem__(self,
-                    lang: str) -> str or None:
+                    lang: str) -> Any:
         """ Get text in the language.
 
         :param lang: str, language.
         :return: str or None, text in the language if exists.
         """
-        return self.lang
+        return self.txt.get(lang, None)
 
     def __setitem__(self,
                     lang: str,
-                    txt: str) -> None:
+                    txt: Any) -> None:
         """ Change text in the lang.
 
         :param lang: str, lang tag.
-        :param txt: str, new text.
+        :param txt: any type, new text.
         :return: None.
         :exception ValueError: if the text in the lang doesn't exist.
         """
+        if not isinstance(txt, str):
+            class_name = self.__class__.__name__
+            logger.warning(f"As a '{lang}' to {class_name} "
+                           f"set {type(txt)}, str expected")
         self._txt[lang] = txt
 
 

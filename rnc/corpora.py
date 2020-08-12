@@ -41,6 +41,11 @@ logger = clog.create_logger(
 
 # Russian National Corpus URL
 RNC_URL = "https://processing.ruscorpora.ru/search.xml"
+DATA_FOLDER = Path('data')
+try:
+    DATA_FOLDER.mkdir()
+except FileExistsError:
+    pass
 
 
 class Subcorpus:
@@ -86,13 +91,19 @@ def create_filename(length: int = 8) -> str:
     return ''.join(name)
 
 
-def create_unique_filename() -> Path:
+def create_unique_filename(classname: str,
+                           p_count: int) -> Path:
     """ Create a random unique csv filename,
     means the file doesn't exist.
 
+    Name format:
+    (classname)(p_count)(some random symbols)
+
+    :param classname: name of the class.
+    :param p_count: int, count of pages.
     :return: Path, unique filename. len = 8 .
     """
-    path = Path(f"{create_filename()}.csv")
+    path = DATA_FOLDER / Path(f"{classname}{p_count}_{create_filename()}.csv")
     while path.exists():
         path = path.with_name(f"{create_filename()}.csv")
     return path
@@ -199,7 +210,8 @@ class Corpus:
         self._marker = kwargs.pop('marker', None)
 
         # path to local database
-        file = file or create_unique_filename()
+        classname = self.__class__.__name__.replace('Corpus', '')
+        file = file or create_unique_filename(classname, p_count)
         path = Path(file)
         if path.suffix != '.csv':
             msg = "File must have '.csv' extension"
@@ -225,7 +237,7 @@ class Corpus:
                      query: dict or str,
                      p_count: int,
                      **kwargs) -> None:
-        """ Initting from the given values. If the file doesn't exist.
+        """ Init from the given values. If the file doesn't exist.
         Params the same as in the init method.
 
         :return: None.
@@ -263,7 +275,7 @@ class Corpus:
         if 'subcorpus' in kwargs:
             self._params['mycorp'] = kwargs.pop('subcorpus')
 
-        # TODO:
+        # TODO: page structure changes
         # if 'expand' in kwargs:
         #     self._params['expand'] = kwargs.pop('expand')
 
@@ -287,8 +299,8 @@ class Corpus:
         self._p_count = params.get('p_count', None)
         self._params = params.get('params', None)
 
-        mode = self.params.get('mode', '')
-        if mode != self._MODE:
+        mode = self.mode
+        if mode is None or mode != self._MODE:
             msg = f"Tried to load data to wrong Corpus: " \
                   f"{mode} instead of {self._MODE}"
             logger.error(msg)
@@ -313,6 +325,7 @@ class Corpus:
 
             data = [self.ex_type(*i) for i in reader]
             wordforms = list(map(lambda x: x.found_wordforms, data))
+            wordforms = sum(wordforms, [])
             self._add_wordforms(wordforms)
 
         return data
@@ -577,10 +590,10 @@ class Corpus:
 
         :return: None
         """
-        if self.params['out'] == 'normal':
+        if self.out == 'normal':
             # ex_type is defined above in this case
             self._page_parser = self._parse_page_normal
-        elif self.params['out'] == 'kwic':
+        elif self.out == 'kwic':
             self._page_parser = self._parse_page_kwic
             self._ex_type = expl.KwicExample
 
@@ -590,7 +603,7 @@ class Corpus:
         :return: None.
         :exception ValueError: if wrong type given.
         """
-        if self.params['text'] == 'lexform':
+        if self.text == 'lexform':
             if not isinstance(self.query, str):
                 msg = "One must give str as a query if search is 'lexform'"
                 logger.error(msg)
@@ -875,9 +888,8 @@ class Corpus:
             logger.exception(msg)
             raise
 
-        start, stop = 0, self.p_count
         coro_start = time.time()
-        htmls = creq.get_htmls(RNC_URL, start, stop, **self.params)
+        htmls = creq.get_htmls(RNC_URL, 0, self.p_count, **self.params)
         logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
 
         try:
@@ -896,10 +908,13 @@ class Corpus:
         """
         :return: copied object.
         """
-        return self[:]
+        copy_obj = self.__class__(
+            self.query, self.p_count, file=self.file, marker=self.marker, **self.params)
+        copy_obj._data = self.data.copy()
+        return copy_obj
 
-    def sort(self,
-             **kwargs) -> None:
+    def sort_data(self,
+                  **kwargs) -> None:
         """ Sort the data by using a key.
 
         :keyword key: func to sort, called to Example objects, by default – len.
@@ -1014,6 +1029,23 @@ class Corpus:
         :return: iter, iterator for data.
         """
         return iter(self.data)
+
+    def __contains__(self,
+                     item: Any) -> bool:
+        """ Whether the Corpus obj contains the Example obj.
+
+        :param item: obj with the same ex_type.
+        :return: whether Corpus obj contains the Example obj.
+        :exception TypeError: if wrong type (different Example) given.
+        """
+        if not isinstance(item, self.ex_type):
+            msg = "in supports with the same Example objects"
+            logger.error(msg)
+            raise TypeError(msg)
+        return any(
+            item == ex
+            for ex in self.data
+        )
 
     def __getattr__(self,
                     item: str) -> str or int or List or None:
@@ -1237,8 +1269,8 @@ class Paper2000Corpus(MainCorpus):
 class PaperRegionalCorpus(MainCorpus):
     _MODE = 'regional'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, ex_type=expl.ParallelExample)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs, ex_type=expl.PaperRegionalExample)
         self._params['mode'] = self._MODE
 
 
@@ -1312,6 +1344,8 @@ class ParallelCorpus(Corpus):
 
         :return: list of examples.
         """
+        if self.out == 'kwic':
+            return super()._load_data()
         with self.file.open('r', encoding='utf-16') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR

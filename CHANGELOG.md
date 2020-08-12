@@ -96,3 +96,15 @@ Other minor fixes and improvements.
 * Some Corpora inherited from MainCorpus didn't work.
 
 Minor fixes and improvements.
+
+
+#### 0.4.1 – 12.08.2020 
+#### Changed
+* Examples improved and fixed.
+* Docs fixed.
+* Setting loggers/handlers levels. 
+
+#### Added
+* Some features to Example.
+
+Minor fixes and improvements.
