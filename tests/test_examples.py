@@ -13,12 +13,14 @@ class TemplateTestExamples:
         copy = self.ex.copy()
         new_txt = 'test_text'
         copy.txt = new_txt
+
         assert copy.txt == new_txt
 
     def test_text_setter_with_notstr_type(self):
         copy = self.ex.copy()
         new_txt = list('new ex')
         copy.txt = new_txt
+
         assert copy.txt == new_txt
 
     def test_src_getter(self):
@@ -28,49 +30,59 @@ class TemplateTestExamples:
         copy = self.ex.copy()
         new_src = 'test_source'
         copy.src = new_src
+
         assert copy.src == new_src
 
     def test_src_setter_with_notstr_type(self):
         copy = self.ex.copy()
         new_src = list('test_source')
         copy.src = new_src
+
         assert copy.src == new_src
 
     def test_ambiguation_getter(self):
         amb = self.ex.ambiguation
+
         assert isinstance(amb, str) and amb
 
     def test_ambiguation_setter(self):
         copy = self.ex.copy()
         new_amb = 'new_amb'
         copy.ambiguation = new_amb
+
         assert copy.ambiguation == new_amb
 
     def test_ambiguation_setter_with_nostr_type(self):
         copy = self.ex.copy()
         new_amb = list('new_amb')
         copy.ambiguation = new_amb
+
         assert copy.ambiguation == new_amb
 
     def test_doc_url(self):
         url = self.ex.doc_url
+
         assert isinstance(url, str) and url
 
     def test_found_worforms(self):
         wf = self.ex.found_wordforms
+
         assert isinstance(wf, list) and wf
 
     def test_columns(self):
         columns = self.ex.columns
         expected = ['text', 'source', 'ambiguation', 'found wordforms', 'URL']
+
         assert columns == expected
 
     def test_items(self):
         items = self.ex.items
+
         assert all(isinstance(i, str) and i for i in items)
 
     def test_data(self):
         data = self.ex.data
+
         assert isinstance(data, dict) and len(data) is 4
 
     def test_open_doc(self):
@@ -99,17 +111,20 @@ class TemplateTestExamples:
 
     def test_contains(self):
         item = self.ex.txt[:5]
+
         assert item in self.ex
 
     def test_contains_with_notstr_type(self):
         copy = self.ex.copy()
         copy.txt = ['1', 2, 3, 4, '5']
+
         assert '1' in copy and 2 in copy
 
     def test_equal(self):
         lhs = rhs = self.ex.copy()
         lhs.txt = list('test lhs')
         rhs.txt = lhs.txt
+
         assert lhs == rhs
 
 
@@ -136,36 +151,42 @@ class TestKwicExample(TemplateTestExamples):
         copy = self.ex.copy()
         new_left = 'new left'
         copy.left = new_left
+
         assert copy.left == new_left
 
     def test_left_setter_with_notstr_type(self):
         copy = self.ex.copy()
         new_left = list('new left')
         copy.left = new_left
+
         assert copy.left == new_left
 
     def test_center_setter(self):
         copy = self.ex.copy()
         new_center = 'new center'
         copy.center = new_center
+
         assert copy.center == new_center
 
     def test_center_setter_with_notstr_type(self):
         copy = self.ex.copy()
         new_center = list('new center')
         copy.center = new_center
+
         assert copy.center == new_center
 
     def test_right_setter(self):
         copy = self.ex.copy()
         new_right = 'new right'
         copy.right = new_right
+
         assert copy.right == new_right
 
     def test_right_setter_with_notstr_type(self):
         copy = self.ex.copy()
         new_right = list('new right')
         copy.right = new_right
+
         assert copy.right == new_right
 
     def test_ambiguation_getter(self):
@@ -184,10 +205,12 @@ class TestKwicExample(TemplateTestExamples):
         columns = self.ex.columns
         expected = ['left', 'center', 'right', 'source',
                     'found wordforms', 'URL']
+
         assert columns == expected
 
     def test_data(self):
         data = self.ex.data
+
         assert isinstance(data, dict) and len(data) is 5
 
     def test_mark_words(self):
@@ -209,11 +232,13 @@ class TestKwicExample(TemplateTestExamples):
         copy.left = [1, 2, 3]
         copy.center = '1'
         copy.right = 12
+
         assert '12' in copy
 
     def test_equal(self):
         lhs = rhs = self.ex.copy()
         lhs.left = rhs.left = ''
+
         assert lhs == rhs
 
 
@@ -225,6 +250,7 @@ class TestParallelExample(TemplateTestExamples):
 
     def test_text_getter(self):
         txt = self.ex.txt
+
         assert isinstance(txt, dict) and len(txt) is 2
 
     def test_text_setter(self):
@@ -237,12 +263,14 @@ class TestParallelExample(TemplateTestExamples):
 
     def test_data(self):
         data = self.ex.data
+
         assert isinstance(data, dict) and len(data) is 5
 
     def test_iadd_with_nochanges(self):
         copy = self.ex.copy()
         new_ex = expl.ParallelExample()
         copy += new_ex
+
         assert copy == self.ex
 
     def test_iadd_with_extend_texts(self):
@@ -258,6 +286,7 @@ class TestParallelExample(TemplateTestExamples):
         }
         rhs = expl.ParallelExample(update, 'old src | new src', 'amb', ['test1'])
         lhs += rhs
+
         assert lhs.ru == 'текст1 и текст2'
         assert lhs.en == 'text1 and text2'
         assert lhs.src == 'old src | new src'
@@ -336,10 +365,12 @@ class TestParallelExample(TemplateTestExamples):
         columns = self.ex.columns
         expected = ['en', 'ru', 'source', 'ambiguation',
                     'found wordforms', 'URL']
+
         assert columns == expected
 
     def test_getattr(self):
         txt = self.ex.ru
+
         assert isinstance(txt, str) and txt
 
     def test_getattr_none(self):
@@ -347,6 +378,7 @@ class TestParallelExample(TemplateTestExamples):
 
     def test_getitem(self):
         txt = self.ex['ru']
+
         assert isinstance(txt, str) and txt
 
     def test_getitem_none(self):
@@ -355,19 +387,21 @@ class TestParallelExample(TemplateTestExamples):
     def test_setitem(self):
         new_txt = 'sth with new txt'
         copy = self.ex.copy()
-
         copy['ru'] = new_txt
+
         assert copy.ru == new_txt
 
     def test_setitem_with_notstr_type(self):
         copy = self.ex.copy()
         new_txt = list('new txt')
         copy['ru'] = new_txt
+
         assert copy.ru == new_txt
 
     def test_sort(self):
         copy = self.ex.copy()
         copy.sort()
+
         assert copy.txt == self.ex.txt
 
     def test_mark_words(self):
@@ -390,14 +424,17 @@ class TestParallelExample(TemplateTestExamples):
     def test_equal(self):
         lhs = rhs = self.ex.copy()
         lhs['fr'] = rhs['fr'] = ''
+
         assert lhs == rhs
 
     def test_contains(self):
         text = self.ex.ru[:5]
+
         assert text in self.ex
 
     def test_contains_with_notstr_type(self):
         copy = self.ex.copy()
         new_txt = ['1', 2, '3', '5']
         copy['ru'] = new_txt
+
         assert '1' in copy and '3' in copy
