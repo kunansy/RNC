@@ -11,31 +11,21 @@ day.month.year hours:minutes:seconds
 """
 
 __all__ = (
-    'create_logger', 'create_formatter', 'log_folder',
+    'create_logger', 'create_formatter',
     'create_file_handler', 'create_stream_handler')
 
 import logging
-import os
 from pathlib import Path
+
 
 DEFAULT_MSG_FMT = "[{name}:{levelname}:{funcName}:{asctime}] {message}"
 DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
-DEFAULT_LOGFOLDER_NAME = 'logs'
 
-
-def create_folder(
-        folder_name: str or Path = DEFAULT_LOGFOLDER_NAME) -> Path:
-    """ Create folder and return path to it.
-
-    :param folder_name: str, name of folder. 'logs' by default.
-    :return: None.
-    """
-    folder_path = Path(folder_name)
-    if folder_path.exists():
-        return folder_path
-
-    os.mkdir(folder_path)
-    return folder_path
+LOG_FOLDER = Path('logs')
+try:
+    LOG_FOLDER.mkdir()
+except FileExistsError:
+    pass
 
 
 def create_formatter(message_format: str = DEFAULT_MSG_FMT,
@@ -68,8 +58,8 @@ def create_stream_handler(level=logging.WARNING,
     """
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(level)
-    if formatter:
-        stream_handler.setFormatter(formatter)
+    formatter = formatter or create_formatter()
+    stream_handler.setFormatter(formatter)
 
     return stream_handler
 
@@ -95,29 +85,34 @@ def create_file_handler(level=logging.DEBUG,
     file_handler = logging.FileHandler(
         log_path, delay=delay, encoding=encoding, **kwargs)
     file_handler.setLevel(level)
-    if formatter:
-        file_handler.setFormatter(formatter)
+    formatter = formatter or create_formatter()
+    file_handler.setFormatter(formatter)
 
     return file_handler
 
 
-def create_logger(name: str,
+def create_logger(module_name: str,
                   level=logging.DEBUG,
                   *handlers) -> logging.Logger:
     """ Create logger.
 
-    :param name: str, name of logger.
+    :param module_name: str, name of logger.
     :param level: level of logger.
     :param handlers: handlers to be added to the logger.
     :return: logger.
     """
-    logger = logging.getLogger(name)
+    logger = logging.getLogger(module_name)
     logger.setLevel(level)
+
+    path = LOG_FOLDER / f"{module_name}.log"
+
+    default_handlers = [
+        create_stream_handler(),
+        create_file_handler(log_path=path)
+    ]
+    handlers = handlers or default_handlers
 
     for handler in handlers:
         logger.addHandler(handler)
 
     return logger
-
-
-log_folder = create_folder()

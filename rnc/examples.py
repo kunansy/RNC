@@ -17,22 +17,13 @@ __all__ = (
     'KwicExample'
 )
 
-import logging
 import re
 import webbrowser
 from typing import List, Callable, Dict, Any
 
 import rnc.corpora_logging as clog
 
-log_file = clog.log_folder / f"{__name__}.log"
-formatter = clog.create_formatter()
-
-stream_handler = clog.create_stream_handler(formatter=formatter)
-file_handler = clog.create_file_handler(
-    log_path=log_file, formatter=formatter)
-
-logger = clog.create_logger(
-    __name__, logging.DEBUG, file_handler, stream_handler)
+logger = clog.create_logger(__name__)
 
 
 def mark_found_words(txt: str,
