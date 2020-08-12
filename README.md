@@ -149,7 +149,7 @@ There's an exception if:
 * `corp.dump()` – write two files: csv file with all data and json file with request params.
 * `corp.copy()` – create a copy.
 * `corp.shuffle()` – shuffle data.
-* `corp.sort(key=, reverse=)` – sort the list of examples. Here HTTP keys don't work,
+* `corp.sort_data(key=, reverse=)` – sort the list of examples. Here HTTP keys don't work,
 key is applied to Example objects.  
 * `corp.pop(index)` – remove and return the example at the index.
 * `corp.clear()` – empty the data list.
@@ -215,7 +215,6 @@ If it is equal to `False`, the Corpus shows all examples.
 #### Corpora features
 ##### ParallelCorpus
 * Query might be in the language you want or in Russian. 
-* Turnover search is not supported. 
 
 ##### MultilingualParaCorpus
 * Working with files removed.
@@ -228,12 +227,12 @@ If it is equal to `False`, the Corpus shows all examples.
 ```python
 corp.request_examples()
 ```
-* If you've requested more than 10 pages, Corpus returns 429 error (Too many requests).
+* If you've requested more than 10 pages, RNC returns 429 error (Too many requests).
 For example requesting 100 pages you should wait about 3 minutes: 
 ![100 pages](https://github.com/FaustGoethe/RNC/blob/master/docs/100_pages.png?raw=true)
 * If you want to see messages like that:
 ```python
-rnc.set_stream_handlers_level('DEBUG')
+rnc.set_stream_handlers_level('INFO' or 'DEBUG')
 ```
 * If you want to turn off all messages:
 ```python
@@ -249,7 +248,7 @@ ru = rnc.MainCorpus(marker=str.upper)
 ```python
 ru = rnc.MainCorpus(marker=str.upper())
 ```
-* Pass an empty string as a param if you don't want to set it
+* Pass an empty string as a param if you don't want to set them
 ```python
 query = {
     'word1': '',
@@ -262,7 +261,7 @@ query = {
 
 #### How to
 ##### How to set sort?
-[Here](https://github.com/FaustGoethe/RNC/blob/master/docs/HTTP%20params.md) you can find sort keys and their descriptions.
+Sort [keys](https://github.com/FaustGoethe/RNC/blob/master/docs/HTTP%20params.md).
 
 
 ##### How to set language in ParallelCorpus?
@@ -274,7 +273,7 @@ pass this param to Corpus.
 
 
 ##### How to set subcorpus?
-There're default keys in rnc.Subcorpus.Person – Russian writers and poets: 
+There're default keys in rnc.Subcorpus.Person (working checked in **MainCorpus**) – Russian writers and poets: 
 * Pushkin
 * Dostoyevsky
 * TolstoyLN
@@ -299,6 +298,6 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
 [Documentation](https://github.com/FaustGoethe/RNC/tree/master/docs) <br>
 [Source](https://github.com/FaustGoethe/RNC)
 ---
-If you found a bug or have an idea to improve the API write to me – alniconim@gmail.com.  
+If you found a bug (add logs to the mail, please) or have an idea to improve the API write to me – alniconim@gmail.com.  
 
 P.S. If your native is Russian or you know it well, please write me in Russian.
