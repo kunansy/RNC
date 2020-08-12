@@ -2,7 +2,7 @@
 `expl = corp[0]`
 #### MainExample
 * `expl.txt` – example's text (getter and setter).
-* `expl.src` – example's source (only getter).
+* `expl.src` – example's source (getter and setter).
 * `expl.ambiguation` – example's ambiguation (getter and setter).
 * `expl.doc_url` – example's URL (only getter).
 * `expl.found_wordforms` – example's found wordforms (only getter). 
@@ -11,6 +11,8 @@ There're all fields except for URL.
 * `expl.open_doc()` – open the example in new tab of the default browser.
 * `expl.copy()` – create a copy.
 * `bool(expl)` – validating that all fields (from `data`) exists.
+* `expl == expl1` – are examples equal.
+* `'text' in expl` – does expl.txt contain text. 
 * print format: <br>
 ```
     TEXT: ...
