@@ -1,4 +1,4 @@
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 from .corpora import (
     Subcorpus,
@@ -29,9 +29,10 @@ from .examples import (
 def set_stream_handlers_level(level) -> None:
     import rnc.corpora_requests
 
-    examples.stream_handler.setLevel(level)
-    corpora.stream_handler.setLevel(level)
-    corpora_requests.stream_handler.setLevel(level)
+    # TODO:
+    examples.logger[0].setLevel(level)
+    corpora.logger[0].setLevel(level)
+    corpora_requests.logger[0].setLevel(level)
 
 
 __all__ = (
