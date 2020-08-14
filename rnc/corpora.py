@@ -20,6 +20,7 @@ import time
 import webbrowser
 from pathlib import Path
 from typing import Dict, Callable, List, Any
+from urllib.parse import unquote
 
 import bs4
 
@@ -32,6 +33,7 @@ logger = clog.create_logger(__name__)
 
 # Russian National Corpus URL
 RNC_URL = "https://processing.ruscorpora.ru/search.xml"
+BASE_RNC_URL = "https://processing.ruscorpora.ru"
 
 DATA_FOLDER = Path('data')
 try:
@@ -111,7 +113,7 @@ def clean_text_up(text: str) -> str:
 
 
 def create_doc_url(doc_url: str) -> str:
-    """ Create full url to document in Corpus.
+    """ Create full url to document in RNC.
     Add https://... to doc.
 
     :param doc_url: str, doc url to extend.
@@ -119,8 +121,7 @@ def create_doc_url(doc_url: str) -> str:
     """
     if not doc_url:
         return doc_url
-    rnc_url = RNC_URL[:RNC_URL.rindex('/')]
-    return f"{rnc_url}/{doc_url}"
+    return f"{BASE_RNC_URL}/{doc_url}"
 
 
 def join_with_plus(item: str) -> str:
@@ -133,7 +134,15 @@ def join_with_plus(item: str) -> str:
     return '+'.join(res)
 
 
-# TODO: additional info from the first corpus page
+def str_to_int(value: str) -> int:
+    """ Convert str like '350 000 134' to int.
+
+    :param value: str to convert.
+    :return: int.
+    """
+    return int(value.replace(' ', ''))
+
+
 class Corpus:
     """ Base class for Corpora """
     # default params
@@ -200,6 +209,10 @@ class Corpus:
         # type of example should be defined before params init
         self._ex_type = kwargs.pop('ex_type', None)
         self._marker = kwargs.pop('marker', None)
+        # additional info from the first page:
+        # amount of docs, contexts, where the query was found,
+        # link to the graphic with distribution by years
+        self._add_info = {}
 
         # path to local database
         classname = self.__class__.__name__.replace('Corpus', '')
@@ -221,7 +234,7 @@ class Corpus:
             except FileExistsError:
                 logger.exception('')
                 raise
-        # or working with Corpus
+        # or working with RNC
         else:
             self._from_corpus(query, p_count, **kwargs)
 
@@ -265,7 +278,8 @@ class Corpus:
             self._params['kwsz'] = kwargs.pop('kwsz')
 
         if 'subcorpus' in kwargs:
-            self._params['mycorp'] = kwargs.pop('subcorpus')
+            mycorp = kwargs.pop('subcorpus')
+            self._params['mycorp'] = unquote(mycorp)
 
         # TODO: page structure changes
         # if 'expand' in kwargs:
@@ -302,6 +316,11 @@ class Corpus:
         self._page_parser_and_ex_type()
 
         self._data = self._load_data()
+        # add info about
+        try:
+            self._get_additional_info()
+        except Exception:
+            logger.exception("It's impossible to get additional info from RNC")
 
     def _load_data(self) -> List:
         """ Load data from csv file.
@@ -559,7 +578,7 @@ class Corpus:
 
     @property
     def url(self) -> str:
-        """ Return url, first page of Corpus results.
+        """ Return url, first page of RNC results.
 
         :return: str, url.
         """
@@ -568,6 +587,104 @@ class Corpus:
             for key, val in self.params.items()
         )
         return f"{RNC_URL}?{params}"
+
+    @property
+    def amount_of_docs(self) -> int or None:
+        """ Get amount of documents, where the query was found.
+
+        :return: int, this amount or None if it doesn't exist.
+        """
+        return self._add_info.get('docs', None)
+
+    @property
+    def amount_of_contexts(self) -> int or None:
+        """ Get amount of contexts, where the query was found.
+
+        :return: int, this amount or None if it doesn't exist.
+        """
+        return self._add_info.get('contexts', None)
+
+    @property
+    def graphic_link(self) -> str or None:
+        """ Get the link to the distribution by years graphic.
+
+        :return: str, this link or None if it doesn't exist.
+        """
+        return self._add_info.get('graphic_link', None)
+
+    def open_graphic(self) -> None:
+        """ Open the graphic of distribution the query by year.
+
+        :return: None.
+        """
+        url = self.graphic_link
+        if url is None:
+            msg = "Graphic doesn't exist"
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        try:
+            webbrowser.open_new_tab(url)
+        except Exception:
+            logger.exception(
+                "It's impossible to open the graphic "
+                "with distribution the query by years")
+            raise
+
+    @staticmethod
+    def _get_where_query_found(content: bs4.element.Tag) -> Dict[str, Any]:
+        """ Get prettified and converted to int amount of found docs and contexts.
+
+        :param content: bs4.element.Tag, here these values are.
+        """
+        res = {}
+        amount = content.find('p', {'class': 'found'})
+        blocks = amount.find_all('span', {'class': 'stat-number'})
+
+        contexts = blocks[-1].get_text()
+        res['contexts'] = str_to_int(contexts)
+        if len(blocks) is 2:
+            docs = blocks[0].get_text()
+            res['docs'] = str_to_int(docs)
+        return res
+
+    @staticmethod
+    def _get_graphic_url(content: bs4.element.Tag) -> str or None:
+        """ Get distribution by years graphic link.
+
+        :param content: bs4.element.Tag, here the link is.
+        :return: str, full URL.
+        """
+        a = content.find('a', {'target': '_blank'})
+        try:
+            link = a['href']
+        except Exception:
+            return
+        return f"{BASE_RNC_URL}/{link}"
+
+    def _get_additional_info(self) -> None:
+        """ Get additional info (amount of found docs and contexts,
+        link to graphic with distribution by years).
+
+        :return: dict of str and int, this info.
+        """
+        params = self.params.copy()
+        params['lang'] = 'ru'
+        params.pop('expand', None)
+        try:
+            first_page_code = creq.get_htmls(RNC_URL, **params)[0]
+        except Exception:
+            raise
+
+        soup = bs4.BeautifulSoup(first_page_code, 'lxml')
+        content = soup.find('div', {'class': 'content'})
+
+        additional_info = Corpus._get_where_query_found(content)
+        graphic_url = Corpus._get_graphic_url(content)
+        if graphic_url:
+            additional_info['graphic_link'] = graphic_url
+
+        self._add_info = additional_info.copy()
 
     @property
     def ex_type(self) -> Any:
@@ -686,6 +803,7 @@ class Corpus:
         Parsing depends on the subcorpus,
         the method redefined at the descendants.
         """
+        # TODO: remake this func to generator?
         msg = "The func not implemented to the parent Corpus class"
         logger.error(msg)
         raise NotImplementedError(msg)
@@ -883,6 +1001,9 @@ class Corpus:
         coro_start = time.time()
         htmls = creq.get_htmls(RNC_URL, 0, self.p_count, **self.params)
         logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
+
+        # get additional info from the first RNC page.
+        self._get_additional_info()
 
         try:
             parsing_start = time.time()
@@ -1212,7 +1333,6 @@ class MainCorpus(Corpus):
 
         :param doc: bs4.element.ResultSet,
         """
-        # TODO: remake this func to generator?
         if not doc:
             logger.info(f"Empty doc found, params: {self.params}")
             return []

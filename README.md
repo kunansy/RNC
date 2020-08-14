@@ -146,6 +146,9 @@ There's an exception if:
 * `corp.params` – dict, HTTP tags (only getter). 
 * `corp.found_wordforms` – dict with found wordforms and their frequency (only getter).
 * `corp.ex_type` – type of example (only getter).
+* `corp.amount_of_docs` – amount of docs where the query was found.
+* `corp.amount_of_contexts` – amount of contexts where the query was found.
+* `corp.graphic_link` – link to the distribution by years graphic.
 * `corp.dump()` – write two files: csv file with all data and json file with request params.
 * `corp.copy()` – create a copy.
 * `corp.shuffle()` – shuffle data.
@@ -157,6 +160,7 @@ key is applied to Example objects.
 Key is applied to the Example objects.
 * `corp.url` – URL of the first Corpus page (only getter).
 * `corp.open_url()` – open the first Corpus page.
+* `corp.open_graphic()` – open the distribution by years graphic.
 
 Magic methods: 
 * `corp.dpp` or another request param (only getter).
