@@ -12,21 +12,29 @@ class TemplateCorpusTest:
     corp_normal_obj = None
     corp_kwic_obj = None
 
+    full_query = {
+        'ты': {
+            'gramm': {
+                'case': ['acc', 'nom', 'gen'],
+                'num': ['sg', 'pl']
+            },
+            'flags': {
+                'position': ['amark', 'bmark'],
+            }
+        }
+    }
+
     #########################
     #    Test requesting    #
     #########################
 
     def test_empty_query(self):
         with pytest.raises(ValueError):
-            corp = self.corp_type(
-                '', 1, marker=str.upper)
-            corp.request_examples()
+            self.corp_type('', 1, marker=str.upper)
 
     def test_p_count_zero(self):
         with pytest.raises(ValueError):
-            corp = self.corp_type(
-                'корпус', 0, marker=None)
-            corp.request_examples()
+            self.corp_type('корпус', 0, marker=None)
 
     def test_one_str_with_one_word(self):
         corp = self.corp_type('ты', 1, marker=str.capitalize, spd=1, dpp=5)
@@ -63,18 +71,7 @@ class TemplateCorpusTest:
         sleep(5)
 
     def test_one_form_with_several_grams_and_flags(self):
-        query = {
-            'ты': {
-                'gramm': {
-                    'case': ['acc', 'nom', 'gen'],
-                    'num': ['sg', 'pl']
-                },
-                'flags': {
-                    'position': ['amark', 'bmark'],
-                }
-            }
-        }
-        corp = self.corp_type(query, 1, marker=str.capitalize)
+        corp = self.corp_type(self.full_query, 1, marker=str.capitalize)
         corp.request_examples()
 
         assert len(corp) > 1
@@ -88,36 +85,14 @@ class TemplateCorpusTest:
         sleep(5)
 
     def test_full_query_with_kwic_without_kwsz(self):
-        query = {
-            'ты': {
-                'gramm': {
-                    'case': ['acc', 'nom', 'gen'],
-                    'num': ['sg', 'pl']
-                },
-                'flags': {
-                    'position': ['amark', 'bmark'],
-                }
-            }
-        }
-        corp = self.corp_type(query, 1, marker=str.capitalize, out='kwic')
+        corp = self.corp_type(self.full_query, 1, marker=str.capitalize, out='kwic')
         corp.request_examples()
 
         assert len(corp) > 1
         sleep(5)
 
     def test_full_query_with_kwic_with_kwsz(self):
-        query = {
-            'ты': {
-                'gramm': {
-                    'case': ['acc', 'nom', 'gen'],
-                    'num': ['sg', 'pl']
-                },
-                'flags': {
-                    'position': ['amark', 'bmark'],
-                }
-            }
-        }
-        corp = self.corp_type(query, 1, marker=str.capitalize, out='kwic', kwsz=7)
+        corp = self.corp_type(self.full_query, 1, marker=str.capitalize, out='kwic', kwsz=7)
         corp.request_examples()
 
         assert len(corp) > 1
@@ -140,7 +115,9 @@ class TemplateCorpusTest:
             subcorpus="JSONeyJkb2Nfc2V4IjogWyLQvNGD0LYiXSwgImRvY19pX3RhZ2dpbmciOiBbIjEiXX0%3D"
         )
         corp.request_examples()
+
         assert len(corp) >= 1
+        sleep(5)
 
     def test_call(self):
         corp = self.corp_type('ты', 1, marker=str.capitalize, out='kwic')
@@ -256,12 +233,27 @@ class TemplateCorpusTest:
 
         assert isinstance(corp.url, str) and corp.url
 
+    def test_amount_of_docs_normal(self):
+        assert isinstance(self.corp_normal_obj.amount_of_docs, int)
+
+    def test_amount_of_docs_kwic(self):
+        assert self.corp_kwic_obj.amount_of_docs is None
+
+    def test_amount_of_contexts_normal(self):
+        assert isinstance(self.corp_normal_obj.amount_of_contexts, int)
+
+    def test_amount_of_contexts_kwic(self):
+        assert isinstance(self.corp_kwic_obj.amount_of_contexts, int)
+
     ##########################
     # Test working with data #
     ##########################
 
     def test_open_url(self):
         self.corp_normal_obj.open_url()
+
+    def test_open_graphic(self):
+        self.corp_normal_obj.open_graphic()
 
     def test_copy(self):
         copy = self.corp_normal_obj.copy()
@@ -507,7 +499,9 @@ class TestPaper2000Corpus(TemplateCorpusTest):
             subcorpus="JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDEwIl19"
         )
         corp.request_examples()
+
         assert len(corp) >= 1
+        sleep(5)
 
 
 class TestPaperRegionalCorpus(TemplateCorpusTest):
@@ -534,7 +528,13 @@ class TestPaperRegionalCorpus(TemplateCorpusTest):
             subcorpus="JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDEwIl19"
         )
         corp.request_examples()
+
         assert len(corp) >= 1
+        sleep(5)
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
 
 
 class TestParallelCorpus(TemplateCorpusTest):
@@ -561,13 +561,19 @@ class TestParallelCorpus(TemplateCorpusTest):
             subcorpus='JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDAwIl19'
         )
         corp.request_examples()
+
         assert len(corp) >= 1
+        sleep(5)
 
     def test_sort_data(self):
         copy = self.corp_normal_obj.copy()
         copy.sort_data(key=lambda x: len(x.ru))
 
         assert copy.data != self.corp_normal_obj.data
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
 
 
 class TestMultilingualParaCorpus(TemplateCorpusTest):
@@ -590,14 +596,16 @@ class TestMultilingualParaCorpus(TemplateCorpusTest):
 
     def test_subcorpus(self):
         pass
-        # there's a bug on RNC
+        # it's impossible to set subcorpus in MultilingualParaCorpus
 
         # corp = self.corp_type(
         #     'ты', 1,
         #     subcorpus='JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDAwIl19'
         # )
         # corp.request_examples()
+        #
         # assert len(corp) >= 1
+        # sleep(5)
 
     def test_sort_data(self):
         copy = self.corp_normal_obj.copy()
@@ -631,6 +639,10 @@ class TestMultilingualParaCorpus(TemplateCorpusTest):
     def test_found_wordforms_from_file(self):
         pass
 
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
+
 
 class TestTutoringCorpus(TemplateCorpusTest):
     corp_type = rnc.TutoringCorpus
@@ -649,6 +661,10 @@ class TestTutoringCorpus(TemplateCorpusTest):
 
         assert len(corp) >= 1
         sleep(5)
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
 
 
 class TestDialectalCorpus(TemplateCorpusTest):
@@ -672,13 +688,16 @@ class TestDialectalCorpus(TemplateCorpusTest):
     def test_subcorpus(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus='JSONeyJkb2NfcmVnaW9uIjogWyLQmtCw0YDQtdC70LjRjyJdfQ=='
+            subcorpus='JSONeyJkb2NfcmVnaW9uIjogWyLQmtCw0YDQtdC70LjRjyJdfQ%3D%3D'
         )
-        # TODO: написать преобразование URL символов в обычные, поскольку
-        #  aiohttp переводит символы в нужный код сам, а уже переведённые
-        #  переводит ещё раз
         corp.request_examples()
+
         assert len(corp) >= 1
+        sleep(5)
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
 
 
 class TestSpokenCorpus(TemplateCorpusTest):
@@ -691,6 +710,10 @@ class TestSpokenCorpus(TemplateCorpusTest):
     sleep(5)
     corp_kwic_obj.request_examples()
     sleep(5)
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
 
 
 class TestAccentologicalCorpus(TemplateCorpusTest):
@@ -707,8 +730,13 @@ class TestAccentologicalCorpus(TemplateCorpusTest):
     def test_subcorpus(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus='JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il0sICJkb2NfaV9sZV9lbmRfeWVhciI6IFsiMTgzMCJdfQ=='
+            subcorpus='JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il0sICJkb2NfaV9sZV9lbmRfeWVhciI6IFsiMTgzMCJdfQ%3D%3D'
         )
-
         corp.request_examples()
+
         assert len(corp) >= 1
+        sleep(5)
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
