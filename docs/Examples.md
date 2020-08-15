@@ -82,3 +82,10 @@ All the same to `MainExample`.
 
 #### TutoringExample
 All the same to `MainExample`.
+
+---
+
+#### MultimodalExample
+* `expl.filepath` – path to the local media file (getter and setter).
+* `expl.download_file()` – download the media file.
+* Other the same to `MainExample`.

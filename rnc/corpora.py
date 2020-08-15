@@ -19,7 +19,7 @@ import string
 import time
 import webbrowser
 from pathlib import Path
-from typing import Dict, Callable, List, Any
+from typing import Dict, Callable, List, Any, Tuple
 from urllib.parse import unquote
 
 import bs4
@@ -578,15 +578,22 @@ class Corpus:
 
     @property
     def url(self) -> str:
-        """ Return url, first page of RNC results.
+        """ Return URL, first page of RNC results.
 
-        :return: str, url.
+        :return: str, URL.
         """
         params = '&'.join(
             f"{key}={val}"
             for key, val in self.params.items()
         )
         return f"{RNC_URL}?{params}"
+
+    @property
+    def ex_type(self) -> Any:
+        """
+        :return: example type of the Corpus.
+        """
+        return self._ex_type
 
     @property
     def amount_of_docs(self) -> int or None:
@@ -633,7 +640,7 @@ class Corpus:
 
     @staticmethod
     def _get_where_query_found(content: bs4.element.Tag) -> Dict[str, Any]:
-        """ Get prettified and converted to int amount of found docs and contexts.
+        """ Get converted to int amount of found docs and contexts.
 
         :param content: bs4.element.Tag, here these values are.
         """
@@ -650,7 +657,7 @@ class Corpus:
 
     @staticmethod
     def _get_graphic_url(content: bs4.element.Tag) -> str or None:
-        """ Get distribution by years graphic link.
+        """ Get distribution by years graphic URL.
 
         :param content: bs4.element.Tag, here the link is.
         :return: str, full URL.
@@ -666,7 +673,7 @@ class Corpus:
         """ Get additional info (amount of found docs and contexts,
         link to graphic with distribution by years).
 
-        :return: dict of str and int, this info.
+        :return: None.
         """
         params = self.params.copy()
         params['lang'] = 'ru'
@@ -685,13 +692,6 @@ class Corpus:
             additional_info['graphic_link'] = graphic_url
 
         self._add_info = additional_info.copy()
-
-    @property
-    def ex_type(self) -> Any:
-        """
-        :return: example type of the Corpus.
-        """
-        return self._ex_type
 
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
@@ -797,7 +797,7 @@ class Corpus:
             self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
 
     def _parse_doc(self,
-                   doc: bs4.element.ResultSet) -> Any:
+                   doc: bs4.element.Tag) -> Any:
         """ Parse the doc to list of Examples.
 
         Parsing depends on the subcorpus,
@@ -998,12 +998,12 @@ class Corpus:
             logger.exception(msg)
             raise
 
+        # get additional info from the first RNC page.
+        self._get_additional_info()
+
         coro_start = time.time()
         htmls = creq.get_htmls(RNC_URL, 0, self.p_count, **self.params)
         logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
-
-        # get additional info from the first RNC page.
-        self._get_additional_info()
 
         try:
             parsing_start = time.time()
@@ -1076,6 +1076,26 @@ class Corpus:
         """
         filtered_data = list(filter(key, self.data))
         self._data = filtered_data[:]
+
+    def findall(self,
+                pattern: Any) -> None:
+        """ Apply the pattern to the examples' text with re.findall.
+        Change tha data list.
+
+        :param pattern: r str or re.pattern, pattern to apply.
+        :return: None.
+        """
+        pass
+
+    def finditer(self,
+                 pattern: Any) -> None:
+        """ Apply the pattern to the examples' text with re.findall.
+        Change tha data list.
+
+        :param pattern: r str or re.pattern, pattern to apply.
+        :return: None.
+        """
+        pass
 
     def __repr__(self) -> str:
         """ Format:
@@ -1543,7 +1563,84 @@ class AccentologicalCorpus(MainCorpus):
 
 
 class MultimodalCorpus(Corpus):
-    pass
+    MEDIA_FOLDER = DATA_FOLDER / 'media'
+    _MODE = 'murco'
+
+    try:
+        MEDIA_FOLDER.mkdir()
+    except FileExistsError:
+        pass
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs, ex_type=expl.MultimodalExample)
+        self._params['mode'] = self._MODE
+
+    def _parse_example(self,
+                       example: bs4.element.Tag) -> Tuple[str, str, str, list, str]:
+        """ Parse example get text, source etc.
+
+        :param example: bs4.element.Tag, example to parse.
+        :return: tuple of parsed values.
+        """
+        src = Corpus._get_source(example)
+        txt = Corpus._get_text(example)
+        txt = txt[:txt.index(src)]
+        txt = txt[:txt.rindex('[')].strip()
+
+        doc_url = Corpus._get_doc_url(example)
+        ambiguation = Corpus._get_ambiguation(example)
+        found_words = Corpus._find_searched_words(example)
+
+        return txt, src, ambiguation, found_words, doc_url
+
+    def _parse_media(self,
+                     media: bs4.element.Tag) -> Tuple[str, str]:
+        """ Get link to the media file, filepath.
+
+        :param media: bs4.element.Tag, here they are.
+        :return: tuple of str and Path, link and filepath.
+        """
+        try:
+            media_link = media.find('td').a['href']
+        except Exception:
+            raise
+        media_link, filename = media_link.split('?name=')
+        return media_link, self.MEDIA_FOLDER / filename
+
+    def _parse_doc(self,
+                   doc: bs4.element.Tag) -> List[Any]:
+        """ Parse the documents to examples.
+
+        :param doc: doc to parse.
+        :return: list of examples.
+        """
+        try:
+            media, example = doc.find_all('td', {'valign': 'top'})
+        except ValueError:
+            return []
+        examples = []
+
+        media_url, filename = self._parse_media(media)
+        for ex in example.find_all('li'):
+            data_from_example = self._parse_example(ex)
+
+            new_ex = self.ex_type(*data_from_example, media_url, filename)
+            new_ex.mark_found_words(self.marker)
+            self._add_wordforms(new_ex.found_wordforms)
+            examples += [new_ex]
+
+        return examples
+
+    def download_all(self) -> None:
+        """ Download all files.
+
+        :return: None.
+        """
+        urls_to_names = [
+            (ex.media_url, ex.filepath)
+            for ex in self
+        ]
+        creq.download_docs(urls_to_names)
 
 
 class MultiPARCCorpus(Corpus):

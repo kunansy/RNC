@@ -1,4 +1,4 @@
-__version__ = '0.4.2'
+__version__ = '0.5'
 
 from .corpora import (
     Subcorpus,
@@ -10,7 +10,8 @@ from .corpora import (
     SpokenCorpus,
     AccentologicalCorpus,
     MultilingualParaCorpus,
-    TutoringCorpus
+    TutoringCorpus,
+    MultimodalCorpus
 )
 from .examples import (
     MainExample,
@@ -22,6 +23,7 @@ from .examples import (
     AccentologicalExample,
     MultilingualParaExample,
     TutoringExample,
+    MultimodalExample,
     KwicExample
 )
 
@@ -44,8 +46,9 @@ __all__ = (
     'SpokenCorpus',
     'AccentologicalCorpus',
     'MultilingualParaCorpus',
-    'Subcorpus',
     'TutoringCorpus',
+    'MultimodalCorpus',
+    'Subcorpus',
 
     'MainExample',
     'Paper2000Example',
@@ -56,6 +59,7 @@ __all__ = (
     'AccentologicalExample',
     'MultilingualParaExample',
     'TutoringExample',
+    'MultimodalExample',
     'KwicExample',
 
     'set_stream_handlers_level'

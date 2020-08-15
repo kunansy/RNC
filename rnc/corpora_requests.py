@@ -14,6 +14,7 @@ __all__ = 'get_htmls', 'is_request_correct'
 import asyncio
 from typing import List, Tuple
 
+import aiofiles
 import aiohttp
 import bs4
 
@@ -28,6 +29,7 @@ async def fetch(url: str,
     """ Coro, obtaining page's html code. There's ClientTimeout.
 
     If response status == 429 sleep and try again.
+
     If response status != 429 and != 200, raise an exception.
 
     :param url: string, URL to get its html code.
@@ -36,8 +38,8 @@ async def fetch(url: str,
     :return: 'p' key to sort results and html code, decoded to UTF-8.
     """
     wait = 24
-    t_out = aiohttp.ClientTimeout(wait + 1)
-    async with ses.get(url, params=kwargs, timeout=t_out) as resp:
+    timeout = aiohttp.ClientTimeout(wait + 1)
+    async with ses.get(url, params=kwargs, timeout=timeout) as resp:
         if resp.status == 200:
             return kwargs['p'], await resp.text('utf-8')
         elif resp.status == 429:
@@ -255,3 +257,97 @@ def is_request_correct(url: str,
         raise ValueError("Last page doesn't exist")
 
     return True
+
+
+async def fetch_download(url: str,
+                         ses: aiohttp.ClientSession,
+                         filename: str) -> str:
+    """ Coro, downloading and writing media file from RNC.
+    There's ClientTimeout = 25s.
+
+    If response status == 429 sleep 24s and try again.
+
+    If response status != 429 and != 200, raise an exception.
+
+    :param url: str, file's url.
+    :param ses: aiohttp.ClientSession.
+    :param filename: str, name of the file.
+    :return: str, name of the file.
+    """
+    wait = 24
+    timeout = aiohttp.ClientTimeout(wait + 1)
+    async with ses.get(url, allow_redirects=True, timeout=timeout) as resp:
+        if resp.status == 200:
+            content = await resp.read()
+            async with aiofiles.open(filename, 'wb') as f:
+                await f.write(content)
+            return filename
+        elif resp.status == 429:
+            await asyncio.sleep(wait)
+            return await fetch_download(url, ses, filename)
+        resp.raise_for_status()
+
+
+async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
+    """ Coro executing fetch_download coro, catching exceptions.
+
+    :param url_to_name: list of tuples of str, pairs: url – filename.
+    :return None.
+
+    :exception aiohttp.ClientResponseError:
+    :exception aiohttp.ClientConnectionError:
+    :exception aiohttp.InvalidURL:
+    :exception aiohttp.ServerTimeoutError:
+    :exception Exception: another one.
+    """
+    async with aiohttp.ClientSession() as ses:
+        tasks = [
+            asyncio.create_task(fetch_download(url, ses, filename))
+            for url, filename in url_to_name
+        ]
+        while True:
+            done, pending = await asyncio.wait(tasks)
+            msg = "While downloading or writing file"
+            for future in done:
+                try:
+                    filename = future.result()
+                except aiohttp.ClientResponseError:
+                    # 5.., 404 etc
+                    logger.exception(msg)
+                    raise
+                except aiohttp.ClientConnectionError:
+                    # there's no connection or access to the site
+                    logger.exception(msg)
+                    raise
+                except aiohttp.InvalidURL:
+                    # wrong url or params
+                    logger.exception(msg)
+                    raise
+                except aiohttp.ServerTimeoutError:
+                    # timeout
+                    logger.exception(msg)
+                    raise
+                except Exception:
+                    # another error
+                    logger.exception(msg)
+                    raise
+                else:
+                    logger.debug(f"{filename} successfully downloaded")
+                    return
+
+
+def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
+    """ Run coro, get the files.
+
+    :param url_to_name: list of tuples of str, pairs: url – filename.
+    :return: None.
+
+    :exception aiohttp.ClientResponseError:
+    :exception aiohttp.ClientConnectionError:
+    :exception aiohttp.InvalidURL:
+    :exception aiohttp.ServerTimeoutError:
+    :exception Exception: another one.
+    """
+    logger.info(f"Requested {len(url_to_name)} files to download")
+    asyncio.run(download_docs_coro(url_to_name))
+    logger.info(f"Downloading successfully completed")

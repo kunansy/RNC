@@ -35,7 +35,7 @@ Docs to all [subcorpora](https://github.com/FaustGoethe/RNC/tree/master/docs/Lex
 * Poetic – **in developing...**
 * Spoken – class **SpokenCorpus**
 * Accentological – class **AccentologicalCorpus**
-* Multimodal – **in developing...**
+* Multimodal – class **MultimodalCorpus**
 * MultiPARC – **in developing...**
   * «Ревизор» – **in developing...**
   * English-Russian – **in developing...**

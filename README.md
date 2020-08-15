@@ -41,7 +41,7 @@ ru.request_examples()
 ```
 * **query** – one str or dict with tags. Words to found, you should give the vocabulary form of them.
 * **p_count** – count of **PAGES**.
-* **file** – name of local csv file, optional.
+* **file** – path of local csv file, optional. Example: `file='data\\filename.csv'`. 
 * **marker** – function, with which found wordforms'll be marked, optional. 
 * **kwargs** – additional params.
 
@@ -223,6 +223,10 @@ If it is equal to `False`, the Corpus shows all examples.
 ##### MultilingualParaCorpus
 * Working with files removed.
 * Param `subcorpus` not demanded by default, but it might be passed, see **how to** section below.
+
+##### MultimodalCorpus
+* `corp.download_all()` – download all media files. **It's recommended** to use 
+this method instead of `expl.download_file`.
 
 ---
 

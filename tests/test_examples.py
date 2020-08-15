@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import rnc.corpora as corp
 import rnc.examples as expl
 import pytest
@@ -438,3 +441,36 @@ class TestParallelExample(TemplateTestExamples):
         copy['ru'] = new_txt
 
         assert '1' in copy and '3' in copy
+
+
+class TestMultimodalExample(TemplateTestExamples):
+    corpus_res = corp.MultimodalCorpus(
+        'корпус', 1, marker=str.upper)
+    corpus_res.request_examples()
+    ex: expl.MultimodalExample = corpus_res[0]
+
+    def test_columns(self):
+        columns = self.ex.columns
+        expected = ['text', 'source', 'ambiguation',
+                    'found wordforms', 'URL', 'media_url', 'filename']
+
+        assert columns == expected
+
+    def test_items(self):
+        items = self.ex.items
+
+        assert all(isinstance(i, (str, Path)) and i for i in items)
+
+    def test_filepath_getter(self):
+        path = self.ex.filepath
+
+        assert isinstance(path, Path)
+
+    def test_filepath_setter(self):
+        self.ex.filepath = 'path'
+
+    def test_download_file(self):
+        self.ex.download_file()
+        files = os.listdir('data\\media')
+
+        assert self.ex.filepath.name in files

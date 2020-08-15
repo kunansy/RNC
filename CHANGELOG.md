@@ -2,26 +2,26 @@
 
 #### 0.1 – 26.07.2020
 First release
-* `MainCorpus`
+* `MainCorpus`.
 
 
 #### 0.2 – 26.07.2020
 ##### Added
-* `Paper2000Corpus`
-* `PaperRegionalCorpus`
-* `DialectCorpus`
-* `SpokenCorpus`
-* `AccentologyCorpus`
+* `Paper2000Corpus`.
+* `PaperRegionalCorpus`.
+* `DialectCorpus`.
+* `SpokenCorpus`.
+* `AccentologyCorpus`.
 
 
 #### 0.2.1 – 31.07.2020
 #### Changed
-* Marking found wordforms with re.
+* Marking found wordforms with `re`.
 * Logging simplified.
 * Exceptions catching and evaluating.
 * Some methods became static.
 * `__repr__` and `__str__` methods in `Example` and `Corpus`.
-* Ex_type initting fixed. 
+* Ex_type init fixed. 
 * Docs corrected.
 * Now one can dump data to files even if they exist.
 
@@ -53,7 +53,6 @@ One can change this param or turn the restriction off.
 * Order of receiving pages corrected.
 * Corpus init divided: _from_file, _from_Corpus.
  
-
 #### Added
 * ParallelCorpus.
 * Adding found wordforms to the Corpus initting from file.
@@ -75,7 +74,6 @@ is equal to the Corpus class type.
 * Deleting the example by the index – **Issue 6** closed.
 * Method `filter` to Corpus – **Issue 9** closed. 
 
-
 #### Fixed
 * Distance between words set – **Issue 7** closed. 
 * Order of texts in the ParallelCorpus – **Issue 8** closed.
@@ -89,8 +87,8 @@ Other minor fixes and improvements.
 * Corpora were renamed.
  
 #### Added
-* MultilingualParaCorpus
-* TutoringCorpus
+* MultilingualParaCorpus.
+* TutoringCorpus.
 
 #### Fixed
 * Some Corpora inherited from MainCorpus didn't work.
@@ -108,3 +106,12 @@ Minor fixes and improvements.
 * Some features to Example.
 
 Minor fixes and improvements.
+
+
+#### 0.5 – 15.08.2020
+#### Changed
+* Logging/creating a logger simplified.
+
+#### Added
+* Additional info from the first RNC page.
+* `MultimodalCorpus`.

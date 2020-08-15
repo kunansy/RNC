@@ -19,9 +19,11 @@ __all__ = (
 
 import re
 import webbrowser
+from pathlib import Path
 from typing import List, Callable, Dict, Any
 
 import rnc.corpora_logging as clog
+import rnc.corpora_requests as creq
 
 logger = clog.create_logger(__name__)
 
@@ -652,7 +654,62 @@ class AccentologicalExample(Example):
 
 
 class MultimodalExample(Example):
-    pass
+    def __init__(self,
+                 txt: str,
+                 src: str,
+                 ambiguation: str,
+                 found_wordforms: List[str] or str,
+                 doc_url: str,
+                 media_url: str,
+                 filename: str) -> None:
+        super().__init__(txt, src, ambiguation, found_wordforms, doc_url)
+        self._media_url = media_url
+        self._filepath = Path(filename)
+
+    @property
+    def filepath(self) -> Path:
+        """ Get the path to the local file.
+
+        :return: Path, path to the file.
+        """
+        return self._filepath
+
+    @filepath.setter
+    def filepath(self,
+                 other: str or Path) -> None:
+        """ Set new path to the local file.
+
+        ATTENTION: if the file exists it'll not be moved to
+        the new path. You should call 'download_file' again.
+
+        :param other: str of path, new path to the local file.
+        :return: None.
+        """
+        self._filepath = Path(other)
+
+    @property
+    def columns(self) -> List[str]:
+        """ For csv writing.
+
+        :return: list of str, names of columns.
+        """
+        return super().columns + ['media_url', 'filename']
+
+    @property
+    def items(self) -> List[Any]:
+        """ For csv writing.
+
+        :return: list of any types, values of columns.
+        """
+        return super().items + [self._media_url, self.filepath]
+
+    def download_file(self) -> None:
+        """ Download the media file. """
+        data = [(self._media_url, str(self.filepath))]
+        try:
+            creq.download_docs(data)
+        except Exception:
+            raise
 
 
 class MultiPARCExample(Example):
