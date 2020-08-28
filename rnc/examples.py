@@ -67,7 +67,7 @@ class Example:
         :param txt: str, example's text.
         :param src: str, example's source.
         :param ambiguation: str, example's ambiguation.
-        :param found_wordforms: list of str or str joined with ', ',
+        :param found_wordforms: list of str, None or str joined with ', ',
         example's found wordforms.
         :param doc_url: str, example's url.
         :return: None.
@@ -137,7 +137,7 @@ class Example:
 
     @property
     def data(self) -> Dict[str, Any]:
-        """ There're all fields except for doc_url.
+        """ There are all fields except for doc_url.
         Found wordforms joined with ', '.
 
         :return: dict with fields names and their values.
@@ -160,8 +160,8 @@ class Example:
         """
         if not isinstance(other, str):
             class_name = self.__class__.__name__
-            logger.warning(
-                f"As a txt to {class_name} set {type(other)}, str expected")
+            logger.warning(f"As a text to {class_name} "
+                           f"set {type(other)}, str expected")
 
         self._txt = other
 
@@ -174,10 +174,9 @@ class Example:
         :return: None.
         """
         if not isinstance(other, str):
-            if not isinstance(other, str):
-                class_name = self.__class__.__name__
-                logger.warning(
-                    f"As a src to {class_name} set {type(other)}, str expected")
+            class_name = self.__class__.__name__
+            logger.warning(f"As a source to {class_name} "
+                           f"set {type(other)}, str expected")
 
         self._src = other
 
@@ -199,13 +198,8 @@ class Example:
         """ Open the doc in the new tab of the default browser.
 
         :return: None.
-        :exception ValueError: URL is not like 'http...'
-        :exception: if something's wrong.
+        :exception: if something is wrong.
         """
-        if not self._doc_url.startswith('http'):
-            logger.exception(
-                f"Tried to open doc with wrong url: {self._doc_url}")
-            raise ValueError(f"Wrong URL: {self._doc_url}")
         try:
             webbrowser.open_new_tab(self._doc_url)
         except Exception:
@@ -221,7 +215,7 @@ class Example:
         :return: None.
         """
         self._txt = mark_found_words(
-            self._txt, self._found_wordforms, marker)
+            self.txt, self.found_wordforms, marker)
 
     def copy(self) -> Any:
         """
@@ -240,8 +234,8 @@ class Example:
 
     def __contains__(self,
                      item: Any) -> bool:
-        """ Checking that item is in the text.
-        Registers equaled.
+        """ Whether the item is in the text.
+        Registers equaled (if it is available).
 
         :param item: any type, item to check.
         :return: whether item is in text.
@@ -251,7 +245,11 @@ class Example:
         return item in self.txt
 
     def __str__(self) -> str:
-        """ Str format depends on the descendant.
+        """ Str format:
+            TEXT: ...
+            SOURCE: ...
+            AMBIGUATION: ...
+            FOUND WORDFORMS: ...
 
         :return: this str.
         """
@@ -262,7 +260,12 @@ class Example:
         return res
 
     def __repr__(self) -> str:
-        """ Str format depends on the descendant.
+        """ Str format:
+            text: ...
+            source: ...
+            ambiguation: ...
+            found wordforms: ...
+            URL: ...
 
         :return: this str.
         """
@@ -288,7 +291,7 @@ class Example:
 
 
 class KwicExample(Example):
-    __slots__ = '__left', '__center', '__right'
+    __slots__ = '_left', '_center', '_right'
 
     def __init__(self,
                  left: str,
@@ -297,7 +300,7 @@ class KwicExample(Example):
                  src: str,
                  found_wordforms: List[str] or str,
                  doc_url: str) -> None:
-        """ There's no ambiguation, it set with ''.
+        """ There is no ambiguation, it set with ''.
 
         :param left: str, example's left context.
         :param center: str, example's center context.
@@ -306,9 +309,9 @@ class KwicExample(Example):
         :param found_wordforms: list of str or str, example's found wordforms.
         :param doc_url: str, example's URL.
         """
-        self.__left = left
-        self.__center = center
-        self.__right = right
+        self._left = left
+        self._center = center
+        self._right = right
         super().__init__(self.txt, src, '', found_wordforms, doc_url)
 
     @property
@@ -316,21 +319,21 @@ class KwicExample(Example):
         """
         :return: str, example's left context.
         """
-        return self.__left
+        return self._left
 
     @property
     def center(self) -> Any:
         """
         :return: str, example's center context.
         """
-        return self.__center
+        return self._center
 
     @property
     def right(self) -> Any:
         """
         :return: str, example's right context.
         """
-        return self.__right
+        return self._right
 
     @property
     def txt(self) -> str:
@@ -342,7 +345,7 @@ class KwicExample(Example):
 
     @property
     def ambiguation(self) -> None:
-        msg = "There's no ambiguation in KWICExamples"
+        msg = "There is no ambiguation in KWICExamples"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -350,7 +353,7 @@ class KwicExample(Example):
     def data(self) -> Dict[str, Any]:
         """ All fields except for URL.
 
-        :return: dict with fields names and their values.
+        :return: dict with fields' names and their values.
         """
         data = {
             'left': self.left,
@@ -373,7 +376,7 @@ class KwicExample(Example):
             class_name = self.__class__.__name__
             logger.warning(f"As a left context to {class_name} "
                            f"set {type(other)}, str expected")
-        self.__left = other
+        self._left = other
 
     @center.setter
     def center(self,
@@ -387,7 +390,7 @@ class KwicExample(Example):
             class_name = self.__class__.__name__
             logger.warning(f"As a center context to {class_name} "
                            f"set {type(other)}, str expected")
-        self.__center = other
+        self._center = other
 
     @right.setter
     def right(self,
@@ -401,27 +404,27 @@ class KwicExample(Example):
             class_name = self.__class__.__name__
             logger.warning(f"As a right context to {class_name} "
                            f"set {type(other)}, str expected")
-        self.__right = other
+        self._right = other
 
     @txt.setter
     def txt(self,
             other: Any) -> None:
-        """ Text setter not implemented to kwic """
+        """ Text setter not implemented to KWICExamples """
         msg = "Text setter not implemented to KWICExamples"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     def mark_found_words(self,
                          marker: Callable) -> None:
-        """ Mark found wordforms in all contexts using marker function.
+        """ Mark found wordforms in all contexts using marker.
 
         :param marker: function to mark found wordforms.
         :return: None.
         """
         words = self.found_wordforms
-        self.__left = mark_found_words(self.left, words, marker)
-        self.__center = mark_found_words(self.center, words, marker)
-        self.__right = mark_found_words(self.right, words, marker)
+        self._left = mark_found_words(self.left, words, marker)
+        self._center = mark_found_words(self.center, words, marker)
+        self._right = mark_found_words(self.right, words, marker)
 
 
 class MainExample(Example):
@@ -448,17 +451,16 @@ class ParallelExample(Example):
                  found_wordforms: List[str] or str = None,
                  doc_url: str = '') -> None:
         """
-        :param txt: dict of str, {lang: text}
+        :param txt: dict of str, {language tag: text}
         :param src: str, examples source.
         :param ambiguation: str, examples ambiguation.
         :param found_wordforms: list of str, examples found wordforms.
         :param doc_url: str, examples URL.
         """
         txt = txt or {}
-        found_wordforms = found_wordforms or []
 
         super().__init__(txt, src, ambiguation, found_wordforms, doc_url)
-        self.sort(lambda x: x[0])
+        self.sort()
 
     @property
     def txt(self) -> Dict[str, Any]:
@@ -472,17 +474,17 @@ class ParallelExample(Example):
     def txt(self,
             other: Any) -> None:
         """ Text setter not implemented to the ParallelExample """
-        msg = "Text setter not implemented to ParallelExamples. " \
-              "Try to use ex['lang'] instead"
+        msg = ("Text setter not implemented to ParallelExamples. "
+               "Try to use ex['language tag'] instead")
         logger.error(msg)
         raise NotImplementedError(msg)
 
     @property
     def data(self) -> Dict[str, Any]:
-        """ There're all fields except for doc_url.
+        """ There are all fields except for doc_url.
         Found wordforms joined with ', '.
 
-        :return: dict with fields names and their values.
+        :return: dict with fields' names and their values.
         """
         data = self.txt.copy()
         data['source'] = self.src
@@ -505,8 +507,8 @@ class ParallelExample(Example):
     @staticmethod
     def _best_src(f_src: str,
                   s_src: str) -> str:
-        """ Choose the best source, means there're
-        two translations in it.
+        """ Choose the best source, means
+        there are two translations in it.
 
         :param f_src: str, first source.
         :param s_src: str, second source.
@@ -519,13 +521,14 @@ class ParallelExample(Example):
     def sort(self,
              key: Callable = None,
              reverse: bool = False) -> None:
-        """ Sort txt dict, allowing the key to lang tags.
+        """ Sort txt dict, allowing the key to
+        items() from there.
 
-        :param key: callable, key to sort.
-        :param reverse: bool, whether sorting'll be in reversed order.
+        :param key: callable, key to sort. Sort by language tag by default.
+        :param reverse: bool, whether sorting will be in reversed order.
         :return: None.
         """
-        key = key or (lambda x: x)
+        key = key or (lambda items: items[0])
         data = sorted(self.txt.items(), key=key, reverse=reverse)
         self._txt = dict(data)
 
@@ -540,8 +543,8 @@ class ParallelExample(Example):
 
     def __contains__(self,
                      item: Any) -> bool:
-        """ Checking that item is in the text.
-        Registers equaled.
+        """ Whether the item is in the text.
+        Registers equaled (if it is available).
 
         :param item: any type, item to check.
         :return: whether item is in text.
@@ -556,7 +559,7 @@ class ParallelExample(Example):
         """ Concatenate two examples:
             – join the texts
 
-            – choose the best source, there're
+            – choose the best source, there are
             two translations there
 
             – choose where the text is disambiguated.
@@ -568,8 +571,9 @@ class ParallelExample(Example):
         :exception TypeError: if wrong type given.
         """
         if not isinstance(other, self.__class__):
-            msg = f"'+=' supported only with '{self.__class__}' " \
-                  f"objects, but {type(other)} given"
+            class_name = self.__class__.__name__
+            msg = (f"'+=' supported only with '{class_name}' "
+                   f"objects, but {type(other)} given")
             logger.error(msg)
             raise TypeError(msg)
 
@@ -596,9 +600,9 @@ class ParallelExample(Example):
 
     def __getattr__(self,
                     item: str) -> Any:
-        """ Get text in language.
+        """ Get the text in language.
 
-        :param item: str, language.
+        :param item: str, language tag.
         :return: str or None, text in the language if exists.
         """
         return self.txt.get(item, None)
@@ -607,7 +611,7 @@ class ParallelExample(Example):
                     lang: str) -> Any:
         """ Get text in the language.
 
-        :param lang: str, language.
+        :param lang: str, language tag.
         :return: str or None, text in the language if exists.
         """
         return self.txt.get(lang, None)
@@ -615,12 +619,12 @@ class ParallelExample(Example):
     def __setitem__(self,
                     lang: str,
                     txt: Any) -> None:
-        """ Change text in the lang.
+        """ Change text in the language.
 
-        :param lang: str, lang tag.
+        :param lang: str, language tag.
         :param txt: any type, new text.
         :return: None.
-        :exception ValueError: if the text in the lang doesn't exist.
+        :exception ValueError: if the text in the language does not exist.
         """
         if not isinstance(txt, str):
             class_name = self.__class__.__name__
@@ -662,6 +666,17 @@ class MultimodalExample(Example):
                  doc_url: str,
                  media_url: str,
                  filename: str) -> None:
+        """
+        :param txt: str, example's text.
+        :param src: str, example's source.
+        :param ambiguation: str, example's ambiguation.
+        :param found_wordforms: list of str, None or str joined with ', ',
+        example's found wordforms.
+        :param doc_url: str, example's url.
+        :param media_url: str, URL to example's media file.
+        :param filename: str or Path, default name of the file (from RNC).
+        :return: None.
+        """
         super().__init__(txt, src, ambiguation, found_wordforms, doc_url)
         self._media_url = media_url
         self._filepath = Path(filename)
@@ -670,7 +685,7 @@ class MultimodalExample(Example):
     def filepath(self) -> Path:
         """ Get the path to the local file.
 
-        :return: Path, path to the file.
+        :return: Path to the file.
         """
         return self._filepath
 
@@ -679,10 +694,10 @@ class MultimodalExample(Example):
                  other: str or Path) -> None:
         """ Set new path to the local file.
 
-        ATTENTION: if the file exists it'll not be moved to
-        the new path. You should call 'download_file' again.
+        ATTENTION: if the file exists it will not be moved to
+        the new path. You should call 'download_file()' again.
 
-        :param other: str of path, new path to the local file.
+        :param other: str or Path, new path to the local file.
         :return: None.
         """
         self._filepath = Path(other)
@@ -704,7 +719,10 @@ class MultimodalExample(Example):
         return super().items + [self._media_url, self.filepath]
 
     def download_file(self) -> None:
-        """ Download the media file. """
+        """ Download the media file.
+
+        :return: None.
+        """
         data = [(self._media_url, str(self.filepath))]
         try:
             creq.download_docs(data)
