@@ -7,11 +7,13 @@ __all__ = (
     'Paper2000Corpus',
     'ParallelCorpus',
     'MultilingualParaCorpus',
-    'TutoringCorpus'
+    'TutoringCorpus',
+    'MultimodalCorpus'
 )
 
 import csv
 import json
+import os
 import random
 import re
 import string
@@ -43,26 +45,29 @@ def create_filename(length: int = 8) -> str:
     :param length: int, length of result (8 by default).
     :return: str, random symbols.
     """
-    sample = f"{string.ascii_letters}{string.digits}"
-    name = random.sample(sample, length)
+    name = random.sample(ALPHABET, length)
     return ''.join(name)
 
 
-def create_unique_filename(classname: str,
+def create_unique_filename(folder: Path,
+                           class_name: str,
                            p_count: int) -> Path:
     """ Create a random unique csv filename,
-    means the file doesn't exist.
+    means the file does not exist.
 
     Name format:
-    (classname)(p_count)(some random symbols)
+    <class_name><p_count>_<some random symbols>
 
-    :param classname: name of the class.
+    :param folder: Path to the data folder.
+    :param class_name: name of the class.
     :param p_count: int, count of pages.
-    :return: Path, unique filename. len = 8 .
+    :return: Path, unique filename.
     """
-    path = DATA_FOLDER / Path(f"{classname}{p_count}_{create_filename()}.csv")
+    name_template = "{}{}_{}.csv"
+    path = folder / Path(name_template.format(class_name, p_count, create_filename()))
     while path.exists():
-        path = path.with_name(f"{create_filename()}.csv")
+
+        path = path.with_name(name_template.format(class_name, p_count, create_filename()))
     return path
 
 
@@ -131,13 +136,15 @@ class Corpus:
     _DATA_W_DELIMITER = '\t'
     _DATA_W_QUOTCHAR = '"'
 
+    DATA_FOLDER = Path('data')
+    os.makedirs(DATA_FOLDER, exist_ok=True)
+
     def __init__(self,
                  query: dict or str = None,
                  p_count: int = None,
                  file: str or Path = None,
                  **kwargs) -> None:
-        """ There're no checking arguments valid.
-
+        """ 
         If the file exists, working with a local database.
 
         :param query: dict of str, words to search;
@@ -178,15 +185,15 @@ class Corpus:
         self._add_info = {}
 
         # path to local database
-        classname = self.__class__.__name__.replace('Corpus', '')
-        file = file or create_unique_filename(classname, p_count)
+        class_name = self.__class__.__name__.replace('Corpus', '')
+        file = file or create_unique_filename(self.DATA_FOLDER, class_name, p_count)
         path = Path(file)
         if path.suffix != '.csv':
             msg = "File must have '.csv' extension"
             logger.error(msg)
             raise TypeError(msg)
 
-        # to these files the data and req params'll be dumped
+        # to these files the data and req params will be dumped
         self._csv_path = path
         self._config_path = path.with_suffix('.json')
 
@@ -205,7 +212,7 @@ class Corpus:
                      query: dict or str,
                      p_count: int,
                      **kwargs) -> None:
-        """ Init from the given values. If the file doesn't exist.
+        """ Init from the given values. If the file does not exist.
         Params the same as in the init method.
 
         :return: None.
@@ -244,7 +251,7 @@ class Corpus:
             mycorp = kwargs.pop('subcorpus')
             self._params['mycorp'] = unquote(mycorp)
 
-        # TODO: page structure changes
+        # TODO: page structure changed if expand=full
         # if 'expand' in kwargs:
         #     self._params['expand'] = kwargs.pop('expand')
 
@@ -283,7 +290,7 @@ class Corpus:
         try:
             self._get_additional_info()
         except Exception:
-            logger.exception("It's impossible to get additional info from RNC")
+            logger.exception("It is impossible to get additional info from RNC")
 
     def _load_data(self) -> List:
         """ Load data from csv file.
@@ -297,8 +304,8 @@ class Corpus:
             # first row contains headers, skip it
             next(reader)
 
-            data = [self.ex_type(*i) for i in reader]
-            wordforms = list(map(lambda x: x.found_wordforms, data))
+            data = [self.ex_type(*row) for row in reader]
+            wordforms = list(map(lambda example: example.found_wordforms, data))
             wordforms = sum(wordforms, [])
             self._add_wordforms(wordforms)
 
@@ -382,7 +389,7 @@ class Corpus:
         """ Get pretty text from example and remove
         from there duplicate spaces.
 
-        Here it's assumed, that all examples have text.
+        Here it is assumed, that all examples have text.
 
         :param tag: bs4.element.Tag, example.
         :return: str, text.
@@ -428,7 +435,8 @@ class Corpus:
 
         :param params: dict, params to convert.
         :param join_inside_symbol: str, symbol to join params.
-        :param with_braces: bool, whether the braces'll added around the param.
+        :param with_braces: bool, whether the braces 
+        will be added around the param.
         :return: str, joined with ',' params.
         """
         if not (isinstance(params, (str, dict)) and ' ' not in params):
@@ -562,7 +570,7 @@ class Corpus:
     def amount_of_docs(self) -> int or None:
         """ Get amount of documents, where the query was found.
 
-        :return: int, this amount or None if it doesn't exist.
+        :return: int, this amount or None if it does not exist.
         """
         return self._add_info.get('docs', None)
 
@@ -570,35 +578,35 @@ class Corpus:
     def amount_of_contexts(self) -> int or None:
         """ Get amount of contexts, where the query was found.
 
-        :return: int, this amount or None if it doesn't exist.
+        :return: int, this amount or None if it does not exist.
         """
         return self._add_info.get('contexts', None)
 
     @property
     def graphic_link(self) -> str or None:
-        """ Get the link to the distribution by years graphic.
+        """ Get the link the graphic of the
+        distribution of query occurrences by years.
 
-        :return: str, this link or None if it doesn't exist.
+        :return: str, this link or None if it does not exist.
         """
         return self._add_info.get('graphic_link', None)
 
     def open_graphic(self) -> None:
-        """ Open the graphic of distribution the query by year.
+        """ Open the graph of the distribution
+        of query occurrences by years.
 
         :return: None.
         """
         url = self.graphic_link
         if url is None:
-            msg = "Graphic doesn't exist"
+            msg = "Graphic does not exist"
             logger.error(msg)
             raise RuntimeError(msg)
 
         try:
             webbrowser.open_new_tab(url)
         except Exception:
-            logger.exception(
-                "It's impossible to open the graphic "
-                "with distribution the query by years")
+            logger.exception("It is impossible to open the graphic")
             raise
 
     @staticmethod
@@ -687,8 +695,8 @@ class Corpus:
             # working with long query like
             # 'открыть -открыл дверь -двери настеж'
             q = re.finditer(r'\b\w+\b( -\b\w+\b)?', self.query)
-            for num, ex in enumerate(q, 1):
-                match = ex.group(0)
+            for num, query in enumerate(q, 1):
+                match = query.group(0)
                 self._params[f"lex{num}"] = join_with_plus(match)
                 if num > 1:
                     self._params[f"min{num}"] = self.__MIN
@@ -699,15 +707,15 @@ class Corpus:
         for word_num, (word, params) in enumerate(self.query.items(), 1):
             # add distance
             if word_num > 1:
-                mmin = f'min{word_num}'
-                mmax = f'max{word_num}'
+                min_distance = f'min{word_num}'
+                max_distance = f'max{word_num}'
                 # given or default values
                 if isinstance(params, dict):
-                    self._params[mmin] = params.get('min', None) or self.__MIN
-                    self._params[mmax] = params.get('max', None) or self.__MAX
+                    self._params[min_distance] = params.get('min', None) or self.__MIN
+                    self._params[max_distance] = params.get('max', None) or self.__MAX
                 else:
-                    self._params[mmin] = self.__MIN
-                    self._params[mmax] = self.__MAX
+                    self._params[min_distance] = self.__MIN
+                    self._params[max_distance] = self.__MAX
 
             self._params[f"lex{word_num}"] = join_with_plus(word)
 
@@ -737,7 +745,7 @@ class Corpus:
             sem = params.get('sem', '')
             if sem:
                 try:
-                    logger.warning("Semantic properties doesn't support")
+                    logger.warning("Semantic properties does not support")
                 except Exception:
                     raise
                 # self.__params фильтр1 и фильтр2
@@ -752,11 +760,8 @@ class Corpus:
         if not forms:
             return
 
-        forms = [
-            clean_text_up(form).lower()
-            for form in forms
-        ]
         for form in forms:
+            form = clean_text_up(form).lower()
             self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
 
     def _parse_doc(self,
@@ -870,11 +875,11 @@ class Corpus:
 
     def _data_to_csv(self) -> None:
         """ Dump the data to csv file.
-        Here it's assumed that the data exist.
+        Here it is assumed that the data exist.
 
         :return: None.
         """
-        data = [i.items for i in self.data]
+        data = [example.items for example in self.data]
         columns = self[0].columns
         with self.file.open('w', encoding='utf-16', newline='') as f:
             # class constants
@@ -889,7 +894,7 @@ class Corpus:
         """ Write the request params: query,
         p_count and http tags to json file.
 
-        Here it's assumed that these params exist.
+        Here it is assumed that these params exist.
 
         :return: None.
         """
@@ -905,14 +910,14 @@ class Corpus:
         """ Write the data to csv file, request params to json file.
 
         :return: None.
-        :exception RuntimeError: If there're no data, params or files exist.
+        :exception RuntimeError: If there are no data, params or files exist.
         """
         if not self.data:
             logger.error("Tried to write empty data to file")
-            raise RuntimeError("There're no data to write")
+            raise RuntimeError("there are no data to write")
         if not (self.query and self.p_count and self.params):
             logger.error("Tried to write empty config to file")
-            raise RuntimeError("There're no data to write")
+            raise RuntimeError("there are no data to write")
 
         self._data_to_csv()
         self._params_to_json()
@@ -921,7 +926,7 @@ class Corpus:
             f"Data was wrote to files: {self.file} and {self._config_path}")
 
     def open_url(self) -> None:
-        """ Open first page of Coprus results in the new
+        """ Open first page of RNC results in the new
         tab of the default browser.
 
         :return: None.
@@ -938,7 +943,7 @@ class Corpus:
     def request_examples(self) -> None:
         """ Request examples, parse them and update the data.
 
-        If there're no results found, last page doesn't exist,
+        If there are no results found, last page does not exist,
         params or query is wrong then exception.
 
         :return: None.
@@ -994,12 +999,12 @@ class Corpus:
         """ Sort the data by using a key.
 
         :keyword key: func to sort, called to Example objects, by default – len.
-        :keyword reverse: bool, whether the data'll sort in reversed order,
+        :keyword reverse: bool, whether the data will sort in reversed order,
          by default – False.
         :return None.
         :exception TypeError: if the key is uncallable.
         """
-        key = kwargs.pop('key', lambda x: len(x))
+        key = kwargs.pop('key', lambda example: len(example))
         reverse = kwargs.pop('reverse', False)
 
         if not callable(key):
@@ -1033,7 +1038,7 @@ class Corpus:
                key: Callable) -> None:
         """ Remove some items, that are not satisfied the key.
 
-        :param key: callable, it'll be used to Example
+        :param key: callable, it will be used to Example
         objects inside the data list.
         :return: None.
         """
@@ -1071,17 +1076,17 @@ class Corpus:
 
         :return: str with the format.
         """
-        res = f"{self.__class__.__name__}\n" \
-              f"{len(self)}\n" \
-              f"{self.file}\n" \
-              f"{self.params}\n" \
-              f"{self.p_count}\n" \
-              f"{self.query}\n"
+        res = (f"{self.__class__.__name__}\n"
+               f"{len(self)}\n" 
+               f"{self.file}\n" 
+               f"{self.params}\n" 
+               f"{self.p_count}\n"
+               f"{self.query}\n")
         return res
 
     def __str__(self) -> str:
         """
-        :return: str, classname, length and enumerated examples.
+        :return: str, info about Corpus and enumerated examples.
         """
         q_forms = ', '.join(self.forms_in_query)
         metainfo = f"Russian National Corpus (https://ruscorpora.ru)\n" \
@@ -1139,8 +1144,8 @@ class Corpus:
             logger.error(msg)
             raise TypeError(msg)
         return any(
-            item == ex
-            for ex in self.data
+            item == example
+            for example in self.data
         )
 
     def __getattr__(self,
@@ -1148,7 +1153,7 @@ class Corpus:
         """ Get request param.
 
         :param item: item, param name.
-        :return: param value or None if it doesn't exist.
+        :return: param value or None if it does not exist.
         """
         return self.params.get(item, None)
 
@@ -1294,7 +1299,6 @@ class MainCorpus(Corpus):
         """ Parse example to Example object.
 
         :param example: tag, example to parse.
-        :param src: str, source of example.
         :return: example obj.
         """
         src = Corpus._get_source(example)
@@ -1321,8 +1325,8 @@ class MainCorpus(Corpus):
             return []
         res = []
 
-        for ex in doc.find_all('li'):
-            new_ex = self._parse_example(ex)
+        for example in doc.find_all('li'):
+            new_ex = self._parse_example(example)
             res += [new_ex]
             self._add_wordforms(new_ex.found_wordforms)
         return res
@@ -1428,8 +1432,8 @@ class ParallelCorpus(Corpus):
         :return: list of Examples.
         """
         res = []
-        for ex in doc.find_all('table', {'class': 'para'}):
-            new_ex = self._parse_example(ex)
+        for example in doc.find_all('table', {'class': 'para'}):
+            new_ex = self._parse_example(example)
             res += [new_ex]
             self._add_wordforms(new_ex.found_wordforms)
         return res
@@ -1451,13 +1455,13 @@ class ParallelCorpus(Corpus):
             lang_tags = columns[:end_lang_tags]
             data = []
 
-            for i in reader:
+            for row in reader:
                 # to create dict {lang: text in the lang}
                 langs = {}
                 for num, lang in enumerate(lang_tags):
-                    langs[lang] = i[num]
+                    langs[lang] = row[num]
 
-                new_ex = self.ex_type(langs, *i[end_lang_tags:])
+                new_ex = self.ex_type(langs, *row[end_lang_tags:])
                 data += [new_ex]
 
                 self._add_wordforms(new_ex.found_wordforms)
@@ -1474,12 +1478,12 @@ class MultilingualParaCorpus(ParallelCorpus):
         self._params['mode'] = self._MODE
 
     def _from_file(self) -> None:
-        msg = "Working with files doesn't support"
+        msg = "Working with files does not support"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     def dump(self) -> None:
-        msg = "Working with files doesn't support"
+        msg = "Working with files does not support"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -1526,13 +1530,9 @@ class AccentologicalCorpus(MainCorpus):
 
 
 class MultimodalCorpus(Corpus):
-    MEDIA_FOLDER = DATA_FOLDER / 'media'
+    MEDIA_FOLDER = Corpus.DATA_FOLDER / 'media'
+    os.makedirs(MEDIA_FOLDER, exist_ok=True)
     _MODE = 'murco'
-
-    try:
-        MEDIA_FOLDER.mkdir()
-    except FileExistsError:
-        pass
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, ex_type=expl.MultimodalExample)
@@ -1584,8 +1584,8 @@ class MultimodalCorpus(Corpus):
         examples = []
 
         media_url, filename = self._parse_media(media)
-        for ex in example.find_all('li'):
-            data_from_example = self._parse_example(ex)
+        for example in example.find_all('li'):
+            data_from_example = self._parse_example(example)
 
             new_ex = self.ex_type(*data_from_example, media_url, filename)
             new_ex.mark_found_words(self.marker)
@@ -1600,8 +1600,8 @@ class MultimodalCorpus(Corpus):
         :return: None.
         """
         urls_to_names = [
-            (ex.media_url, ex.filepath)
-            for ex in self
+            (example.media_url, example.filepath)
+            for example in self
         ]
         creq.download_docs(urls_to_names)
 
