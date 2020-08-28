@@ -1,7 +1,6 @@
 __version__ = '0.5'
 
 from .corpora import (
-    Subcorpus,
     MainCorpus,
     Paper2000Corpus,
     PaperRegionalCorpus,
@@ -13,6 +12,7 @@ from .corpora import (
     TutoringCorpus,
     MultimodalCorpus
 )
+from .corpora_params import Subcorpus
 from .examples import (
     MainExample,
     Paper2000Example,
