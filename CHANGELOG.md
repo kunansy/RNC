@@ -115,3 +115,11 @@ Minor fixes and improvements.
 #### Added
 * Additional info from the first RNC page.
 * `MultimodalCorpus`.
+
+### 0.5.1 –
+#### Changed
+* Docs fixed and improved.
+
+Other minor fixes and improvements.
+#### Added
+* Chinese parallel corpus added.
