@@ -9,8 +9,8 @@ pip install rnc
 #### Structure
 
 Corpus object contains list of obtained examples.
-There're two types of examples:
-![](https://github.com/FaustGoethe/RNC/blob/master/docs/Two_ex_types.png?raw=true) <br> 
+There are two types of examples:
+![](https://github.com/kunansy/RNC/blob/master/docs/Two_ex_types.png?raw=true) <br> 
 * If `out` is `normal`, API uses normal example, which name is equal to the Corpus class name:
 ```python
 ru = rnc.MainCorpus(...)
@@ -21,7 +21,7 @@ print(type(ru[0]))
 ```
 * if `out` is `kwic`, API uses `KwicExample`.
 
-Examples' objects [fields](https://github.com/FaustGoethe/RNC/blob/master/docs/Examples.md)   
+Examples' objects [fields](https://github.com/kunansy/RNC/blob/master/docs/Examples.md)   
 
 ---
 
@@ -39,13 +39,13 @@ ru = rnc.MainCorpus(
 
 ru.request_examples()
 ```
-* **query** – one str or dict with tags. Words to found, you should give the vocabulary form of them.
+* **query** – one str or dict with tags. Words to find, you should give the vocabulary form of them.
 * **p_count** – count of **PAGES**.
-* **file** – path of local csv file, optional. Example: `file='data\\filename.csv'`. 
-* **marker** – function, with which found wordforms'll be marked, optional. 
+* **file** – path to local csv file, optional. Example: `file='data\\filename.csv'`. 
+* **marker** – function, with which found wordforms will be marked, optional. 
 * **kwargs** – additional params.
 
-[Corpora](https://github.com/FaustGoethe/RNC/blob/master/docs/Corpora.md) you can use.
+[Corpora](https://github.com/kunansy/RNC/blob/master/docs/Corpora.md) you can use.
 
 ---
 
@@ -72,26 +72,21 @@ query = {
 }
 
 corp = rnc.MainCorpus(
-    query=query,
-    p_count=5,
-    file='filename.csv',
-    marker=str.upper,
-    **kwargs
-)
+    query, 5, file='filename.csv', marker=str.upper, **kwargs)
 corp.reques_examples()
 ```
-[Lexgramm search params](https://github.com/FaustGoethe/RNC/tree/master/docs/Lexgram%20search%20params)
+[Lexgramm search params](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params)
 
 ---
 
-##### Query as a string
+##### String as a query
 Also you can pass as a query a string with the **vocabulary forms** of the words, divided by space:
-`query = 'get down'` or `query = 'я получить'`. Distance between them'll be default.
+`query = 'get down'` or `query = 'я получить'`. Distance between them will be default.
 
 ---
 
 #### Additional request params
-These params are optional, you can ignore them. Here the default values is shown.
+These params are optional, you can ignore them. Here are the default values.
 ```python
 corp = rnc.ParallelCorpus(
     query=query, 
@@ -100,16 +95,16 @@ corp = rnc.ParallelCorpus(
     marker=str.upper,
     
     dpp=5, # documents per page
-    spd=10, # sentences per document
+    spd=10, # sentences per document (<= than spd)
     text='lexgramm' or 'lexform', # way to search
     out='normal' or 'kwic', # output format
     kwsz=5, # if out=kwic, count of words in context
     sort='i_grtagging', # way to sort the results
     subcorpus='', # see below how to set it
-    accent=0, # with accentology (1) or without (0), if it's available
+    accent=0, # with accentology (1) or without (0), if it is available
 )
 ```
-[Sort keys](https://github.com/FaustGoethe/RNC/blob/master/docs/HTTP%20params.md)
+[Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 
 
 ##### API can work with local base too
@@ -117,9 +112,9 @@ corp = rnc.ParallelCorpus(
 ru = rnc.SpokenCorpus(file='local_database.csv') # it must exist
 print(ru)
 ```
-If the file exists, API works with it and you can't request new examples. <br>
+If the file exists, API works with it. If the data list is not empty you cannot request new examples. <br>
 
-If you work with a file, it's not demanded to pass any argument to Corpus 
+If you work with a file, it is not demanded to pass any argument to Corpus 
 except for the file name (via `file=...`).
 
 ---
@@ -129,13 +124,13 @@ except for the file name (via `file=...`).
 corp = rnc.corpus_name(...) 
 ```
 * `corp.request_examples()` – request examples. 
-There's an exception if:
+There is an exception if:
     * Data still exist. 
     * No results found.
-    * Requested page doesn't exist (if there're 10 pages in the Corpus, but you've requested > 10).
-    * There's a mistake in the request.
+    * Requested page does not exist (if there are 10 pages in the Corpus, but you have requested > 10).
+    * There is a mistake in the request.
     * You have no access to Internet.
-    * There's a problem while getting access to Corpus.
+    * There is a problem while getting access to Corpus.
     * another problems...
 * `corp.data` – list of examples (only getter)
 * `corp.query` – query (only getter).
@@ -148,23 +143,23 @@ There's an exception if:
 * `corp.ex_type` – type of example (only getter).
 * `corp.amount_of_docs` – amount of docs where the query was found.
 * `corp.amount_of_contexts` – amount of contexts where the query was found.
-* `corp.graphic_link` – link to the distribution by years graphic.
-* `corp.dump()` – write two files: csv file with all data and json file with request params.
+* `corp.graphic_link` – link to the graphic of the distribution of query occurrences by years.
+* `corp.dump()` – write two files: csv file with all data and json file with config.
 * `corp.copy()` – create a copy.
 * `corp.shuffle()` – shuffle data.
-* `corp.sort_data(key=, reverse=)` – sort the list of examples. Here HTTP keys don't work,
+* `corp.sort_data(key=, reverse=)` – sort the list of examples. Here HTTP keys do not work,
 key is applied to Example objects.  
 * `corp.pop(index)` – remove and return the example at the index.
 * `corp.clear()` – empty the data list.
-* `corp.filter(key)` – remove some examples from the data list using the key. 
-Key is applied to the Example objects.
+* `corp.filter(key)` – filter the data list, remove some examples using the key. 
+Key is applied to the `Example` objects.
 * `corp.url` – URL of the first Corpus page (only getter).
 * `corp.open_url()` – open the first Corpus page.
-* `corp.open_graphic()` – open the distribution by years graphic.
+* `corp.open_graphic()` – open the graphic of the distribution of query occurrences by years.
 
 Magic methods: 
 * `corp.dpp` or another request param (only getter).
-* `corp()` – the same as `request_examples()`.
+* `corp()` – all the same to `request_examples()`.
 * `str(corp) or print(corp)` – str with info about Corpus, enumerated examples.
 By default Corpus shows first 50 examples, but you can change it 
 or turn the restriction off. 
@@ -204,7 +199,7 @@ Compare corp length with int or length of another Corpus obj.
 * `corp <= `
 
 
-Set default values to all objects you'll create:
+Set default values to all objects you will create:
 * `corpus_name.set_dpp(value)` – change default `document per page` value.
 * `corpus_name.set_spd(value)` – change default `sentences per document` value.
 * `corpus_name.set_text(value)` – change default search way.
@@ -218,26 +213,26 @@ If it is equal to `False`, the Corpus shows all examples.
 
 #### Corpora features
 ##### ParallelCorpus
-* Query might be in the language you want or in Russian. 
+* The query might be both in the original language and in the language of translation. 
 
 ##### MultilingualParaCorpus
-* Working with files removed.
+* Working with files is removed.
 * Param `subcorpus` not demanded by default, but it might be passed, see **how to** section below.
 
 ##### MultimodalCorpus
-* `corp.download_all()` – download all media files. **It's recommended** to use 
-this method instead of `expl.download_file`.
+* `corp.download_all()` – download all media files. **It is recommended** to use 
+this method instead of `expl.download_file()`.
 
 ---
 
 #### ATTENTION
-* Don't forget to call this function
+* Do not forget to call this function
 ```python
 corp.request_examples()
 ```
-* If you've requested more than 10 pages, RNC returns 429 error (Too many requests).
+* If you have requested more than 10 pages, RNC returns 429 error (Too many requests).
 For example requesting 100 pages you should wait about 3 minutes: 
-![100 pages](https://github.com/FaustGoethe/RNC/blob/master/docs/100_pages.png?raw=true)
+![100 pages](https://github.com/kunansy/RNC/blob/master/docs/100_pages.png?raw=true)
 * If you want to see messages like that:
 ```python
 rnc.set_stream_handlers_level('INFO' or 'DEBUG')
@@ -246,7 +241,7 @@ rnc.set_stream_handlers_level('INFO' or 'DEBUG')
 ```python
 rnc.set_stream_handlers_level('CRITICAL')
 ```
-* **Don't call** the marker you pass
+* **Do not call** the marker you pass
 
 **RIGHT:**
 ```python
@@ -256,20 +251,20 @@ ru = rnc.MainCorpus(marker=str.upper)
 ```python
 ru = rnc.MainCorpus(marker=str.upper())
 ```
-* Pass an empty string as a param if you don't want to set them
+* Pass an empty string as a param if you do not want to set them
 ```python
 query = {
     'word1': '',
     'word2': {'min': 2, 'max': 5}
 }
 ```
-* If `accent=1`, marker doesn't work.
+* If `accent=1`, marker does not work.
 
 ---
 
 #### How to
 ##### How to set sort?
-Sort [keys](https://github.com/FaustGoethe/RNC/blob/master/docs/HTTP%20params.md).
+Sort [keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md).
 
 
 ##### How to set language in ParallelCorpus?
@@ -281,7 +276,7 @@ pass this param to Corpus.
 
 
 ##### How to set subcorpus?
-There're default keys in rnc.Subcorpus.Person (working checked in **MainCorpus**) – Russian writers and poets: 
+There are default keys in rnc.Subcorpus.Person (working checked in **MainCorpus**) – Russian writers and poets: 
 * Pushkin
 * Dostoyevsky
 * TolstoyLN
@@ -297,15 +292,21 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
 **OR**
 
  
-![1](https://raw.githubusercontent.com/FaustGoethe/RNC/master/docs/How%20to%20set%20subcorpus/1.png)
-![2](https://raw.githubusercontent.com/FaustGoethe/RNC/master/docs/How%20to%20set%20subcorpus/2.png)
-![3](https://raw.githubusercontent.com/FaustGoethe/RNC/master/docs/How%20to%20set%20subcorpus/3.png)
-![4](https://raw.githubusercontent.com/FaustGoethe/RNC/master/docs/How%20to%20set%20subcorpus/4.png)
+![1](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/1.png)
+![2](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/2.png)
+![3](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/3.png)
+![4](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/4.png)
 
 ---
-[Documentation](https://github.com/FaustGoethe/RNC/tree/master/docs) <br>
-[Source](https://github.com/FaustGoethe/RNC)
+### Links
+* [Russian National Corpus](https://ruscorpora.ru)
+* [Docs](https://github.com/kunansy/RNC/tree/master/docs)
+* [Source](https://github.com/kunansy/RNC)
+* Examples' objects [fields](https://github.com/kunansy/RNC/blob/master/docs/Examples.md)
+* [Corpora](https://github.com/kunansy/RNC/blob/master/docs/Corpora.md) you can use.
+* [Lexgramm search params](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params)
+* [Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 ---
-If you found a bug (add logs to the mail, please) or have an idea to improve the API write to me – alniconim@gmail.com.  
+If you have found a bug (add all logs to the mail, please) or have an idea to improve the API write to me – alniconim@gmail.com.  
 
 P.S. If your native is Russian or you know it well, please write me in Russian.
