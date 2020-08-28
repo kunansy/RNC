@@ -15,6 +15,7 @@ __all__ = (
     'create_file_handler', 'create_stream_handler')
 
 import logging
+import os
 from pathlib import Path
 
 
@@ -22,10 +23,7 @@ DEFAULT_MSG_FMT = "[{name}:{levelname}:{funcName}:{asctime}] {message}"
 DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 LOG_FOLDER = Path('logs')
-try:
-    LOG_FOLDER.mkdir()
-except FileExistsError:
-    pass
+os.makedirs(LOG_FOLDER, exist_ok=True)
 
 
 def create_formatter(message_format: str = DEFAULT_MSG_FMT,
@@ -35,7 +33,7 @@ def create_formatter(message_format: str = DEFAULT_MSG_FMT,
 
     :param message_format: str, way to format message.
     :param date_format: str, way to format date.
-     Str with %, because it needed for time.strftime()
+     Str with %, because it is needed for time.strftime()
     :param style: str, % or {. Whether message_format
      contains % or { way to format.
     :return: logging.Formatter.
@@ -49,11 +47,11 @@ def create_formatter(message_format: str = DEFAULT_MSG_FMT,
 
 
 def create_stream_handler(level=logging.WARNING,
-                          formatter=None) -> logging.StreamHandler:
+                          formatter: logging.Formatter = None) -> logging.StreamHandler:
     """ Create stream handler.
 
     :param level: handler level. WARNING by default.
-    :param formatter: message formatter. None by default.
+    :param formatter: Formatter, message format.
     :return: stream handler.
     """
     stream_handler = logging.StreamHandler()
@@ -66,24 +64,21 @@ def create_stream_handler(level=logging.WARNING,
 
 def create_file_handler(level=logging.DEBUG,
                         log_path: str = None,
-                        formatter=None,
+                        formatter: logging.Formatter = None,
                         **kwargs) -> logging.FileHandler:
     """ Create file handler.
 
     :param level: handler level.
-    :param log_path: str, log file path.
-    :param formatter: message formatter.
-    :param kwargs: params to FileHandler constructor.
-    :keyword delay: bool, whether file'll not be opened
+    :param log_path: str, path to log file.
+    :param formatter: Formatter, message format.
+    :keyword delay: bool, whether the file will not be opened
      until the first logger calling. True by default.
-    :keyword encoding: str, file encoding. utf-8 by default.
     :return: file handler.
     """
     delay = kwargs.pop('delay', True)
-    encoding = kwargs.pop('encoding', 'utf-8')
 
     file_handler = logging.FileHandler(
-        log_path, delay=delay, encoding=encoding, **kwargs)
+        log_path, delay=delay, encoding='utf-8', **kwargs)
     file_handler.setLevel(level)
     formatter = formatter or create_formatter()
     file_handler.setFormatter(formatter)
@@ -106,11 +101,10 @@ def create_logger(module_name: str,
 
     path = LOG_FOLDER / f"{module_name}.log"
 
-    default_handlers = [
+    handlers = handlers or [
         create_stream_handler(),
         create_file_handler(log_path=path)
     ]
-    handlers = handlers or default_handlers
 
     for handler in handlers:
         logger.addHandler(handler)
