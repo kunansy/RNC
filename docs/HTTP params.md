@@ -1,4 +1,4 @@
-### Some of Corpus HTTP keys:
+### Some of RNC HTTP keys:
 
 **I.** Sorting.
 1. i_grtagging – by default.
