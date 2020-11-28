@@ -100,7 +100,7 @@ corp = rnc.ParallelCorpus(
     out='normal' or 'kwic', # output format
     kwsz=5, # if out=kwic, count of words in context
     sort='i_grtagging', # way to sort the results
-    subcorpus='', # see below how to set it
+    subcorpus='', # see HOWTO section below
     accent=0, # with accentology (1) or without (0), if it is available
 )
 ```
@@ -115,7 +115,7 @@ print(ru)
 If the file exists, API works with it. If the data list is not empty you cannot request new examples. <br>
 
 If you work with a file, it is not demanded to pass any argument to Corpus 
-except for the file name (via `file=...`).
+except for the file name (`file=...`).
 
 ---
 
@@ -127,10 +127,10 @@ corp = rnc.corpus_name(...)
 There is an exception if:
     * Data still exist. 
     * No results found.
-    * Requested page does not exist (if there are 10 pages in the Corpus, but you have requested > 10).
+    * Requested page does not exist (if there are 10 pages in the RNC, but you have requested > 10).
     * There is a mistake in the request.
-    * You have no access to Internet.
-    * There is a problem while getting access to Corpus.
+    * You have no access to the Internet.
+    * There is a problem while getting access to RNC.
     * another problems...
 * `corp.data` – list of examples (only getter)
 * `corp.query` – query (only getter).
@@ -146,15 +146,15 @@ There is an exception if:
 * `corp.graphic_link` – link to the graphic of the distribution of query occurrences by years.
 * `corp.dump()` – write two files: csv file with all data and json file with config.
 * `corp.copy()` – create a copy.
-* `corp.shuffle()` – shuffle data.
+* `corp.shuffle()` – shuffle data list.
 * `corp.sort_data(key=, reverse=)` – sort the list of examples. Here HTTP keys do not work,
 key is applied to Example objects.  
 * `corp.pop(index)` – remove and return the example at the index.
 * `corp.clear()` – empty the data list.
 * `corp.filter(key)` – filter the data list, remove some examples using the key. 
 Key is applied to the `Example` objects.
-* `corp.url` – URL of the first Corpus page (only getter).
-* `corp.open_url()` – open the first Corpus page.
+* `corp.url` – URL of the first RNC page (only getter).
+* `corp.open_url()` – open the first RNC page.
 * `corp.open_graphic()` – open the graphic of the distribution of query occurrences by years.
 
 Magic methods: 
@@ -217,7 +217,7 @@ If it is equal to `False`, the Corpus shows all examples.
 
 ##### MultilingualParaCorpus
 * Working with files is removed.
-* Param `subcorpus` not demanded by default, but it might be passed, see **how to** section below.
+* Param `subcorpus` is not demanded by default, but it might be passed, see **HOWTO** section below.
 
 ##### MultimodalCorpus
 * `corp.download_all()` – download all media files. **It is recommended** to use 
@@ -307,6 +307,6 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
 * [Lexgramm search params](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params)
 * [Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 ---
-If you have found a bug (add all logs to the mail, please) or have an idea to improve the API write to me – alniconim@gmail.com.  
+If you have found a bug (add all logs to the mail, please) or have an idea how to improve the API write to me – alniconim@gmail.com.  
 
 P.S. If your native is Russian or you know it well, please write me in Russian.
