@@ -5,8 +5,8 @@ import sys
 from setuptools import setup, find_packages
 
 
-if sys.version_info < (3, 6):
-    raise RuntimeError('Python >= 3.6 required')
+if sys.version_info < (3, 7):
+    raise RuntimeError('Python >= 3.7 required')
 
 HERE = pathlib.Path(__file__).parent
 txt = (HERE / 'rnc' / '__init__.py').read_text('utf-8')
@@ -23,7 +23,7 @@ setup(
     version=version,
     url='https://github.com/FaustGoethe/RNC',
     packages=find_packages(exclude='tests'),
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     license='MIT',
     install_requires=['bs4',
                       'beautifulsoup4>=4.9',
