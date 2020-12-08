@@ -137,7 +137,6 @@ class Corpus:
     _DATA_W_QUOTCHAR = '"'
 
     DATA_FOLDER = Path('data')
-    os.makedirs(DATA_FOLDER, exist_ok=True)
 
     def __init__(self,
                  query: dict or str = None,
@@ -916,8 +915,10 @@ class Corpus:
             logger.error("Tried to write empty data to file")
             raise RuntimeError("there are no data to write")
         if not (self.query and self.p_count and self.params):
-            logger.error("Tried to write empty config to file")
-            raise RuntimeError("there are no data to write")
+            logger.error("There is no data to write")
+            raise RuntimeError("There is no data to write")
+
+        os.makedirs(self.DATA_FOLDER, exist_ok=True)
 
         self._data_to_csv()
         self._params_to_json()
@@ -1531,7 +1532,6 @@ class AccentologicalCorpus(MainCorpus):
 
 class MultimodalCorpus(Corpus):
     MEDIA_FOLDER = Corpus.DATA_FOLDER / 'media'
-    os.makedirs(MEDIA_FOLDER, exist_ok=True)
     _MODE = 'murco'
 
     def __init__(self, *args, **kwargs) -> None:
@@ -1599,6 +1599,8 @@ class MultimodalCorpus(Corpus):
 
         :return: None.
         """
+        os.makedirs(self.MEDIA_FOLDER, exist_ok=True)
+
         urls_to_names = [
             (example.media_url, example.filepath)
             for example in self
