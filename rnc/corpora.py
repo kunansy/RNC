@@ -1221,68 +1221,6 @@ class Corpus:
         """
         return self[:]
 
-    def __lt__(self, other) -> bool:
-        """ <
-        :param other: int or another Corpus obj.
-        :return: whether len(self) < len(other).
-        :exception TypeError: if wrong type given.
-        """
-        if isinstance(other, int):
-            return len(self) < other
-        elif isinstance(other, self.__class__):
-            return len(self) < len(other)
-        else:
-            msg = f"Int or {self.__class__.__name__} expected"
-            logger.error(msg)
-            raise TypeError(msg)
-
-    def __le__(self, other) -> bool:
-        """ <=
-        :param other: int or another Corpus obj.
-        :return: whether len(self) <= len(other).
-        :exception TypeError: if wrong type given.
-        """
-        return self < other or self == other
-
-    def __eq__(self, other) -> bool:
-        """ ==
-        :param other: int or another Corpus obj.
-        :return: whether len(self) == len(other).
-        :exception TypeError: if wrong type given.
-        """
-        if isinstance(other, int):
-            return len(self) == other
-        elif isinstance(other, self.__class__):
-            return len(self) == len(other)
-        else:
-            msg = f"int or {self.__class__.__name__} expected"
-            logger.error(msg)
-            raise TypeError(msg)
-
-    def __ne__(self, other) -> bool:
-        """ !=
-        :param other: int or another Corpus obj.
-        :return: whether len(self) != len(other).
-        :exception TypeError: if wrong type given.
-        """
-        return not (self == other)
-
-    def __gt__(self, other) -> bool:
-        """ >
-        :param other: int or another Corpus obj.
-        :return: whether len(self) > len(other).
-        :exception TypeError: if wrong type given.
-        """
-        return not (self == other or self < other)
-
-    def __ge__(self, other) -> bool:
-        """ >=
-        :param other: int or another Corpus obj.
-        :return: whether len(self) >= len(other).
-        :exception TypeError: if wrong type given.
-        """
-        return self == other or self > other
-
 
 class MainCorpus(Corpus):
     _MODE = 'main'
