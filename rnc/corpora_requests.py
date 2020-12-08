@@ -1,12 +1,6 @@
 """
-Module for requesting to URL and get page's html code.
-
-There's function checking, that:
-– HTTP request is correct, means there's no exception catch while requesting.
-– The page exists, means results found.
-– The page at the number exists, means RNC didn't redirect to the first page.
-
-There's ClientTimeout in the requesting function.
+Module for requesting to URL and get page's html code from there,
+download media files, check that the request if correct, page in RNC exists.
 """
 
 __all__ = 'get_htmls', 'is_request_correct'
@@ -21,6 +15,7 @@ from typing import List, Tuple
 import rnc.corpora_logging as clog
 
 logger = clog.create_logger(__name__)
+WAIT = 24
 
 
 async def fetch(url: str,
@@ -105,30 +100,23 @@ async def get_htmls_coro(url: str,
 
 
 def get_htmls(url: str,
-              p_index_start: int = 0,
-              p_index_stop: int = 1,
+              start: int = 0,
+              stop: int = 1,
               **kwargs) -> List[str]:
     """ Run coro, get html codes of the pages.
 
-    URLs will be created for i in range(p_index_start, p_index_stop),
+    URLs will be created for i in range(start, stop),
      HTTP tag 'p' (page) is i.
 
     :param url: str, URL.
-    :param p_index_start: int, start page index.
-    :param p_index_stop: int, stop page index.
+    :param start: int, start page index.
+    :param stop: int, stop page index.
     :param kwargs: HTTP tags.
     :return: list of str, html codes of the pages.
-
-    :exception aiohttp.ClientResponseError:
-    :exception aiohttp.ClientConnectionError:
-    :exception aiohttp.InvalidURL:
-    :exception aiohttp.ServerTimeoutError:
-    :exception Exception: another one.
     """
-    logger.info(f"Requested: ({p_index_start};{p_index_stop}), "
-                f"with params {kwargs}")
+    logger.info(f"Requested: ({start};{stop}), with params {kwargs}")
     html_codes = asyncio.run(
-        get_htmls_coro(url, p_index_start, p_index_stop, **kwargs))
+        get_htmls_coro(url, start, stop, **kwargs))
     logger.info("Request was completed successfully")
     return html_codes
 
@@ -144,10 +132,10 @@ def is_http_request_correct(url: str,
     """
     # coro writes logs by itself
     try:
-        get_htmls(url, **kwargs)
+        htmls = get_htmls(url, **kwargs)
     except Exception:
         return False
-    return True
+    return bool(htmls)
 
 
 def whether_result_found(url: str,
@@ -253,12 +241,11 @@ async def fetch_download(url: str,
 
     If response status == 429 sleep 24s and try again.
 
-    If response status != 429 and != 200, raise an exception.
-
     :param url: str, file's url.
     :param ses: aiohttp.ClientSession.
     :param filename: str, name of the file.
     :return: str, name of the file.
+    :exception: all exceptions should be processed here.
     """
     wait = 24
     timeout = aiohttp.ClientTimeout(wait + 1)
@@ -279,12 +266,6 @@ async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
     :return None.
-
-    :exception aiohttp.ClientResponseError:
-    :exception aiohttp.ClientConnectionError:
-    :exception aiohttp.InvalidURL:
-    :exception aiohttp.ServerTimeoutError:
-    :exception Exception: another one.
     """
     async with aiohttp.ClientSession() as ses:
         tasks = [
@@ -323,16 +304,10 @@ async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
 
 
 def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
-    """ Run coro, get the files.
+    """ Run coro, download the files.
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
     :return: None.
-
-    :exception aiohttp.ClientResponseError:
-    :exception aiohttp.ClientConnectionError:
-    :exception aiohttp.InvalidURL:
-    :exception aiohttp.ServerTimeoutError:
-    :exception Exception: another one.
     """
     logger.info(f"Requested {len(url_to_name)} files to download")
     asyncio.run(download_docs_coro(url_to_name))
