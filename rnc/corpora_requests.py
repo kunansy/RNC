@@ -27,16 +27,17 @@ async def fetch(url: str,
                 ses: aiohttp.ClientSession,
                 queue: asyncio.Queue,
                 **kwargs) -> None:
-    """ Coro, obtaining page's html code. There's ClientTimeout.
+    """ Coro, obtaining page's html code.
 
     If response status == 429 sleep and try again.
 
-    If response status != 429 and != 200, raise an exception.
-
-    :param url: string, URL to get its html code.
+    :param url: str, URL to get its html code.
     :param ses: aiohttp.ClientSession.
+    :param queue: asyncio.Queue, queue to where put the results:
+    'p' key to sort results and html code, decoded to UTF-8.
     :param kwargs: HTTP tags.
-    :return: 'p' key to sort results and html code, decoded to UTF-8.
+    :return: None.
+    :exception: all exceptions should be processed here.
     """
     try:
         resp = await ses.get(url, params=kwargs)
