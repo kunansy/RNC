@@ -32,7 +32,7 @@ setup(
                       'aiofiles>=0.5',
                       'aiojobs>=0.3',
                       'lxml'],
-    author="Kolobov Kirill, Python beginner",
+    author="Kolobov Kirill",
     author_email='alniconim@gmail.com',
     description='API for Russian National Corpus',
     long_description=open('README.md', encoding='utf-8').read(),
