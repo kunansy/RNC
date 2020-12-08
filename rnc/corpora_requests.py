@@ -65,8 +65,8 @@ async def fetch(url: str,
 
 
 async def get_htmls_coro(url: str,
-                         p_index_start: int,
-                         p_index_stop: int,
+                         start: int,
+                         stop: int,
                          **kwargs) -> List[str]:
     """ Coro doing requests and catching exceptions.
 
@@ -85,51 +85,28 @@ async def get_htmls_coro(url: str,
     :exception aiohttp.ServerTimeoutError:
     :exception Exception: another one.
     """
-    async with aiohttp.ClientSession() as ses:
-        tasks = [
-            asyncio.create_task(fetch(url, ses, **kwargs, p=p_index))
-            for p_index in range(p_index_start, p_index_stop)
+    timeout = aiohttp.ClientTimeout(WAIT)
+    # this limit might be wrong, it is
+    # just not demanded to set any limit
+    queue = asyncio.Queue(maxsize=100_000)
+
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
+        scheduler = await aiojobs.create_scheduler(limit=None)
+        for p_index in range(start, stop):
+            await scheduler.spawn(fetch(url, ses, queue, **kwargs, p=p_index))
+
+        while len(scheduler) is not 0:
+            await asyncio.sleep(.5)
+        await scheduler.close()
+
+        results = [
+            await queue.get()
+            for _ in range(queue.qsize())
         ]
-
-        if not tasks:
-            msg = "Empty range given"
-            logger.error(msg)
-            raise ValueError(msg)
-
-        html_codes = []
-        while True:
-            done, pending = await asyncio.wait(tasks)
-            for future in done:
-                try:
-                    page_code = future.result()
-                except aiohttp.ClientResponseError:
-                    # 5.., 404 etc
-                    logger.exception(f"Params: {kwargs}")
-                    raise
-                except aiohttp.ClientConnectionError:
-                    # there's no connection or access to the site
-                    logger.exception(f"Params: {kwargs}")
-                    raise
-                except aiohttp.InvalidURL:
-                    # wrong url or params
-                    logger.exception(f"Params: {kwargs}")
-                    raise
-                except aiohttp.ServerTimeoutError:
-                    # timeout
-                    logger.exception(f"Params: {kwargs}")
-                    raise
-                except Exception:
-                    # another error
-                    logger.exception(f"Params: {kwargs}")
-                    raise
-                else:
-                    html_codes += [page_code]
-            # TODO: add pages' html codes as they are obtained
-            # TODO: return here in the While cycle?
-            # sort pages: 1, 2, ...
-            html_codes.sort(key=lambda x: x[0])
-            html_codes = [i[1] for i in html_codes]
-            return html_codes
+    results.sort(key=lambda res: res[0])
+    return [
+        html for p, html in results
+    ]
 
 
 def get_htmls(url: str,
