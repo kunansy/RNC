@@ -191,13 +191,6 @@ for r in corp:
     print(r.left)
     print(r.src)
 ```
- 
-Compare corp length with int or length of another Corpus obj.  
-* `corp > `
-* `corp >= `
-* `corp < `
-* `corp <= `
-
 
 Set default values to all objects you will create:
 * `corpus_name.set_dpp(value)` – change default `document per page` value.
