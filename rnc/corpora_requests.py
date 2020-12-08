@@ -70,20 +70,14 @@ async def get_htmls_coro(url: str,
                          **kwargs) -> List[str]:
     """ Coro doing requests and catching exceptions.
 
-    URLs will be created for i in range(p_index_start, p_index_stop),
+    URLs will be created for i in range(start, stop),
     HTTP tag 'p' (page) is i.
 
     :param url: str, URL.
-    :param p_index_start: int, start page index.
-    :param p_index_stop: int, stop page index.
+    :param start: int, start page index.
+    :param stop: int, stop page index.
     :param kwargs: HTTP tags.
     :return: list of str, html codes of the pages.
-
-    :exception aiohttp.ClientResponseError:
-    :exception aiohttp.ClientConnectionError:
-    :exception aiohttp.InvalidURL:
-    :exception aiohttp.ServerTimeoutError:
-    :exception Exception: another one.
     """
     timeout = aiohttp.ClientTimeout(WAIT)
     # this limit might be wrong, it is
