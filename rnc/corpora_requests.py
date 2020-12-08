@@ -11,12 +11,12 @@ There's ClientTimeout in the requesting function.
 
 __all__ = 'get_htmls', 'is_request_correct'
 
-import asyncio
-from typing import List, Tuple
-
 import aiofiles
 import aiohttp
+import aiojobs
+import asyncio
 import bs4
+from typing import List, Tuple
 
 import rnc.corpora_logging as clog
 
