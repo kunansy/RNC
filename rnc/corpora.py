@@ -64,10 +64,11 @@ def create_unique_filename(folder: Path,
     :return: Path, unique filename.
     """
     name_template = "{}{}_{}.csv"
-    path = folder / Path(name_template.format(class_name, p_count, create_filename()))
+    name = name_template.format(class_name, p_count, create_filename())
+    path = folder / name
     while path.exists():
-
-        path = path.with_name(name_template.format(class_name, p_count, create_filename()))
+        name = name_template.format(class_name, p_count, create_filename())
+        path = path.with_name(name)
     return path
 
 
@@ -185,7 +186,8 @@ class Corpus:
 
         # path to local database
         class_name = self.__class__.__name__.replace('Corpus', '')
-        file = file or create_unique_filename(self.DATA_FOLDER, class_name, p_count)
+        file = file or create_unique_filename(
+            self.DATA_FOLDER, class_name, p_count)
         path = Path(file)
         if path.suffix != '.csv':
             msg = "File must have '.csv' extension"
@@ -912,8 +914,8 @@ class Corpus:
         :exception RuntimeError: If there are no data, params or files exist.
         """
         if not self.data:
-            logger.error("Tried to write empty data to file")
-            raise RuntimeError("there are no data to write")
+            logger.error("There is no data to write")
+            raise RuntimeError("There is no data to write")
         if not (self.query and self.p_count and self.params):
             logger.error("There is no data to write")
             raise RuntimeError("There is no data to write")
@@ -948,11 +950,6 @@ class Corpus:
         params or query is wrong then exception.
 
         :return: None.
-        :exception aiohttp.ClientResponseError:
-        :exception aiohttp.ClientConnectionError:
-        :exception aiohttp.InvalidURL:
-        :exception aiohttp.ServerTimeoutError:
-        :exception Exception: another one.
 
         :exception RuntimeError: if the data still exist.
         """
@@ -961,6 +958,7 @@ class Corpus:
             raise RuntimeError("Data still exist")
 
         try:
+            # TODO: get first page code if everything is OK
             creq.is_request_correct(RNC_URL, self.p_count, **self.params)
         except Exception:
             msg = f"Query = {self.forms_in_query}, {self.p_count}, {self.params}"
