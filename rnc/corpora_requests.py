@@ -25,7 +25,8 @@ logger = clog.create_logger(__name__)
 
 async def fetch(url: str,
                 ses: aiohttp.ClientSession,
-                **kwargs) -> Tuple[int, str]:
+                queue: asyncio.Queue,
+                **kwargs) -> None:
     """ Coro, obtaining page's html code. There's ClientTimeout.
 
     If response status == 429 sleep and try again.
@@ -37,17 +38,30 @@ async def fetch(url: str,
     :param kwargs: HTTP tags.
     :return: 'p' key to sort results and html code, decoded to UTF-8.
     """
-    wait = 24
-    timeout = aiohttp.ClientTimeout(wait + 1)
-    async with ses.get(url, params=kwargs, timeout=timeout) as resp:
-        if resp.status == 200:
-            return kwargs['p'], await resp.text('utf-8')
-        elif resp.status == 429:
-            logger.debug(f"429, {resp.reason}. "
-                         f"Page: {kwargs['p']}, wait {wait}s")
-            await asyncio.sleep(wait)
-            return await fetch(url, ses, **kwargs)
-        resp.raise_for_status()
+    try:
+        resp = await ses.get(url, params=kwargs)
+    except Exception as e:
+        logger.exception(f"Cannot get answer from RNC:\n{e}")
+        return
+
+    try:
+        if resp.status != 429:
+            resp.raise_for_status()
+    except Exception:
+        logger.error(
+            f"{resp.status}: {resp.reason} requesting to {resp.url}")
+        resp.close()
+        return
+
+    if resp.status == 200:
+        text = await resp.text('utf-8')
+        await queue.put((kwargs['p'], text))
+    elif resp.status == 429:
+        logger.debug(
+            f"429, {resp.reason} Page: {kwargs['p']}, wait {WAIT}s")
+        resp.close()
+        await asyncio.sleep(WAIT)
+        await fetch(url, ses, queue, **kwargs)
 
 
 async def get_htmls_coro(url: str,
