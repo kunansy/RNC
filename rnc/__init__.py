@@ -1,8 +1,9 @@
-__version__ = '0.6'
+__version__ = '0.6.1'
 
 import logging
 import os
 from pathlib import Path
+
 
 DEFAULT_MSG_FMT = "[{name}:{module}:{levelname}:{funcName}:{asctime}] {message}"
 DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
@@ -31,7 +32,7 @@ def create_formatter(message_format: str = DEFAULT_MSG_FMT,
     return formatter
 
 
-def create_stream_handler(level=logging.NOTSET,
+def create_stream_handler(level=logging.WARNING,
                           formatter: logging.Formatter = None) -> logging.StreamHandler:
     """ Create stream handler.
 
