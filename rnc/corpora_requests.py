@@ -5,16 +5,16 @@ download media files, check that the request if correct, page in RNC exists.
 
 __all__ = 'get_htmls', 'is_request_correct'
 
+import asyncio
+import logging
+from typing import List, Tuple
+
 import aiofiles
 import aiohttp
 import aiojobs
-import asyncio
 import bs4
-from typing import List, Tuple
 
-import rnc.corpora_logging as clog
-
-logger = clog.create_logger(__name__)
+logger = logging.getLogger("rnc")
 WAIT = 24
 
 
