@@ -256,30 +256,49 @@ def is_request_correct(url: str,
 
 async def fetch_download(url: str,
                          ses: aiohttp.ClientSession,
-                         filename: str) -> str:
+                         filename: str,
+                         **kwargs) -> None:
     """ Coro, downloading and writing media file from RNC.
-    There's ClientTimeout = 25s.
 
     If response status == 429 sleep 24s and try again.
 
     :param url: str, file's url.
     :param ses: aiohttp.ClientSession.
     :param filename: str, name of the file.
-    :return: str, name of the file.
+    :param kwargs: HTTP tags to request.
+    :return: None.
     :exception: all exceptions should be processed here.
     """
-    wait = 24
-    timeout = aiohttp.ClientTimeout(wait + 1)
-    async with ses.get(url, allow_redirects=True, timeout=timeout) as resp:
-        if resp.status == 200:
-            content = await resp.read()
-            async with aiofiles.open(filename, 'wb') as f:
-                await f.write(content)
-            return filename
-        elif resp.status == 429:
-            await asyncio.sleep(wait)
-            return await fetch_download(url, ses, filename)
-        resp.raise_for_status()
+    try:
+        resp = await ses.get(url, allow_redirects=True, params=kwargs)
+    except Exception:
+        logger.exception("Cannot get answer from RNC")
+        return
+
+    try:
+        if resp.status != 429:
+            resp.raise_for_status()
+    except Exception:
+        logger.error(
+            f"{resp.status}: {resp.reason} requesting to {resp.url}"
+        )
+        resp.close()
+        return
+
+    if resp.status == 200:
+        content = await resp.read()
+        async with aiofiles.open(filename, 'wb') as f:
+            await f.write(content)
+        resp.close()
+    elif resp.status == 429:
+        logger.debug(
+            f"429, {resp.reason} downloading '{filename}', wait {WAIT}s"
+        )
+        resp.close()
+        await asyncio.sleep(WAIT)
+        await fetch_download(url, ses, filename)
+    else:
+        logger.critical("This case must not happened")
 
 
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
@@ -288,40 +307,18 @@ async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
     :param url_to_name: list of tuples of str, pairs: url – filename.
     :return None.
     """
-    async with aiohttp.ClientSession() as ses:
-        tasks = [
-            asyncio.create_task(fetch_download(url, ses, filename))
-            for url, filename in url_to_name
-        ]
-        while True:
-            done, pending = await asyncio.wait(tasks)
-            msg = "While downloading or writing file"
-            for future in done:
-                try:
-                    filename = future.result()
-                except aiohttp.ClientResponseError:
-                    # 5.., 404 etc
-                    logger.exception(msg)
-                    raise
-                except aiohttp.ClientConnectionError:
-                    # there's no connection or access to the site
-                    logger.exception(msg)
-                    raise
-                except aiohttp.InvalidURL:
-                    # wrong url or params
-                    logger.exception(msg)
-                    raise
-                except aiohttp.ServerTimeoutError:
-                    # timeout
-                    logger.exception(msg)
-                    raise
-                except Exception:
-                    # another error
-                    logger.exception(msg)
-                    raise
-                else:
-                    logger.debug(f"{filename} successfully downloaded")
-                    return
+    timeout = aiohttp.ClientTimeout(WAIT)
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
+        scheduler = await aiojobs.create_scheduler(limit=None)
+        for url, filename in url_to_name:
+            await scheduler.spawn(
+                fetch_download(url, ses, filename)
+            )
+
+        while len(scheduler) != 0:
+            await asyncio.sleep(.5)
+
+        await scheduler.close()
 
 
 def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
