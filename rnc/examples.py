@@ -241,9 +241,10 @@ class Example:
         :param item: any type, item to check.
         :return: whether item is in text.
         """
-        if hasattr(item, 'lower') and hasattr(self.txt, 'lower'):
+        try:
             return item.lower() in self.txt.lower()
-        return item in self.txt
+        except AttributeError:
+            return item in self.txt
 
     def __str__(self) -> str:
         """ Str format:
@@ -550,10 +551,10 @@ class ParallelExample(Example):
         :param item: any type, item to check.
         :return: whether item is in text.
         """
-        if (hasattr(item, 'lower') and
-                all(hasattr(i, 'lower') for i in self.txt.values())):
+        try:
             return any(item.lower() in i.lower() for i in self.txt.values())
-        return any(item in i for i in self.txt.values())
+        except AttributeError:
+            return any(item in i for i in self.txt.values())
 
     def __iadd__(self,
                  other: Any) -> Any:
@@ -606,7 +607,10 @@ class ParallelExample(Example):
         :param item: str, language tag.
         :return: str or None, text in the language if exists.
         """
-        return self.txt.get(item, None)
+        try:
+            return getattr(super(), item)
+        except AttributeError:
+            return self.txt.get(item, None)
 
     def __getitem__(self,
                     lang: str) -> Any:
