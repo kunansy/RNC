@@ -541,7 +541,8 @@ class ParallelExample(Example):
         txt_copy = self.txt.copy()
         return self.__class__(
             txt_copy, self.src, self.ambiguation,
-            self.found_wordforms, self.doc_url)
+            self.found_wordforms, self.doc_url
+        )
 
     def __contains__(self,
                      item: Any) -> bool:
