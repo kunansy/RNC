@@ -58,6 +58,19 @@ class Subcorpus:
         Gogol = 'JSONeyJkb2NfYXV0aG9yIjogWyLQnS7Qki4g0JPQvtCz0L7Qu9GMIl19'
         Turgenev = 'JSONeyJkb2NfYXV0aG9yIjogWyLQmC7QoS4g0KLRg9GA0LPQtdC90LXQsiJdfQ%3D%3D'
 
+        def __getitem__(self, item: str) -> str:
+            """ Get attribute from Person.
+            Raise KeyError if there is no the item.
+
+            :param item: str, key name.
+            :return: str, key value.
+            :exception KeyError: if the key doesn't exist.
+            """
+            try:
+                return getattr(self, item)
+            except AttributeError as e:
+                raise KeyError(e)
+
     class Parallel:
         English = 'JSONeyJkb2NfbGFuZyI6IFsiZW5nIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
         Armenian = 'JSONeyJkb2NfbGFuZyI6IFsiYXJtIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
