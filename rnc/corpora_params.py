@@ -16,6 +16,40 @@ class Page:
 
 
 class Subcorpus:
+    def __getitem__(self, item: str) -> str:
+        """ Get attribute from Person or from Parallel.
+        Raise KeyError if there is no the item in both them.
+
+        :param item: str, key name.
+        :return: str, key value.
+        :exception KeyError: if the key doesn't exist.
+        """
+        try:
+            return getattr(self.Person, item)
+        except AttributeError:
+            pass
+        try:
+            return getattr(self.Parallel, item)
+        except AttributeError:
+            raise KeyError(f"No key '{item}' in either Person or Parallel")
+
+    def __getattr__(self, item: str) -> str:
+        """ Get attribute from Person or from Parallel.
+        Raise AttributeError if there is no the item in both them.
+
+        :param item: str, key name.
+        :return: str, key value.
+        :exception AttributeError: if the key doesn't exist.
+        """
+        try:
+            return getattr(super(), item)
+        except AttributeError:
+            pass
+        try:
+            return self[item]
+        except KeyError as e:
+            raise AttributeError(e)
+
     class Person:
         Pushkin = 'JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il19'
         Dostoyevsky = 'JSONeyJkb2NfYXV0aG9yIjogWyLQpC7QnC4g0JTQvtGB0YLQvtC10LLRgdC60LjQuSJdfQ%3D%3D'
