@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 
 if sys.version_info < (3, 7):
-    raise RuntimeError('Python >= 3.7 required')
+    raise RuntimeError('Python >= 3.7 is required')
 
 HERE = pathlib.Path(__file__).parent
 txt = (HERE / 'rnc' / '__init__.py').read_text('utf-8')
@@ -21,7 +21,7 @@ except IndexError:
 setup(
     name='rnc',
     version=version,
-    url='https://github.com/FaustGoethe/RNC',
+    url='https://github.com/kunansy/RNC',
     packages=find_packages(exclude='tests'),
     python_requires='>=3.7',
     license='MIT',
