@@ -1,12 +1,12 @@
-### API for [Russian National Corpus](http://ruscorpora.ru) 
+# API for [Russian National Corpus](http://ruscorpora.ru) 
 
-#### Installation
+## Installation
 ```bash
 pip install rnc
 ```
 
 ---
-#### Structure
+## Structure
 
 Corpus object contains list of obtained examples.
 There are two types of examples:
@@ -25,7 +25,7 @@ Examples' objects [fields](https://github.com/kunansy/RNC/blob/master/docs/Examp
 
 ---
 
-#### Usage
+## Usage
 ```python
 import rnc
 
@@ -49,7 +49,7 @@ ru.request_examples()
 
 ---
 
-##### Full query form
+### Full query form
 ```python
 query = {
     'word1': {
@@ -79,13 +79,13 @@ corp.reques_examples()
 
 ---
 
-##### String as a query
+### String as a query
 Also you can pass as a query a string with the **vocabulary forms** of the words, divided by space:
 `query = 'get down'` or `query = 'я получить'`. Distance between them will be default.
 
 ---
 
-#### Additional request params
+### Additional request params
 These params are optional, you can ignore them. Here are the default values.
 ```python
 corp = rnc.ParallelCorpus(
@@ -107,7 +107,7 @@ corp = rnc.ParallelCorpus(
 [Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 
 
-##### API can work with local base too
+### API can work with local base too
 ```python
 ru = rnc.SpokenCorpus(file='local_database.csv') # it must exist
 print(ru)
@@ -119,7 +119,7 @@ except for the file name (`file=...`).
 
 ---
 
-#### Working with corpora
+### Working with corpora
 ```python
 corp = rnc.corpus_name(...) 
 ```
@@ -204,21 +204,21 @@ If it is equal to `False`, the Corpus shows all examples.
 
 ---
 
-#### Corpora features
-##### ParallelCorpus
+### Corpora features
+#### ParallelCorpus
 * The query might be both in the original language and in the language of translation. 
 
-##### MultilingualParaCorpus
+#### MultilingualParaCorpus
 * Working with files is removed.
 * Param `subcorpus` is not demanded by default, but it might be passed, see **HOWTO** section below.
 
-##### MultimodalCorpus
+#### MultimodalCorpus
 * `corp.download_all()` – download all media files. **It is recommended** to use 
 this method instead of `expl.download_file()`.
 
 ---
 
-#### ATTENTION
+## ATTENTION
 * Do not forget to call this function
 ```python
 corp.request_examples()
@@ -255,8 +255,8 @@ query = {
 
 ---
 
-#### How to
-##### How to set sort?
+## HOWTO
+### How to set sort?
 There are some sort keys:
 1. `i_grtagging` – by default.
 2. `random` – randomly.
@@ -269,7 +269,7 @@ There are some sort keys:
 [Some of HTTP params](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md).
 
 
-##### How to set language in ParallelCorpus?
+### How to set language in ParallelCorpus?
 ```python
 en = rnc.ParallelCorpus('get', 5, subcorpus=rnc.Subcorpus.Parallel.English)
 ```
@@ -277,7 +277,7 @@ If you want to search something by several languages, choose and set the subcorp
 pass this param to Corpus. 
 
 
-##### How to set subcorpus?
+### How to set subcorpus?
 There are default keys in rnc.Subcorpus.Person (working checked in **MainCorpus**) – Russian writers and poets: 
 * Pushkin
 * Dostoyevsky
@@ -300,7 +300,7 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
 ![4](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/4.png)
 
 ---
-### Links
+## Links
 * [Russian National Corpus](https://ruscorpora.ru)
 * [Docs](https://github.com/kunansy/RNC/tree/master/docs)
 * [Source](https://github.com/kunansy/RNC)
