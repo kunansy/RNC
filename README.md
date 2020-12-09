@@ -80,8 +80,9 @@ corp.reques_examples()
 ---
 
 ### String as a query
-Also you can pass as a query a string with the **vocabulary forms** of the words, divided by space:
-`query = 'get down'` or `query = 'я получить'`. Distance between them will be default.
+Also you can pass as a query a string with the **vocabulary forms** of the 
+words, divided by space: `query = 'get down'` or `query = 'я получить'`. 
+Distance between them will be default.
 
 ---
 
@@ -99,7 +100,7 @@ corp = rnc.ParallelCorpus(
     text='lexgramm' or 'lexform', # way to search
     out='normal' or 'kwic', # output format
     kwsz=5, # if out=kwic, count of words in context
-    sort='i_grtagging', # way to sort the results
+    sort='i_grtagging', # way to sort the results, see HOWTO section below
     subcorpus='', # see HOWTO section below
     accent=0, # with accentology (1) or without (0), if it is available
 )
@@ -112,7 +113,8 @@ corp = rnc.ParallelCorpus(
 ru = rnc.SpokenCorpus(file='local_database.csv') # it must exist
 print(ru)
 ```
-If the file exists, API works with it. If the data list is not empty you cannot request new examples. <br>
+If the file exists, API works with it. If the data list is not empty you 
+cannot request new examples. <br>
 
 If you work with a file, it is not demanded to pass any argument to Corpus 
 except for the file name (`file=...`).
@@ -127,7 +129,8 @@ corp = rnc.corpus_name(...)
 There is an exception if:
     * Data still exist. 
     * No results found.
-    * Requested page does not exist (if there are 10 pages in the RNC, but you have requested > 10).
+    * A requested page does not exist (if there are 10 pages in the RNC, but 
+      you have requested > 10).
     * There is a mistake in the request.
     * You have no access to the Internet.
     * There is a problem while getting access to RNC.
@@ -155,7 +158,8 @@ key is applied to Example objects.
 Key is applied to the `Example` objects.
 * `corp.url` – URL of the first RNC page (only getter).
 * `corp.open_url()` – open the first RNC page.
-* `corp.open_graphic()` – open the graphic of the distribution of query occurrences by years.
+* `corp.open_graphic()` – open the graphic of the distribution of query 
+  occurrences by years.
 
 Magic methods: 
 * `corp.dpp` or another request param (only getter).
@@ -172,13 +176,15 @@ or turn the restriction off.
     ```
 * `len(corp)` – count of examples.
 * `bool(corp)` – whether data exist.
-* `corp[index or slice]` – get element at the index or create new obj with sliced data:
+* `corp[index or slice]` – get element at the index or create a new object 
+  with sliced data:
 ```python
 from_2_to_10 = corp[2:10:2]
 ```
 * `del corp[10]` or `del corp[:10]` – remove some examples from the data list.
 
-* Also you can use cycle `for`. For example we want to see only left context (`out=kwic`) and source:
+* Also you can use cycle `for`. For example we want to see only left 
+  context (`out=kwic`) and source:
 ```python
 corp = rnc.ParallelCorpus(
     'corpus', 5, 
@@ -206,11 +212,13 @@ If it is equal to `False`, the Corpus shows all examples.
 
 ### Corpora features
 #### ParallelCorpus
-* The query might be both in the original language and in the language of translation. 
+* The query might be both in the original language and in the language of 
+  translation. 
 
 #### MultilingualParaCorpus
 * Working with files is removed.
-* Param `subcorpus` is not demanded by default, but it might be passed, see **HOWTO** section below.
+* Param `subcorpus` is not demanded by default, but it might be passed, see 
+  **HOWTO** section below.
 
 #### MultimodalCorpus
 * `corp.download_all()` – download all media files. **It is recommended** to use 
@@ -223,7 +231,8 @@ this method instead of `expl.download_file()`.
 ```python
 corp.request_examples()
 ```
-* If you have requested more than 10 pages, RNC returns 429 error (Too many requests).
+* If you have requested more than 10 pages, RNC returns 429 error 
+  (Too many requests).
 For example requesting 100 pages you should wait about 3 minutes: 
 ![100 pages](https://github.com/kunansy/RNC/blob/master/docs/100_pages.png?raw=true)
 * If you want to see messages like that:
@@ -343,6 +352,7 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus.Pushkin)
 * [Lexgramm search params](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params)
 * [Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 ---
-If you have found a bug (add all logs to the mail, please) or have an idea how to improve the API write to me – alniconim@gmail.com.  
+If you have found a bug (add all logs to the mail, please) or have an idea 
+how to improve the API write to me – alniconim@gmail.com.  
 
 P.S. If your native is Russian or you know it well, please write me in Russian.
