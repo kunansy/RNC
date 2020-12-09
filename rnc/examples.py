@@ -17,6 +17,7 @@ __all__ = (
     'KwicExample'
 )
 
+import os
 import re
 import webbrowser
 from pathlib import Path
@@ -723,6 +724,8 @@ class MultimodalExample(Example):
 
         :return: None.
         """
+        os.makedirs(self.filepath.parent, exist_ok=True)
+
         data = [(self._media_url, str(self.filepath))]
         try:
             creq.download_docs(data)
