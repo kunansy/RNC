@@ -37,6 +37,8 @@ def set_stream_handlers_level(level) -> None:
     corpora_requests.logger[0].setLevel(level)
 
 
+subcorpus = Subcorpus()
+
 __all__ = (
     'MainCorpus',
     'Paper2000Corpus',
@@ -48,7 +50,7 @@ __all__ = (
     'MultilingualParaCorpus',
     'TutoringCorpus',
     'MultimodalCorpus',
-    'Subcorpus',
+    'subcorpus',
 
     'MainExample',
     'Paper2000Example',
