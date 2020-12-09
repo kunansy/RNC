@@ -1544,7 +1544,7 @@ class MultimodalCorpus(Corpus):
         os.makedirs(self.MEDIA_FOLDER, exist_ok=True)
 
         urls_to_names = [
-            (example.media_url, example.filepath)
+            (example._media_url, example.filepath)
             for example in self
         ]
         creq.download_docs(urls_to_names)
