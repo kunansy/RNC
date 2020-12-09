@@ -183,7 +183,7 @@ from_2_to_10 = corp[2:10:2]
 corp = rnc.ParallelCorpus(
     'corpus', 5, 
     out='kwic', kwsz=7, 
-    subcorpus=rnc.Subcorpus.Parallel.English
+    subcorpus=rnc.subcorpus.en
 )
 corp.request_examples()
 
@@ -271,14 +271,40 @@ There are some sort keys:
 
 ### How to set language in ParallelCorpus?
 ```python
-en = rnc.ParallelCorpus('get', 5, subcorpus=rnc.Subcorpus.Parallel.English)
+en = rnc.ParallelCorpus('get', 5, subcorpus=rnc.subcorpus.en)
 ```
-If you want to search something by several languages, choose and set the subcorpus in the site,
-pass this param to Corpus. 
+**OR**
+```python
+en = rnc.ParallelCorpus('get', 5, subcorpus=rnc.subcorpus['en'])
+```
+Language keys list:
+1. English – 'en'
+1. Armenian – 'arm'
+1. Bashkir – 'bas'
+1. Belarusian – 'bel'
+1. Bulgarian – 'bul'
+1. Buryatian – 'bur'
+1. Spanish – 'sp'
+1. Italian – 'it'
+1. Chinese – 'ch'
+1. Latvian – 'lat'
+1. Lithuanian – 'lit'
+1. German – 'ger'
+1. Polish – 'pol'
+1. Ukrainian – 'ukr'
+1. French – 'fr'
+1. Finnish – 'fin'
+1. Czech – 'cz'
+1. Swedish – 'sw'
+1. Estonian – 'es'
+
+If you want to search something by several languages, choose and set the 
+subcorpus in the site, pass this param to Corpus. 
 
 
 ### How to set subcorpus?
-There are default keys in rnc.Subcorpus.Person (working checked in **MainCorpus**) – Russian writers and poets: 
+There are default keys in rnc.subcorpus.Person (working checked in 
+**MainCorpus**) – Russian writers and poets: 
 * Pushkin
 * Dostoyevsky
 * TolstoyLN
@@ -288,8 +314,16 @@ There are default keys in rnc.Subcorpus.Person (working checked in **MainCorpus*
 
 Example:
 ```python
-ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.Subcorpus.Person.Pushkin)
+ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus['Pushkin'])
 ```
+
+
+**OR**
+
+```python
+ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus.Pushkin)
+```
+
 
 **OR**
 
