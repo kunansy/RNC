@@ -127,13 +127,30 @@ from .examples import (
 )
 
 
-def set_stream_handlers_level(level) -> None:
-    import rnc.corpora_requests
+def set_handler_level(level, handler_class) -> None:
+    for handler_index in range(len(logger.handlers)):
+        if logger.handlers[handler_index].__class__ == handler_class:
+            logger.handlers[handler_index].setLevel(level)
+            return
+    raise ValueError(f"There is no '{handler_class}' handler")
 
-    # TODO:
-    examples.logger[0].setLevel(level)
-    corpora.logger[0].setLevel(level)
-    corpora_requests.logger[0].setLevel(level)
+
+def set_stream_handler_level(level):
+    try:
+        set_handler_level(level, logging.StreamHandler)
+    except ValueError:
+        raise
+
+
+def set_file_handler_level(level):
+    try:
+        set_handler_level(level, logging.FileHandler)
+    except ValueError:
+        raise
+
+
+def set_logger_level(level):
+    logger.setLevel(level)
 
 
 subcorpus = Subcorpus()
@@ -163,5 +180,7 @@ __all__ = (
     'MultimodalExample',
     'KwicExample',
 
-    'set_stream_handlers_level'
+    'set_stream_handler_level',
+    'set_file_handler_level',
+    'set_logger_level'
 )
