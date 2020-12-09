@@ -5,9 +5,7 @@
 pip install rnc
 ```
 
----
 ## Structure
-
 Corpus object contains list of obtained examples.
 There are two types of examples:
 ![](https://github.com/kunansy/RNC/blob/master/docs/Two_ex_types.png?raw=true) <br> 
@@ -23,7 +21,6 @@ print(type(ru[0]))
 
 Examples' objects [fields](https://github.com/kunansy/RNC/blob/master/docs/Examples.md)   
 
----
 
 ## Usage
 ```python
@@ -47,7 +44,6 @@ ru.request_examples()
 
 [Corpora](https://github.com/kunansy/RNC/blob/master/docs/Corpora.md) you can use.
 
----
 
 ### Full query form
 ```python
@@ -77,14 +73,12 @@ corp.reques_examples()
 ```
 [Lexgramm search params](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params)
 
----
 
 ### String as a query
 Also you can pass as a query a string with the **vocabulary forms** of the 
 words, divided by space: `query = 'get down'` or `query = 'я получить'`. 
 Distance between them will be default.
 
----
 
 ### Additional request params
 These params are optional, you can ignore them. Here are the default values.
@@ -108,7 +102,7 @@ corp = rnc.ParallelCorpus(
 [Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 
 
-### API can work with local base too
+### API can work with a local file too
 ```python
 ru = rnc.SpokenCorpus(file='local_database.csv') # it must exist
 print(ru)
@@ -119,7 +113,6 @@ cannot request new examples. <br>
 If you work with a file, it is not demanded to pass any argument to Corpus 
 except for the file name (`file=...`).
 
----
 
 ### Working with corpora
 ```python
@@ -165,7 +158,7 @@ Magic methods:
 * `corp.dpp` or another request param (only getter).
 * `corp()` – all the same to `request_examples()`.
 * `str(corp) or print(corp)` – str with info about Corpus, enumerated examples.
-By default Corpus shows first 50 examples, but you can change it 
+By default, Corpus shows first 50 examples, but you can change it 
 or turn the restriction off. 
 
     Info about Corpus:
@@ -208,7 +201,6 @@ Set default values to all objects you will create:
 * `corpus_name.set_restrict_show(value)` – change default amount of shown examples in print. 
 If it is equal to `False`, the Corpus shows all examples. 
 
----
 
 ### Corpora features
 #### ParallelCorpus
@@ -342,7 +334,7 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus.Pushkin)
 ![3](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/3.png)
 ![4](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/4.png)
 
----
+
 ## Links
 * [Russian National Corpus](https://ruscorpora.ru)
 * [Docs](https://github.com/kunansy/RNC/tree/master/docs)
