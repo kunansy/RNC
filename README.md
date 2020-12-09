@@ -257,7 +257,16 @@ query = {
 
 #### How to
 ##### How to set sort?
-Sort [keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md).
+There are some sort keys:
+1. `i_grtagging` – by default.
+2. `random` – randomly.
+3. `i_grauthor` – by author.
+4. `i_grcreated_inv` – by creation date.
+5. `i_grcreated` – by creation date in reversed order.
+6. `i_grbirthday_inv` – by author's birth date.
+7. `i_grbirthday` – by author's birth date in reversed order.
+
+[Some of HTTP params](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md).
 
 
 ##### How to set language in ParallelCorpus?
