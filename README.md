@@ -216,7 +216,29 @@ If it is equal to `False`, the Corpus shows all examples.
 * `corp.download_all()` – download all media files. **It is recommended** to use 
 this method instead of `expl.download_file()`.
 
----
+
+## Logger
+* See all log messages
+```python
+rnc.set_stream_handler_level('debug')
+```
+* See less than all messages
+```python
+rnc.set_stream_handler_level('info')
+```
+* Turn the logger off
+```python
+rnc.set_logger_level('critical')
+```
+* Turn off all messages in the stream, but dump logs to file
+```python
+rnc.set_stream_handler_level('critical')
+```
+* Turn off dumping logs to file
+```python
+rnc.set_file_handler_level('critical')
+```
+
 
 ## ATTENTION
 * Do not forget to call this function
@@ -227,14 +249,6 @@ corp.request_examples()
   (Too many requests).
 For example requesting 100 pages you should wait about 3 minutes: 
 ![100 pages](https://github.com/kunansy/RNC/blob/master/docs/100_pages.png?raw=true)
-* If you want to see messages like that:
-```python
-rnc.set_stream_handlers_level('INFO' or 'DEBUG')
-```
-* If you want to turn off all messages:
-```python
-rnc.set_stream_handlers_level('CRITICAL')
-```
 * **Do not call** the marker you pass
 
 **RIGHT:**
