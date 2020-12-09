@@ -91,3 +91,16 @@ class Subcorpus:
         Czech = cz = 'JSONeyJkb2NfbGFuZyI6IFsiY3plIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
         Swedish = sw = 'JSONeyJkb2NfbGFuZyI6IFsic3ZlIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
         Estonian = es = 'JSONeyJkb2NfbGFuZyI6IFsiZXN0Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+
+        def __getitem__(self, item: str) -> str:
+            """ Get attribute from Parallel.
+            Raise KeyError if there is no the item.
+
+            :param item: str, key name.
+            :return: str, key value.
+            :exception KeyError: if the key doesn't exist.
+            """
+            try:
+                return getattr(self, item)
+            except AttributeError as e:
+                raise KeyError(e)
