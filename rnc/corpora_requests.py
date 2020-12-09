@@ -36,8 +36,8 @@ async def fetch(url: str,
     """
     try:
         resp = await ses.get(url, params=kwargs)
-    except Exception as e:
-        logger.exception(f"Cannot get answer from RNC:\n{e}")
+    except Exception:
+        logger.exception("Cannot get answer from RNC")
         return
 
     try:
@@ -45,16 +45,19 @@ async def fetch(url: str,
             resp.raise_for_status()
     except Exception:
         logger.error(
-            f"{resp.status}: {resp.reason} requesting to {resp.url}")
+            f"{resp.status}: {resp.reason} requesting to {resp.url}"
+        )
         resp.close()
         return
 
     if resp.status == 200:
         text = await resp.text('utf-8')
         await queue.put((kwargs['p'], text))
+        resp.close()
     elif resp.status == 429:
         logger.debug(
-            f"429, {resp.reason} Page: {kwargs['p']}, wait {WAIT}s")
+            f"429, {resp.reason} Page: {kwargs['p']}, wait {WAIT}s"
+        )
         resp.close()
         await asyncio.sleep(WAIT)
         await fetch(url, ses, queue, **kwargs)
@@ -85,7 +88,9 @@ async def get_htmls_coro(url: str,
     async with aiohttp.ClientSession(timeout=timeout) as ses:
         scheduler = await aiojobs.create_scheduler(limit=None)
         for p_index in range(start, stop):
-            await scheduler.spawn(fetch(url, ses, queue, **kwargs, p=p_index))
+            await scheduler.spawn(
+                fetch(url, ses, queue, **kwargs, p=p_index)
+            )
 
         while len(scheduler) is not 0:
             await asyncio.sleep(.5)
@@ -118,8 +123,9 @@ def get_htmls(url: str,
     """
     logger.info(f"Requested: ({start};{stop}), with params {kwargs}")
     html_codes = asyncio.run(
-        get_htmls_coro(url, start, stop, **kwargs))
-    logger.info("Request was completed successfully")
+        get_htmls_coro(url, start, stop, **kwargs)
+    )
+    logger.info("Request was successfully completed ")
     return html_codes
 
 
