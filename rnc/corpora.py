@@ -13,6 +13,7 @@ __all__ = (
 
 import csv
 import json
+import logging
 import os
 import random
 import re
@@ -25,11 +26,10 @@ from urllib.parse import unquote
 
 import bs4
 
-import rnc.corpora_logging as clog
 import rnc.corpora_requests as creq
 import rnc.examples as expl
 
-logger = clog.create_logger(__name__)
+logger = logging.getLogger("rnc")
 
 
 # Russian National Corpus URL
