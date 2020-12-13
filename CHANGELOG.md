@@ -134,3 +134,7 @@ Minor fixes and improvements.
 Other minor fixes and improvements.
 #### Added
 * Chinese parallel corpus added.
+
+
+### 0.6.1 - 09.12.2020
+Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
