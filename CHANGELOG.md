@@ -138,3 +138,8 @@ Other minor fixes and improvements.
 
 ### 0.6.1 - 09.12.2020
 Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
+
+
+### 0.6.2
+#### Changed
+* Docs were improved.
