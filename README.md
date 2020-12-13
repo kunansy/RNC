@@ -352,13 +352,25 @@ ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus.Pushkin)
 ## Links
 * [Russian National Corpus](https://ruscorpora.ru)
 * [Docs](https://github.com/kunansy/RNC/tree/master/docs)
-* [Source](https://github.com/kunansy/RNC)
 * Examples' objects [fields](https://github.com/kunansy/RNC/blob/master/docs/Examples.md)
 * [Corpora](https://github.com/kunansy/RNC/blob/master/docs/Corpora.md) you can use.
 * [Lexgramm search params](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params)
 * [Sort keys](https://github.com/kunansy/RNC/blob/master/docs/HTTP%20params.md)
 ---
-If you have found a bug (add all logs to the mail, please) or have an idea 
-how to improve the API write to me – alniconim@gmail.com.  
 
-P.S. If your native is Russian or you know it well, please write me in Russian.
+
+## Requirements
+* Python >= 3.7
+
+
+## Licence
+`rnc` is offered under MIT licence.
+
+
+## Source code
+The project is hosted on [Github](https://github.com/kunansy/RNC)
+
+---
+
+Please file an issue in the [bug tracker](https://github.com/kunansy/RNC/issues) 
+if you have found a bug or have some suggestions to improve the library.
