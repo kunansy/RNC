@@ -40,20 +40,9 @@ async def fetch(url: str,
         logger.exception("Cannot get answer from RNC")
         return
 
-    try:
-        if resp.status != 429:
-            resp.raise_for_status()
-    except Exception:
-        logger.error(
-            f"{resp.status}: {resp.reason} requesting to {resp.url}"
-        )
-        resp.close()
-        return
-
     if resp.status == 200:
         text = await resp.text('utf-8')
         await queue.put((kwargs['p'], text))
-        resp.close()
     elif resp.status == 429:
         logger.debug(
             f"429, {resp.reason} Page: {kwargs['p']}, wait {WAIT}s"
@@ -62,7 +51,11 @@ async def fetch(url: str,
         await asyncio.sleep(WAIT)
         await fetch(url, ses, queue, **kwargs)
     else:
-        logger.critical("This case must not happened")
+        logger.error(
+            f"{resp.status}: {resp.reason} requesting to {resp.url}"
+        )
+
+    resp.close()
 
 
 async def get_htmls_coro(url: str,
@@ -88,9 +81,12 @@ async def get_htmls_coro(url: str,
     async with aiohttp.ClientSession(timeout=timeout) as ses:
         scheduler = await aiojobs.create_scheduler(limit=None)
         for p_index in range(start, stop):
-            await scheduler.spawn(
-                fetch(url, ses, queue, **kwargs, p=p_index)
-            )
+            try:
+                await scheduler.spawn(
+                    fetch(url, ses, queue, **kwargs, p=p_index)
+                )
+            except Exception as e:
+                logger.error(f"{e} requesting to {url} with {kwargs}")
 
         while len(scheduler) is not 0:
             await asyncio.sleep(.5)
@@ -102,7 +98,7 @@ async def get_htmls_coro(url: str,
         ]
     results.sort(key=lambda res: res[0])
     return [
-        html for p, html in results
+        html for _, html in results
     ]
 
 
