@@ -130,29 +130,45 @@ from .examples import (
 )
 
 
-def set_handler_level(level, handler_class) -> None:
+class HandlerNotExistError(Exception):
+    pass
+
+
+def set_handler_level(level: LEVEL,
+                      handler_class: type) -> None:
+    try:
+        level = level.upper()
+    except AttributeError:
+        pass
+
     for handler_index in range(len(logger.handlers)):
         if logger.handlers[handler_index].__class__ == handler_class:
             logger.handlers[handler_index].setLevel(level)
             return
-    raise ValueError(f"There is no '{handler_class}' handler")
+    raise HandlerNotExistError(f"There is no '{handler_class}' handler")
 
 
 def set_stream_handler_level(level: LEVEL) -> None:
     try:
         set_handler_level(level, logging.StreamHandler)
-    except ValueError:
-        raise
+    except HandlerNotExistError:
+        print("Stream handler doesn't exist. This behavior "
+              "is undefined, contact the developer")
 
 
 def set_file_handler_level(level: LEVEL) -> None:
     try:
         set_handler_level(level, logging.FileHandler)
-    except ValueError:
-        raise
+    except HandlerNotExistError:
+        print("File handler doesn't exist. This behavior "
+              "is undefined, contact the developer")
 
 
-def set_logger_level(level):
+def set_logger_level(level: LEVEL) -> None:
+    try:
+        level = level.upper()
+    except AttributeError:
+        pass
     logger.setLevel(level)
 
 
