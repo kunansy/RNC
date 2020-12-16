@@ -275,6 +275,20 @@ class Corpus:
         self._params['out'] = kwargs.pop('out', None) or self.__OUT
         self._params['sort'] = kwargs.pop('sort', None) or self.__SORT
 
+        msg = "'{}' is wrong {} value, expected: {}"
+        if self.params['text'] not in SEARCH_FORMATS:
+            msg = msg.format(self.params['text'], 'text', SEARCH_FORMATS)
+            logger.error(msg)
+            raise ValueError(msg)
+        if self.params['out'] not in OUTPUT_FORMATS:
+            msg = msg.format(self.params['out'], 'out', OUTPUT_FORMATS)
+            logger.error(msg)
+            raise ValueError(msg)
+        if self.params['sort'] not in SORT_KEYS:
+            msg = msg.format(self.params['sort'], 'sort', SORT_KEYS)
+            logger.error(msg)
+            raise ValueError(msg)
+
         accent = kwargs.pop('accent', None) or self.__ACCENT
         accent = int(accent)
         self._params['nodia'] = int(not accent)
