@@ -332,7 +332,7 @@ class Corpus:
 
         :return: list of examples.
         """
-        with self.file.open('r', encoding='utf-16') as f:
+        with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
             reader = csv.reader(f, delimiter=dm, quotechar=qch)
@@ -351,7 +351,7 @@ class Corpus:
 
         :return: json dict.
         """
-        with self._config_path.open('r', encoding='utf-16') as f:
+        with self._config_path.open('r', encoding='utf-8') as f:
             return json.load(f)
 
     @classmethod
@@ -918,7 +918,7 @@ class Corpus:
         """
         data = [example.items for example in self.data]
         columns = self[0].columns
-        with self.file.open('w', encoding='utf-16', newline='') as f:
+        with self.file.open('w', encoding='utf-8', newline='') as f:
             # class constants
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
@@ -940,7 +940,7 @@ class Corpus:
             'p_count': self.p_count,
             'params': self.params
         }
-        with self._config_path.open('w', encoding='utf-16') as f:
+        with self._config_path.open('w', encoding='utf-8') as f:
             json.dump(to_write, f, indent=4, ensure_ascii=False)
 
     def dump(self) -> None:
@@ -1424,7 +1424,7 @@ class ParallelCorpus(Corpus):
         """
         if self.out == 'kwic':
             return super()._load_data()
-        with self.file.open('r', encoding='utf-16') as f:
+        with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
             reader = csv.reader(f, delimiter=dm, quotechar=qch)
