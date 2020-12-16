@@ -786,7 +786,7 @@ class Corpus:
                 continue
 
             # grammar properties
-            gramm = params.get('gramm', '')
+            gramm = params.pop('gramm', '')
             if gramm:
                 try:
                     gram_props = Corpus._parse_lexgramm_params(gramm, '|', True)
@@ -795,7 +795,7 @@ class Corpus:
                 self._params[f"gramm{word_num}"] = gram_props
 
             # additional properties
-            flags = params.get('flags', '')
+            flags = params.pop('flags', '')
             if flags:
                 try:
                     flag_prop = Corpus._parse_lexgramm_params(flags, '+')
@@ -804,13 +804,15 @@ class Corpus:
                 self._params[f"flags{word_num}"] = flag_prop
 
             # TODO: semantic properties
-            sem = params.get('sem', '')
+            sem = params.pop('sem', '')
             if sem:
-                try:
-                    logger.warning("Semantic properties does not support")
-                except Exception:
-                    raise
-                # self.__params фильтр1 и фильтр2
+                logger.warning("Semantic properties does not support")
+
+            if params:
+                msg = f"Oops, 'gramm', 'flags' and 'sem' were expected, but " \
+                      f"another keys given: {params}"
+                logger.error(msg)
+                raise ValueError(msg)
 
     def _add_wordforms(self,
                        forms: List[str]) -> None:
