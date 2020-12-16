@@ -8,7 +8,11 @@ __all__ = (
     'ParallelCorpus',
     'MultilingualParaCorpus',
     'TutoringCorpus',
-    'MultimodalCorpus'
+    'MultimodalCorpus',
+
+    'SORT_KEYS',
+    'SEARCH_FORMATS',
+    'OUTPUT_FORMATS'
 )
 
 import csv
@@ -37,6 +41,18 @@ RNC_URL = "https://processing.ruscorpora.ru/search.xml"
 BASE_RNC_URL = "https://processing.ruscorpora.ru"
 
 ALPHABET = f"{string.ascii_letters}{string.digits}"
+
+
+SORT_KEYS = (
+    'i_grtagging', 'random', 'i_grauthor', 'i_grcreated_inv',
+    'i_grcreated', 'i_grbirthday_inv', 'i_grbirthday',
+)
+SEARCH_FORMATS = (
+    'lexform', 'lexgramm'
+)
+OUTPUT_FORMATS = (
+    'normal', 'kwic'
+)
 
 
 def create_filename(length: int = 8) -> str:

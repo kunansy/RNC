@@ -112,7 +112,11 @@ from .corpora import (
     AccentologicalCorpus,
     MultilingualParaCorpus,
     TutoringCorpus,
-    MultimodalCorpus
+    MultimodalCorpus,
+
+    SORT_KEYS,
+    OUTPUT_FORMATS,
+    SEARCH_FORMATS
 )
 from .corpora_params import Mycorp
 from .examples import (
@@ -201,5 +205,9 @@ __all__ = (
 
     'set_stream_handler_level',
     'set_file_handler_level',
-    'set_logger_level'
+    'set_logger_level',
+
+    'SORT_KEYS',
+    'SEARCH_FORMATS',
+    'OUTPUT_FORMATS'
 )
