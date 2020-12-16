@@ -218,13 +218,11 @@ class Corpus:
 
         # path to local database
         class_name = self.__class__.__name__.replace('Corpus', '')
-        file = file or create_unique_filename(
+        path = Path(file) or create_unique_filename(
             self.DATA_FOLDER, class_name, p_count)
-        path = Path(file)
-        if path.suffix != '.csv':
-            msg = "File must have '.csv' extension"
-            logger.error(msg)
-            raise TypeError(msg)
+
+        # change or add right extension
+        path = path.with_suffix('.csv')
 
         # to these files the data and req params will be dumped
         self._csv_path = path
