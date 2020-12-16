@@ -3,13 +3,15 @@ __version__ = '0.6.1'
 import logging
 import os
 from pathlib import Path
-
+from typing import Union
 
 DEFAULT_MSG_FMT = "[{name}:{module}:{levelname}:{funcName}:{asctime}] {message}"
 DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 LOG_FOLDER = Path('logs')
 os.makedirs(LOG_FOLDER, exist_ok=True)
+
+LEVEL = Union[str, int]
 
 
 def create_formatter(message_format: str = DEFAULT_MSG_FMT,
@@ -32,7 +34,7 @@ def create_formatter(message_format: str = DEFAULT_MSG_FMT,
     return formatter
 
 
-def create_stream_handler(level=logging.WARNING,
+def create_stream_handler(level: LEVEL = logging.WARNING,
                           formatter: logging.Formatter = None) -> logging.StreamHandler:
     """ Create stream handler.
 
@@ -48,7 +50,7 @@ def create_stream_handler(level=logging.WARNING,
     return stream_handler
 
 
-def create_file_handler(level=logging.DEBUG,
+def create_file_handler(level: LEVEL = logging.DEBUG,
                         log_path: str = None,
                         formatter: logging.Formatter = None,
                         **kwargs) -> logging.FileHandler:
@@ -73,7 +75,7 @@ def create_file_handler(level=logging.DEBUG,
 
 
 def create_logger(module_name: str,
-                  level=logging.DEBUG,
+                  level: LEVEL = logging.DEBUG,
                   *handlers) -> logging.Logger:
     """ Create logger.
 
@@ -136,14 +138,14 @@ def set_handler_level(level, handler_class) -> None:
     raise ValueError(f"There is no '{handler_class}' handler")
 
 
-def set_stream_handler_level(level):
+def set_stream_handler_level(level: LEVEL) -> None:
     try:
         set_handler_level(level, logging.StreamHandler)
     except ValueError:
         raise
 
 
-def set_file_handler_level(level):
+def set_file_handler_level(level: LEVEL) -> None:
     try:
         set_handler_level(level, logging.FileHandler)
     except ValueError:
