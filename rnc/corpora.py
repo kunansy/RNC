@@ -139,7 +139,7 @@ class Corpus:
     __TEXT = 'lexgramm'
     # output format
     __OUT = 'normal'
-    # accent on words, without accent by default
+    # accent on words
     __ACCENT = '0'
     # show order
     __SORT = 'i_grtagging'
@@ -168,19 +168,35 @@ class Corpus:
          If you chose 'lexform' as a 'text' param, you must give here a string.
         :param p_count: int, count of pages to request.
         :param file: str or Path, filename of a local database.
+         Optional, random filename by default.
         :keyword dpp: str or int, documents per page.
+         Optional, 5 by default.
         :keyword spd: str or int, sentences per document.
+         Optional, 10 by default.
         :keyword text: str, search format: 'lexgramm' or 'lexform'.
+         Optional, 'lexgramm' by default.
         :keyword out: str, output format: 'normal' or 'kwic'.
+         Optional, 'normal' bu default.
         :keyword kwsz: str or int, count of words in context;
          Optional param if 'out' is 'kwic'.
         :keyword sort: str, sort show order. See docs how to set it.
-        :keyword subcorpus: str, subcorpus. See docs how to set it.
-        :keyword expand: str, if 'full', all part of doc will be shown.
+         Optional.
+        :keyword mycorp: str, mycorp. This is way to specify the sample of docs
+         where you want to find sth. See docs how to set it. Optional.
+        :keyword expand: str, if 'full', all part of doc will be shown. 
+         Now it doesn't work.
         :keyword accent: str or int, with accents on words or not:
-         1 – with, 0 – without.
-
+         1 – with, 0 – without. Optional, 0 by default.
         :keyword marker: function, with which found words will be marked.
+         Optional.
+
+        :return: None.
+        :exception FileExistsError: if csv file is given but json file
+         with config doesn't exist.
+        :exception ValueError: if the query is empty; page count is a negative 
+         number; text, out or sort key is wrong.
+        :exception NotImplementedError: if the corpus type in file isn't equal 
+         to corpus class type.
         """
         # list of examples
         self._data = []
@@ -188,7 +204,7 @@ class Corpus:
         self._params = {}
         # found wordforms with their frequency
         self._found_wordforms = {}
-        # query, wordforms to found
+        # query, wordforms to find
         self._query = {}
         # count of PAGES
         self._p_count = 0
@@ -221,7 +237,7 @@ class Corpus:
             except FileExistsError:
                 logger.exception('')
                 raise
-        # or working with RNC
+        # or work with RNC
         else:
             self._from_corpus(query, p_count, **kwargs)
 
@@ -229,10 +245,12 @@ class Corpus:
                      query: dict or str,
                      p_count: int,
                      **kwargs) -> None:
-        """ Init from the given values. If the file does not exist.
+        """ Set given values to the object. If the file does not exist.
         Params the same as in the init method.
 
         :return: None.
+        :exception ValueError: if the query is empty; pages count is a negative
+         number; out, sort, text key is wrong.
         """
         if not query:
             msg = "Query must be not empty"
@@ -698,11 +716,13 @@ class Corpus:
         """ Convert the query to HTTP tags, add them to params.
 
         :return: None.
-        :exception ValueError: if wrong type given.
+        :exception ValueError: if the query is not str however out is lexform;
+
+        :exception AssertionError:
         """
         if self.text == 'lexform':
             if not isinstance(self.query, str):
-                msg = "One must give str as a query if search is 'lexform'"
+                msg = "Query must be str if search is 'lexform'"
                 logger.error(msg)
                 raise ValueError(msg)
             self._params['req'] = join_with_plus(self.query)
