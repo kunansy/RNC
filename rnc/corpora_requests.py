@@ -271,21 +271,10 @@ async def fetch_download(url: str,
         logger.exception("Cannot get answer from RNC")
         return
 
-    try:
-        if resp.status != 429:
-            resp.raise_for_status()
-    except Exception:
-        logger.error(
-            f"{resp.status}: {resp.reason} requesting to {resp.url}"
-        )
-        resp.close()
-        return
-
     if resp.status == 200:
         content = await resp.read()
         async with aiofiles.open(filename, 'wb') as f:
             await f.write(content)
-        resp.close()
     elif resp.status == 429:
         logger.debug(
             f"429, {resp.reason} downloading '{filename}', wait {WAIT}s"
@@ -294,7 +283,10 @@ async def fetch_download(url: str,
         await asyncio.sleep(WAIT)
         await fetch_download(url, ses, filename)
     else:
-        logger.critical("This case must not happened")
+        logger.error(
+            f"{resp.status}: {resp.reason} requesting to {resp.url}"
+        )
+    resp.close()
 
 
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
@@ -307,9 +299,12 @@ async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
     async with aiohttp.ClientSession(timeout=timeout) as ses:
         scheduler = await aiojobs.create_scheduler(limit=None)
         for url, filename in url_to_name:
-            await scheduler.spawn(
-                fetch_download(url, ses, filename)
-            )
+            try:
+                await scheduler.spawn(
+                    fetch_download(url, ses, filename)
+                )
+            except Exception as e:
+                logger.error(f"{e} requesting to {url}")
 
         while len(scheduler) != 0:
             await asyncio.sleep(.5)
