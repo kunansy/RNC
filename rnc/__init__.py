@@ -114,7 +114,7 @@ from .corpora import (
     TutoringCorpus,
     MultimodalCorpus
 )
-from .corpora_params import Subcorpus
+from .corpora_params import Mycorp
 from .examples import (
     MainExample,
     Paper2000Example,
@@ -172,7 +172,7 @@ def set_logger_level(level: LEVEL) -> None:
     logger.setLevel(level)
 
 
-subcorpus = Subcorpus()
+mycorp = Mycorp()
 
 __all__ = (
     'MainCorpus',
@@ -185,7 +185,7 @@ __all__ = (
     'MultilingualParaCorpus',
     'TutoringCorpus',
     'MultimodalCorpus',
-    'subcorpus',
+    'mycorp',
 
     'MainExample',
     'Paper2000Example',

@@ -248,9 +248,9 @@ class Corpus:
         if self.params['out'] == 'kwic' and 'kwsz' in kwargs:
             self._params['kwsz'] = kwargs.pop('kwsz')
 
-        if 'subcorpus' in kwargs:
-            mycorp = kwargs.pop('subcorpus')
-            self._params['mycorp'] = unquote(mycorp)
+        if 'mycorp' in kwargs:
+            mycorp = kwargs.pop('mycorp')
+            self._params['mycorp'] = urllib.parse.unquote(mycorp)
 
         # TODO: page structure changed if expand=full
         # if 'expand' in kwargs:
