@@ -399,6 +399,15 @@ class Corpus:
         cls.__SORT = value
 
     @classmethod
+    def set_out(cls, value: str) -> None:
+        if value not in OUTPUT_FORMATS:
+            msg = f"Valid out formats: {OUTPUT_FORMATS}, '{value}' was given"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        cls.__OUT = value
+
+    @classmethod
     def set_min(cls, value: int) -> None:
         if not isinstance(value, int) or value <= 0:
             logger.error("min must be int > 0")
