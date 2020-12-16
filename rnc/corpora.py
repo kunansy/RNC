@@ -370,44 +370,48 @@ class Corpus:
 
     @classmethod
     def set_dpp(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("DPP must be int")
-            raise TypeError("DPP must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("DPP must be int > 0")
+            raise ValueError("DPP must be int > 0")
         cls.__DPP = value
 
     @classmethod
     def set_spd(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("SPD must be int")
-            raise TypeError("SPD must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("SPD must be int > 0")
+            raise ValueError("SPD must be int > 0")
         cls.__SPD = value
 
     @classmethod
     def set_text(cls, value: str) -> None:
-        if not isinstance(value, str):
-            logger.error("Text must be str")
-            raise TypeError("Text must be str")
+        if value not in SEARCH_FORMATS:
+            msg = f"Valid search formats: {SEARCH_FORMATS}, '{value}' was given"
+            logger.error(msg)
+            raise ValueError(msg)
+
         cls.__TEXT = value
 
     @classmethod
     def set_sort(cls, value: str) -> None:
-        if not isinstance(value, str):
-            logger.error("Sort key must be str")
-            raise TypeError("Sort key must be str")
+        if value not in SORT_KEYS:
+            msg = f"Valid sort keys: {SORT_KEYS}, '{value}' was given"
+            logger.error(msg)
+            raise ValueError(msg)
+
         cls.__SORT = value
 
     @classmethod
     def set_min(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("min must be int")
-            raise TypeError("min must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("min must be int > 0")
+            raise ValueError("min must be int > 0")
         cls.__MIN = value
 
     @classmethod
     def set_max(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("max must be int")
-            raise TypeError("max must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("max must be int > 0")
+            raise ValueError("max must be int > 0")
         cls.__MAX = value
 
     @classmethod
