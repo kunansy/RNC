@@ -699,17 +699,20 @@ class Corpus:
             return
         return f"{BASE_RNC_URL}/{link}"
 
-    def _get_additional_info(self) -> None:
+    def _get_additional_info(self,
+                             first_page_code: str = None) -> None:
         """ Get additional info (amount of found docs and contexts,
         link to graphic with distribution by years).
 
+        :params first_page_code: str, code of the first page.
         :return: None.
         """
         params = self.params.copy()
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
-            first_page_code = creq.get_htmls(RNC_URL, **params)[0]
+            first_page_code = first_page_code or \
+                              creq.get_htmls(RNC_URL, **params)[0]
         except Exception:
             raise
 
@@ -1023,25 +1026,34 @@ class Corpus:
             logger.error("Tried to request new examples, however data exist")
             raise RuntimeError("Data still exist")
 
+        coro_start = time.time()
         try:
-            # TODO: get first page code if everything is OK
-            creq.is_request_correct(RNC_URL, self.p_count, **self.params)
+            first, last = creq.is_request_correct(
+                RNC_URL, self.p_count, **self.params)
         except Exception:
-            msg = f"Query = {self.forms_in_query}, {self.p_count}, {self.params}"
+            msg = f"Query = {self.forms_in_query}, " \
+                  f"{self.p_count}, {self.params}"
             logger.exception(msg)
             raise
 
         # get additional info from the first RNC page.
-        logger.debug("Requesting additional info from the first RNC page")
-        self._get_additional_info()
+        logger.debug("Getting additional info from the first RNC page")
+        if self.out == 'normal':
+            self._get_additional_info(first)
+        else:
+            self._get_additional_info()
         logger.debug("Additional info was successfully received")
 
-        logger.debug("Main request")
-        coro_start = time.time()
-        htmls = creq.get_htmls(RNC_URL, 0, self.p_count, **self.params)
-        logger.debug("Main request was successfully completed")
-        logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
-
+        if self.p_count > 2:
+            logger.debug("Main request")
+            htmls = creq.get_htmls(RNC_URL, 1, self.p_count - 1, **self.params)
+            htmls = [first] + htmls + [last]
+            logger.debug("Main request was successfully completed")
+            logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
+        else:
+            htmls = [first]
+            if self.p_count is 2:
+                htmls += [last]
         logger.debug("Parsing html was started")
         try:
             parsing_start = time.time()
