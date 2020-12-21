@@ -8,8 +8,8 @@
 1. Paper
    * Media 2000 years – class **Paper2000Corpus**
    * Local media – class **PaperRegionalCorpus**
-1. Parallel – class **ParallelCorpus**. Use `rnc.subcorpus.<lang>` or 
-  `rnc.subcorpus[<lang>]` to set language via `subcorpus=`. 
+1. Parallel – class **ParallelCorpus**. Use `rnc.mycorp.<lang>` or 
+  `rnc.mycorp[<lang>]` to set language via `mycorp=`. 
 Docs to all [subcorpora](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params/Parallel%20Corpus) 
    1. English 
    1. Armenian

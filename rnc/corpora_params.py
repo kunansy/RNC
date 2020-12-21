@@ -1,3 +1,7 @@
+__all__ = (
+    'Mycorp'
+)
+
 from typing import Any
 
 
@@ -15,7 +19,7 @@ class Page:
         pass
 
 
-class Subcorpus:
+class Mycorp:
     def __getitem__(self, item: str) -> str:
         """ Get attribute from Person or from Parallel.
         Raise KeyError if there is no the item in both them.
