@@ -1134,14 +1134,18 @@ class Corpus:
                 yield expl, match
 
     def finditer(self,
-                 pattern: Any) -> None:
-        """ Apply the pattern to the examples' text with re.findall.
-        Change tha data list.
+                 pattern: Pattern or str,
+                 **kwargs) -> Tuple[expl.Example, Any]:
+        """ Apply the pattern to the examples' text with re.finditer.
 
-        :param pattern: r str or re.pattern, pattern to apply.
-        :return: None.
+        :param pattern: r str or re.pattern to apply.
+        :param kwargs: kwargs to re.findall.
+        :return: yield example and match.
         """
-        pass
+        for expl in self:
+            match = re.finditer(pattern, expl.txt, **kwargs)
+            if match:
+                yield expl, match
 
     def __repr__(self) -> str:
         """ Format:
