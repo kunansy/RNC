@@ -143,12 +143,15 @@ def is_http_request_correct(url: str,
 
 
 def whether_result_found(url: str,
-                         **kwargs) -> bool:
+                         **kwargs) -> str:
     """ Whether the page contains results.
 
     :param url: str, request url.
     :param kwargs: request HTTP tags.
+    :return: str, first page HTML code if everything is OK.
+
     :exception RuntimeError: if HTTP request was wrong.
+    :exception ValueError: if the result not found.
     """
     logger.debug("Validating that the request is OK")
     try:
@@ -165,12 +168,15 @@ def whether_result_found(url: str,
     content = soup.find('div', {'class': 'content'}).text
     res_msg = ('По этому запросу ничего не найдено.' in content or
                'No results match the search query.' in content)
-    return not res_msg
+    if res_msg:
+        raise ValueError
+    return page_html
 
 
 def does_page_exist(url: str,
                     p_index: int,
-                    **kwargs) -> bool:
+                    first_page: str,
+                    **kwargs) -> str:
     """ Whether a page at the index exists.
 
     It means, the number of the page in 'pager' is equal to expected index.
@@ -179,8 +185,9 @@ def does_page_exist(url: str,
 
     :param url: str, URL.
     :param p_index: int, index of page. Indexing starts with 0.
+    :param first_page: str, first page code.
     :param kwargs: HTTP tags.
-    :return: bool, whether a page exists.
+    :return: str, last page code if everything is OK, an exception otherwise.
     """
     # indexing starts with 0
     start = p_index
@@ -189,28 +196,31 @@ def does_page_exist(url: str,
 
     # request's correct → first page exists
     if stop is 1:
-        return True
+        return first_page
 
-    page_html = get_htmls(url, start, stop, **kwargs)[0]
-    soup = bs4.BeautifulSoup(page_html, 'lxml')
+    last_page = get_htmls(url, start, stop, **kwargs)[0]
+    soup = bs4.BeautifulSoup(last_page, 'lxml')
 
     pager = soup.find('p', {'class': 'pager'})
     if pager:
         p_num = pager.b
         if not p_num:
-            return False
+            raise ValueError
         # page index from pager should be equal to expected index
-        return p_num.text == str(stop)
+        if p_num.text != str(stop):
+            raise ValueError
+        return last_page
 
     # if there's no pager, but result exists.
     # this might happen if expand=full or out=kwic
-    first_page_code = get_htmls(url, 0, 1, **kwargs)[0]
-    return page_html != first_page_code
+    if last_page == first_page:
+        raise ValueError
+    return last_page
 
 
 def is_request_correct(url: str,
                        p_count: int,
-                       **kwargs) -> bool:
+                       **kwargs) -> Tuple[str, str]:
     """ Check:
         – is the HTTP request correct (means there're no exceptions catch).
 
@@ -222,16 +232,18 @@ def is_request_correct(url: str,
     :param url: str, request url.
     :param p_count: int, request count of pages.
     :param kwargs: request HTTP tags.
-    :return: True if everything's OK, an exception otherwise.
-    :exception ValueError: something's wrong.
+    :return: tuple of str, first and last pages if everything's OK,
+     an exception otherwise.
+    :exception ValueError: HTTP request is wrong, no result found or
+     the last page doesn't exist.
     """
     logger.debug("Validating that everything is OK")
     try:
         # to reduce the number of requests
         # the two checks are combined into one.
         # coro writes logs by itself
-        assert whether_result_found(url, **kwargs) is True
-    except AssertionError:
+        first_page = whether_result_found(url, **kwargs)
+    except ValueError:
         logger.exception("HTTP request is OK, but no result found")
         raise ValueError("No result found")
     except RuntimeError:
@@ -241,13 +253,16 @@ def is_request_correct(url: str,
         logger.debug("HTTP request is correct, result found")
 
     logger.debug("Validating that the last page exists")
-    if not does_page_exist(url, p_count - 1, **kwargs):
+    try:
+        last_page = does_page_exist(url, p_count - 1, first_page, **kwargs)
+    except ValueError:
         logger.error("Everything is OK, but last page doesn't exist")
         raise ValueError("Last page doesn't exist")
     logger.debug("The last page exists")
 
     logger.debug("Validated successfully")
-    return True
+
+    return first_page, last_page
 
 
 async def fetch_download(url: str,
