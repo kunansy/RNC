@@ -536,20 +536,13 @@ class Corpus:
         :param tag: bs4.element.Tag, tag with result.
         :return: list of string, words to which request was.
         """
-        # TODO: simplify
-        # params of the classes and word if 'class' is
-        class_params = [
-            (i.attrs.get('class', ''), i.text)
-            for i in tag.contents
-            if isinstance(i, bs4.element.Tag)
-        ]
         # searched words are marked by class parameter 'g-em'
-        searched_words = [
-            i[1].strip()
-            for i in class_params
-            if 'g-em' in i[0]
+        return [
+            tag.text.strip()
+            for tag in tag.contents
+            if (isinstance(tag, bs4.element.Tag) and
+                'g-em' in tag.attrs.get('class', ''))
         ]
-        return searched_words
 
     @property
     def data(self) -> List:
