@@ -737,6 +737,12 @@ class MultimodalExample(Example):
         except Exception:
             raise
 
+    def copy(self) -> Any:
+        return self.__class__(
+            *self.data.values(), self.doc_url,
+            self._media_url, str(self.filepath)
+        )
+
 
 class MultiPARCExample(Example):
     pass

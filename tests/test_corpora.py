@@ -52,7 +52,7 @@ class TemplateCorpusTest:
         sleep(5)
 
     def test_one_form_with_one_gram(self):
-        corp = self.corp_type({'ты': 'nom'}, 1, marker=str.capitalize, spd=1)
+        corp = self.corp_type({'ты': {'gramm': 'nom'}}, 1, marker=str.capitalize, spd=1)
         corp.request_examples()
 
         assert len(corp) > 1
@@ -110,10 +110,10 @@ class TemplateCorpusTest:
 
         assert default.data != by_creation_date.data
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus="JSONeyJkb2Nfc2V4IjogWyLQvNGD0LYiXSwgImRvY19pX3RhZ2dpbmciOiBbIjEiXX0%3D"
+            mycorp="JSONeyJkb2Nfc2V4IjogWyLQvNGD0LYiXSwgImRvY19pX3RhZ2dpbmciOiBbIjEiXX0%3D"
         )
         corp.request_examples()
 
@@ -156,16 +156,12 @@ class TemplateCorpusTest:
 
     def test_load_to_wrong_corpus(self):
         with pytest.raises(NotImplementedError):
-            self.corp_type(file='data\\wrong_mode.csv')
+            self.corp_type(file=f'data{os.sep}wrong_mode.csv')
 
     def test_request_if_base_loaded(self):
         corp = self.corp_type(file=self.corp_normal_obj.file)
         with pytest.raises(RuntimeError):
             corp.request_examples()
-
-    def test_wrong_filetype(self):
-        with pytest.raises(TypeError):
-            corp = self.corp_type('ты', 1, file='file.txt')
 
     def test_default_filetype(self):
         corp = self.corp_type('ты', 1)
@@ -194,7 +190,7 @@ class TemplateCorpusTest:
         )
 
     def test_query_dict(self):
-        corp = self.corp_type({'ты': 'acc'}, 1)
+        corp = self.corp_type({'ты': {'gramm': 'acc'}}, 1)
 
         assert isinstance(corp.query, dict) and corp.query
 
@@ -204,7 +200,7 @@ class TemplateCorpusTest:
         assert isinstance(corp.query, str) and corp.query
 
     def test_forms_in_query_dict(self):
-        corp = self.corp_type({'ты': 'acc', 'готов': {}}, 1)
+        corp = self.corp_type({'ты': {'gramm': 'acc'}, 'готов': {}}, 1)
 
         assert isinstance(corp.forms_in_query, list)
         assert all(isinstance(form, str) for form in corp.forms_in_query)
@@ -332,70 +328,7 @@ class TemplateCorpusTest:
         copy = self.corp_normal_obj.copy()
         del copy[:]
 
-        assert copy == 0
-
-    ##########################
-    #        Test <=>        #
-    ##########################
-
-    def test_lt_with_int(self):
-        assert self.corp_normal_obj < 10
-        assert self.corp_kwic_obj < 10
-
-    def test_lt_with_corp(self):
-        copy = self.corp_normal_obj.copy()
-        del copy[0]
-
-        assert copy < self.corp_normal_obj
-
-    def test_le_with_int(self):
-        assert self.corp_normal_obj <= 5
-        assert self.corp_kwic_obj <= 5
-
-    def test_le_with_corp(self):
-        copy = self.corp_normal_obj.copy()
-        del copy[0]
-
-        assert copy <= self.corp_normal_obj
-
-    def test_eq_with_int(self):
-        assert self.corp_normal_obj == len(self.corp_normal_obj)
-        assert self.corp_kwic_obj == len(self.corp_kwic_obj)
-
-    def test_eq_with_corp(self):
-        copy = self.corp_normal_obj.copy()
-
-        assert copy == self.corp_normal_obj
-
-    def test_ne_with_int(self):
-        assert self.corp_normal_obj != 0
-        assert self.corp_kwic_obj != 0
-
-    def test_ne_with_corp(self):
-        copy = self.corp_normal_obj.copy()
-        del copy[0]
-
-        assert copy != self.corp_normal_obj
-
-    def test_gt_with_int(self):
-        assert self.corp_normal_obj > 0
-        assert self.corp_kwic_obj > 0
-
-    def test_gt_with_corp(self):
-        copy = self.corp_normal_obj.copy()
-        del copy[0]
-
-        assert self.corp_normal_obj > copy
-
-    def test_ge_with_int(self):
-        assert self.corp_normal_obj >= 1
-        assert self.corp_kwic_obj >= 1
-
-    def test_ge_with_corp(self):
-        copy = self.corp_normal_obj.copy()
-        del copy[0]
-
-        assert self.corp_normal_obj >= copy
+        assert len(copy.data) == 0
 
     ##########################
     #   Test class setters   #
@@ -408,7 +341,7 @@ class TemplateCorpusTest:
         assert corp.spd is 20
 
     def test_set_spd_exception(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             self.corp_type.set_spd('12')
 
     def test_set_dpp_normal(self):
@@ -418,7 +351,7 @@ class TemplateCorpusTest:
         assert corp.dpp is 20
 
     def test_set_dpp_exception(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             self.corp_type.set_dpp('12')
 
     def test_set_text_normal(self):
@@ -428,7 +361,7 @@ class TemplateCorpusTest:
         assert corp.text == 'lexform'
 
     def test_set_text_exception(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             self.corp_type.set_text(12)
 
     def test_set_sort_normal(self):
@@ -438,7 +371,7 @@ class TemplateCorpusTest:
         assert corp.sort == 'i_grcreated_inv'
 
     def test_set_sort_exception(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             self.corp_type.set_sort(12)
 
     def test_set_min_normal(self):
@@ -448,7 +381,7 @@ class TemplateCorpusTest:
         assert corp.min2 is 10
 
     def test_set_min_exception(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             self.corp_type.set_min('12')
 
     def test_set_max_normal(self):
@@ -458,7 +391,7 @@ class TemplateCorpusTest:
         assert corp.max2 is 10
 
     def test_set_max_exception(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             self.corp_type.set_max('12')
 
     def test_set_restrict_show_exception_str(self):
@@ -494,15 +427,19 @@ class TestPaper2000Corpus(TemplateCorpusTest):
     corp_kwic_obj.request_examples()
     sleep(5)
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus="JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDEwIl19"
+            mycorp="JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDEwIl19"
         )
         corp.request_examples()
 
         assert len(corp) >= 1
         sleep(5)
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
 
 
 class TestPaperRegionalCorpus(TemplateCorpusTest):
@@ -523,10 +460,10 @@ class TestPaperRegionalCorpus(TemplateCorpusTest):
         assert len(corp) > 1
         sleep(5)
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus="JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDEwIl19"
+            mycorp="JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDEwIl19"
         )
         corp.request_examples()
 
@@ -556,10 +493,10 @@ class TestParallelCorpus(TemplateCorpusTest):
         assert len(corp) > 1
         sleep(5)
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus='JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDAwIl19'
+            mycorp='JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDAwIl19'
         )
         corp.request_examples()
 
@@ -571,10 +508,6 @@ class TestParallelCorpus(TemplateCorpusTest):
         copy.sort_data(key=lambda x: len(x.ru))
 
         assert copy.data != self.corp_normal_obj.data
-
-    def test_open_graphic(self):
-        with pytest.raises(RuntimeError):
-            self.corp_normal_obj.open_graphic()
 
 
 class TestMultilingualParaCorpus(TemplateCorpusTest):
@@ -595,13 +528,13 @@ class TestMultilingualParaCorpus(TemplateCorpusTest):
         assert len(corp) > 1
         sleep(5)
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         pass
         # it's impossible to set subcorpus in MultilingualParaCorpus
 
         # corp = self.corp_type(
         #     'ты', 1,
-        #     subcorpus='JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDAwIl19'
+        #     mycorp='JSONeyJkb2NfaV9sZV9zdGFydF95ZWFyIjogWyIyMDAwIl19'
         # )
         # corp.request_examples()
         #
@@ -686,10 +619,10 @@ class TestDialectalCorpus(TemplateCorpusTest):
         assert len(corp) > 1
         sleep(5)
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus='JSONeyJkb2NfcmVnaW9uIjogWyLQmtCw0YDQtdC70LjRjyJdfQ%3D%3D'
+            mycorp='JSONeyJkb2NfcmVnaW9uIjogWyLQmtCw0YDQtdC70LjRjyJdfQ%3D%3D'
         )
         corp.request_examples()
 
@@ -728,10 +661,10 @@ class TestAccentologicalCorpus(TemplateCorpusTest):
     corp_kwic_obj.request_examples()
     sleep(5)
 
-    def test_subcorpus(self):
+    def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            subcorpus='JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il0sICJkb2NfaV9sZV9lbmRfeWVhciI6IFsiMTgzMCJdfQ%3D%3D'
+            mycorp='JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il0sICJkb2NfaV9sZV9lbmRfeWVhciI6IFsiMTgzMCJdfQ%3D%3D'
         )
         corp.request_examples()
 
@@ -762,3 +695,16 @@ class TestMultimodalCorpus(TemplateCorpusTest):
             ex.filepath.name in files
             for ex in self.corp_normal_obj
         )
+
+    def test_mycorp(self):
+        pass
+
+    def test_open_graphic(self):
+        with pytest.raises(RuntimeError):
+            self.corp_normal_obj.open_graphic()
+
+    def test_full_query_with_lexform(self):
+        corp = self.corp_type('ты это', 1, text='lexform')
+        corp.request_examples()
+
+        assert len(corp.data) > 1

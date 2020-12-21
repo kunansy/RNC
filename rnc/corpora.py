@@ -8,23 +8,27 @@ __all__ = (
     'ParallelCorpus',
     'MultilingualParaCorpus',
     'TutoringCorpus',
-    'MultimodalCorpus'
+    'MultimodalCorpus',
+
+    'SORT_KEYS',
+    'SEARCH_FORMATS',
+    'OUTPUT_FORMATS'
 )
 
 import csv
-import json
 import logging
 import os
 import random
 import re
 import string
 import time
+import urllib.parse
 import webbrowser
 from pathlib import Path
-from typing import Dict, Callable, List, Any, Tuple
-from urllib.parse import unquote
+from typing import Dict, Callable, List, Any, Tuple, Pattern
 
 import bs4
+import ujson
 
 import rnc.corpora_requests as creq
 import rnc.examples as expl
@@ -37,6 +41,18 @@ RNC_URL = "https://processing.ruscorpora.ru/search.xml"
 BASE_RNC_URL = "https://processing.ruscorpora.ru"
 
 ALPHABET = f"{string.ascii_letters}{string.digits}"
+
+
+SORT_KEYS = (
+    'i_grtagging', 'random', 'i_grauthor', 'i_grcreated_inv',
+    'i_grcreated', 'i_grbirthday_inv', 'i_grbirthday',
+)
+SEARCH_FORMATS = (
+    'lexform', 'lexgramm'
+)
+OUTPUT_FORMATS = (
+    'normal', 'kwic'
+)
 
 
 def create_filename(length: int = 8) -> str:
@@ -123,7 +139,7 @@ class Corpus:
     __TEXT = 'lexgramm'
     # output format
     __OUT = 'normal'
-    # accent on words, without accent by default
+    # accent on words
     __ACCENT = '0'
     # show order
     __SORT = 'i_grtagging'
@@ -152,19 +168,35 @@ class Corpus:
          If you chose 'lexform' as a 'text' param, you must give here a string.
         :param p_count: int, count of pages to request.
         :param file: str or Path, filename of a local database.
+         Optional, random filename by default.
         :keyword dpp: str or int, documents per page.
+         Optional, 5 by default.
         :keyword spd: str or int, sentences per document.
+         Optional, 10 by default.
         :keyword text: str, search format: 'lexgramm' or 'lexform'.
+         Optional, 'lexgramm' by default.
         :keyword out: str, output format: 'normal' or 'kwic'.
+         Optional, 'normal' bu default.
         :keyword kwsz: str or int, count of words in context;
          Optional param if 'out' is 'kwic'.
         :keyword sort: str, sort show order. See docs how to set it.
-        :keyword subcorpus: str, subcorpus. See docs how to set it.
-        :keyword expand: str, if 'full', all part of doc will be shown.
+         Optional.
+        :keyword mycorp: str, mycorp. This is way to specify the sample of docs
+         where you want to find sth. See docs how to set it. Optional.
+        :keyword expand: str, if 'full', all part of doc will be shown. 
+         Now it doesn't work.
         :keyword accent: str or int, with accents on words or not:
-         1 – with, 0 – without.
-
+         1 – with, 0 – without. Optional, 0 by default.
         :keyword marker: function, with which found words will be marked.
+         Optional.
+
+        :return: None.
+        :exception FileExistsError: if csv file is given but json file
+         with config doesn't exist.
+        :exception ValueError: if the query is empty; page count is a negative 
+         number; text, out or sort key is wrong.
+        :exception NotImplementedError: if the corpus type in file isn't equal 
+         to corpus class type.
         """
         # list of examples
         self._data = []
@@ -172,7 +204,7 @@ class Corpus:
         self._params = {}
         # found wordforms with their frequency
         self._found_wordforms = {}
-        # query, wordforms to found
+        # query, wordforms to find
         self._query = {}
         # count of PAGES
         self._p_count = 0
@@ -186,13 +218,11 @@ class Corpus:
 
         # path to local database
         class_name = self.__class__.__name__.replace('Corpus', '')
-        file = file or create_unique_filename(
+        path = file or create_unique_filename(
             self.DATA_FOLDER, class_name, p_count)
-        path = Path(file)
-        if path.suffix != '.csv':
-            msg = "File must have '.csv' extension"
-            logger.error(msg)
-            raise TypeError(msg)
+        path = Path(path)
+        # change or add right extension
+        path = path.with_suffix('.csv')
 
         # to these files the data and req params will be dumped
         self._csv_path = path
@@ -203,9 +233,9 @@ class Corpus:
             try:
                 self._from_file()
             except FileExistsError:
-                logger.exception('')
+                logger.exception('Probably there is no json file with config')
                 raise
-        # or working with RNC
+        # or work with RNC
         else:
             self._from_corpus(query, p_count, **kwargs)
 
@@ -213,10 +243,12 @@ class Corpus:
                      query: dict or str,
                      p_count: int,
                      **kwargs) -> None:
-        """ Init from the given values. If the file does not exist.
+        """ Set given values to the object. If the file does not exist.
         Params the same as in the init method.
 
         :return: None.
+        :exception ValueError: if the query is empty; pages count is a negative
+         number; out, sort, text key is wrong.
         """
         if not query:
             msg = "Query must be not empty"
@@ -225,7 +257,7 @@ class Corpus:
         self._query = query
 
         if p_count <= 0:
-            msg = "Page count must be > 0"
+            msg = "Pages count must be > 0"
             logger.error(msg)
             raise ValueError(msg)
         self._p_count = p_count
@@ -241,6 +273,20 @@ class Corpus:
         self._params['out'] = kwargs.pop('out', None) or self.__OUT
         self._params['sort'] = kwargs.pop('sort', None) or self.__SORT
 
+        msg = "'{}' is wrong {} value, expected: {}"
+        if self.params['text'] not in SEARCH_FORMATS:
+            msg = msg.format(self.params['text'], 'text', SEARCH_FORMATS)
+            logger.error(msg)
+            raise ValueError(msg)
+        if self.params['out'] not in OUTPUT_FORMATS:
+            msg = msg.format(self.params['out'], 'out', OUTPUT_FORMATS)
+            logger.error(msg)
+            raise ValueError(msg)
+        if self.params['sort'] not in SORT_KEYS:
+            msg = msg.format(self.params['sort'], 'sort', SORT_KEYS)
+            logger.error(msg)
+            raise ValueError(msg)
+
         accent = kwargs.pop('accent', None) or self.__ACCENT
         accent = int(accent)
         self._params['nodia'] = int(not accent)
@@ -248,9 +294,9 @@ class Corpus:
         if self.params['out'] == 'kwic' and 'kwsz' in kwargs:
             self._params['kwsz'] = kwargs.pop('kwsz')
 
-        if 'subcorpus' in kwargs:
-            mycorp = kwargs.pop('subcorpus')
-            self._params['mycorp'] = unquote(mycorp)
+        if 'mycorp' in kwargs:
+            mycorp = kwargs.pop('mycorp')
+            self._params['mycorp'] = urllib.parse.unquote(mycorp)
 
         # TODO: page structure changed if expand=full
         # if 'expand' in kwargs:
@@ -298,7 +344,7 @@ class Corpus:
 
         :return: list of examples.
         """
-        with self.file.open('r', encoding='utf-16') as f:
+        with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
             reader = csv.reader(f, delimiter=dm, quotechar=qch)
@@ -317,49 +363,62 @@ class Corpus:
 
         :return: json dict.
         """
-        with self._config_path.open('r', encoding='utf-16') as f:
-            return json.load(f)
+        with self._config_path.open('r', encoding='utf-8') as f:
+            return ujson.load(f)
 
     @classmethod
     def set_dpp(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("DPP must be int")
-            raise TypeError("DPP must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("DPP must be int > 0")
+            raise ValueError("DPP must be int > 0")
         cls.__DPP = value
 
     @classmethod
     def set_spd(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("SPD must be int")
-            raise TypeError("SPD must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("SPD must be int > 0")
+            raise ValueError("SPD must be int > 0")
         cls.__SPD = value
 
     @classmethod
     def set_text(cls, value: str) -> None:
-        if not isinstance(value, str):
-            logger.error("Text must be str")
-            raise TypeError("Text must be str")
+        if value not in SEARCH_FORMATS:
+            msg = f"Valid search formats: {SEARCH_FORMATS}, '{value}' was given"
+            logger.error(msg)
+            raise ValueError(msg)
+
         cls.__TEXT = value
 
     @classmethod
     def set_sort(cls, value: str) -> None:
-        if not isinstance(value, str):
-            logger.error("Sort key must be str")
-            raise TypeError("Sort key must be str")
+        if value not in SORT_KEYS:
+            msg = f"Valid sort keys: {SORT_KEYS}, '{value}' was given"
+            logger.error(msg)
+            raise ValueError(msg)
+
         cls.__SORT = value
 
     @classmethod
+    def set_out(cls, value: str) -> None:
+        if value not in OUTPUT_FORMATS:
+            msg = f"Valid out formats: {OUTPUT_FORMATS}, '{value}' was given"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        cls.__OUT = value
+
+    @classmethod
     def set_min(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("min must be int")
-            raise TypeError("min must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("min must be int > 0")
+            raise ValueError("min must be int > 0")
         cls.__MIN = value
 
     @classmethod
     def set_max(cls, value: int) -> None:
-        if not isinstance(value, int):
-            logger.error("max must be int")
-            raise TypeError("max must be int")
+        if not isinstance(value, int) or value <= 0:
+            logger.error("max must be int > 0")
+            raise ValueError("max must be int > 0")
         cls.__MAX = value
 
     @classmethod
@@ -376,11 +435,13 @@ class Corpus:
         :param tag: bs4.element.Tag, example.
         :return: str, 'disambiguated' or 'not disambiguated' or 'Not found'.
         """
-        ambiguation = (tag.find('span', {'class': 'on'}) or
-                       tag.find('span', {'class': 'off'}))
+        ambiguation = (tag.find('span', {'class': 'off'}) or
+                       tag.find('span', {'class': 'on'}))
         if not ambiguation:
             return 'Not found'
         ambiguation = ambiguation.text.strip()
+
+        # TODO: use regexp here
         # here ambiguation like '[...]'
         ambiguation = ambiguation[1:-1].strip()
         return ambiguation
@@ -424,6 +485,8 @@ class Corpus:
         if not src:
             return "Not found"
         src = clean_text_up(src.text)
+
+        # TODO: use regexp gere
         # here src like '[...]'
         src = src[1:-1].strip()
         return src
@@ -473,20 +536,13 @@ class Corpus:
         :param tag: bs4.element.Tag, tag with result.
         :return: list of string, words to which request was.
         """
-        # TODO: simplify
-        # params of the classes and word if 'class' is
-        class_params = [
-            (i.attrs.get('class', ''), i.text)
-            for i in tag.contents
-            if isinstance(i, bs4.element.Tag)
-        ]
         # searched words are marked by class parameter 'g-em'
-        searched_words = [
-            i[1].strip()
-            for i in class_params
-            if 'g-em' in i[0]
+        return [
+            tag.text.strip()
+            for tag in tag.contents
+            if (isinstance(tag, bs4.element.Tag) and
+                'g-em' in tag.attrs.get('class', ''))
         ]
-        return searched_words
 
     @property
     def data(self) -> List:
@@ -597,6 +653,8 @@ class Corpus:
         of query occurrences by years.
 
         :return: None.
+        :exception RuntimeError: if the URL doesn't exist.
+        :exception ...: if it's impossible to open the link.
         """
         url = self.graphic_link
         if url is None:
@@ -641,17 +699,20 @@ class Corpus:
             return
         return f"{BASE_RNC_URL}/{link}"
 
-    def _get_additional_info(self) -> None:
+    def _get_additional_info(self,
+                             first_page_code: str = None) -> None:
         """ Get additional info (amount of found docs and contexts,
         link to graphic with distribution by years).
 
+        :params first_page_code: str, code of the first page.
         :return: None.
         """
         params = self.params.copy()
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
-            first_page_code = creq.get_htmls(RNC_URL, **params)[0]
+            first_page_code = first_page_code or \
+                              creq.get_htmls(RNC_URL, **params)[0]
         except Exception:
             raise
 
@@ -682,11 +743,13 @@ class Corpus:
         """ Convert the query to HTTP tags, add them to params.
 
         :return: None.
-        :exception ValueError: if wrong type given.
+        :exception ValueError: if the query is not str however out is lexform;
+
+        :exception AssertionError:
         """
         if self.text == 'lexform':
             if not isinstance(self.query, str):
-                msg = "One must give str as a query if search is 'lexform'"
+                msg = "Query must be str if search is 'lexform'"
                 logger.error(msg)
                 raise ValueError(msg)
             self._params['req'] = join_with_plus(self.query)
@@ -708,24 +771,27 @@ class Corpus:
         for word_num, (word, params) in enumerate(self.query.items(), 1):
             # add distance
             if word_num > 1:
-                min_distance = f'min{word_num}'
-                max_distance = f'max{word_num}'
+                min_ = f'min{word_num}'
+                max_ = f'max{word_num}'
                 # given or default values
                 if isinstance(params, dict):
-                    self._params[min_distance] = params.get('min', None) or self.__MIN
-                    self._params[max_distance] = params.get('max', None) or self.__MAX
+                    self._params[min_] = params.get('min', None) or self.__MIN
+                    self._params[max_] = params.get('max', None) or self.__MAX
                 else:
-                    self._params[min_distance] = self.__MIN
-                    self._params[max_distance] = self.__MAX
+                    self._params[min_] = self.__MIN
+                    self._params[max_] = self.__MAX
 
             self._params[f"lex{word_num}"] = join_with_plus(word)
 
             if isinstance(params, str):
+                assert len(params) is 0, \
+                    f"If the key is str it must be empty " \
+                    f"(is not set) but it is: '{params}'"
                 # empty param, skip it
                 continue
 
             # grammar properties
-            gramm = params.get('gramm', '')
+            gramm = params.pop('gramm', '')
             if gramm:
                 try:
                     gram_props = Corpus._parse_lexgramm_params(gramm, '|', True)
@@ -734,7 +800,7 @@ class Corpus:
                 self._params[f"gramm{word_num}"] = gram_props
 
             # additional properties
-            flags = params.get('flags', '')
+            flags = params.pop('flags', '')
             if flags:
                 try:
                     flag_prop = Corpus._parse_lexgramm_params(flags, '+')
@@ -743,13 +809,15 @@ class Corpus:
                 self._params[f"flags{word_num}"] = flag_prop
 
             # TODO: semantic properties
-            sem = params.get('sem', '')
+            sem = params.pop('sem', '')
             if sem:
-                try:
-                    logger.warning("Semantic properties does not support")
-                except Exception:
-                    raise
-                # self.__params фильтр1 и фильтр2
+                logger.warning("Semantic properties does not support")
+
+            if params:
+                msg = f"Oops, 'gramm', 'flags' and 'sem' were expected, but " \
+                      f"another keys given: {params}"
+                logger.error(msg)
+                raise ValueError(msg)
 
     def _add_wordforms(self,
                        forms: List[str]) -> None:
@@ -806,7 +874,7 @@ class Corpus:
             src = right.a.attrs['msg'].strip()
             url = right.a.attrs['href']
         except Exception:
-            logger.exception("Source or url not found")
+            logger.error("Source or url not found")
             src = url = ''
 
         url = create_doc_url(url)
@@ -830,8 +898,9 @@ class Corpus:
 
         content = soup.find('table', {'align': 'left'})
         if not content:
-            msg = "Content is None, this behavior is undefined, contact the developer"
-            logger.error(msg)
+            msg = "Content is None, this behavior " \
+                  "is undefined, contact the developer"
+            logger.critical(msg)
             raise ValueError(msg)
 
         nobr = content.find_all('nobr')
@@ -882,7 +951,7 @@ class Corpus:
         """
         data = [example.items for example in self.data]
         columns = self[0].columns
-        with self.file.open('w', encoding='utf-16', newline='') as f:
+        with self.file.open('w', encoding='utf-8', newline='') as f:
             # class constants
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
@@ -904,8 +973,8 @@ class Corpus:
             'p_count': self.p_count,
             'params': self.params
         }
-        with self._config_path.open('w', encoding='utf-16') as f:
-            json.dump(to_write, f, indent=4, ensure_ascii=False)
+        with self._config_path.open('w', encoding='utf-8') as f:
+            ujson.dump(to_write, f, indent=4, ensure_ascii=False)
 
     def dump(self) -> None:
         """ Write the data to csv file, request params to json file.
@@ -957,26 +1026,35 @@ class Corpus:
             logger.error("Tried to request new examples, however data exist")
             raise RuntimeError("Data still exist")
 
+        coro_start = time.time()
         try:
-            # TODO: get first page code if everything is OK
-            creq.is_request_correct(RNC_URL, self.p_count, **self.params)
+            first, last = creq.is_request_correct(
+                RNC_URL, self.p_count, **self.params)
         except Exception:
-            msg = f"Query = {self.forms_in_query}, {self.p_count}, {self.params}"
+            msg = f"Query = {self.forms_in_query}, " \
+                  f"{self.p_count}, {self.params}"
             logger.exception(msg)
             raise
 
         # get additional info from the first RNC page.
-        logger.info("Requesting additional info from the first RNC page")
-        self._get_additional_info()
-        logger.info("Additional info was successfully received")
+        logger.debug("Getting additional info from the first RNC page")
+        if self.out == 'normal':
+            self._get_additional_info(first)
+        else:
+            self._get_additional_info()
+        logger.debug("Additional info was successfully received")
 
-        logger.info("Main request")
-        coro_start = time.time()
-        htmls = creq.get_htmls(RNC_URL, 0, self.p_count, **self.params)
-        logger.info("Main request was successfully completed")
-        logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
-
-        logger.info("Parsing html was started")
+        if self.p_count > 2:
+            logger.debug("Main request")
+            htmls = creq.get_htmls(RNC_URL, 1, self.p_count - 1, **self.params)
+            htmls = [first] + htmls + [last]
+            logger.debug("Main request was successfully completed")
+            logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
+        else:
+            htmls = [first]
+            if self.p_count is 2:
+                htmls += [last]
+        logger.debug("Parsing html was started")
         try:
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
@@ -985,7 +1063,7 @@ class Corpus:
             logger.exception(f"Error while parsing, query = {self.params}")
             raise
         else:
-            logger.info("Parsing was successfully completed")
+            logger.debug("Parsing was successfully completed")
             logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
             logger.info(f"Overall time: {parsing_stop - coro_start:.2f}")
             self._data = parsed[:]
@@ -995,7 +1073,8 @@ class Corpus:
         :return: copied object.
         """
         copy_obj = self.__class__(
-            self.query, self.p_count, file=self.file, marker=self.marker, **self.params)
+            self.query, self.p_count, file=self.file,
+            marker=self.marker, **self.params)
         copy_obj._data = self.data.copy()
         return copy_obj
 
@@ -1051,24 +1130,33 @@ class Corpus:
         self._data = filtered_data[:]
 
     def findall(self,
-                pattern: Any) -> None:
+                pattern: Pattern or str,
+                **kwargs) -> Tuple[expl.Example, List[str]]:
         """ Apply the pattern to the examples' text with re.findall.
-        Change tha data list.
+        Yield all examples which are satisfy the pattern.
 
-        :param pattern: r str or re.pattern, pattern to apply.
-        :return: None.
+        :param pattern: r str or re.pattern to apply.
+        :param kwargs: kwargs to re.findall.
+        :return: yield example and match.
         """
-        pass
+        for expl in self:
+            match = re.findall(pattern, expl.txt, **kwargs)
+            if match:
+                yield expl, match
 
     def finditer(self,
-                 pattern: Any) -> None:
-        """ Apply the pattern to the examples' text with re.findall.
-        Change tha data list.
+                 pattern: Pattern or str,
+                 **kwargs) -> Tuple[expl.Example, Any]:
+        """ Apply the pattern to the examples' text with re.finditer.
 
-        :param pattern: r str or re.pattern, pattern to apply.
-        :return: None.
+        :param pattern: r str or re.pattern to apply.
+        :param kwargs: kwargs to re.findall.
+        :return: yield example and match.
         """
-        pass
+        for expl in self:
+            match = re.finditer(pattern, expl.txt, **kwargs)
+            if match:
+                yield expl, match
 
     def __repr__(self) -> str:
         """ Format:
@@ -1082,9 +1170,9 @@ class Corpus:
         :return: str with the format.
         """
         res = (f"{self.__class__.__name__}\n"
-               f"{len(self)}\n" 
-               f"{self.file}\n" 
-               f"{self.params}\n" 
+               f"{len(self)}\n"
+               f"{self.file}\n"
+               f"{self.params}\n"
                f"{self.p_count}\n"
                f"{self.query}\n")
         return res
@@ -1109,8 +1197,7 @@ class Corpus:
             f"{num}.\n{str(example)}"
             for num, example in enumerate(data, 1)
         )
-        if is_restricted:
-            examples += '\n...'
+        examples += '\n...' * is_restricted
 
         return f"{metainfo}\n\n{examples}"
 
@@ -1160,7 +1247,10 @@ class Corpus:
         :param item: item, param name.
         :return: param value or None if it does not exist.
         """
-        return self.params.get(item, None)
+        try:
+            return getattr(super(), item)
+        except AttributeError:
+            return self.params.get(item, None)
 
     def __getitem__(self,
                     item: int or slice) -> Any:
@@ -1264,7 +1354,7 @@ class MainCorpus(Corpus):
         :param doc: bs4.element.ResultSet,
         """
         if not doc:
-            logger.info(f"Empty doc found, params: {self.params}")
+            logger.debug(f"Empty doc found, params: {self.params}")
             return []
         res = []
 
@@ -1388,7 +1478,7 @@ class ParallelCorpus(Corpus):
         """
         if self.out == 'kwic':
             return super()._load_data()
-        with self.file.open('r', encoding='utf-16') as f:
+        with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
             reader = csv.reader(f, delimiter=dm, quotechar=qch)
@@ -1481,7 +1571,8 @@ class MultimodalCorpus(Corpus):
         self._params['mode'] = self._MODE
 
     def _parse_example(self,
-                       example: bs4.element.Tag) -> Tuple[str, str, str, list, str]:
+                       example: bs4.element.Tag) -> Tuple[
+        str, str, str, list, str]:
         """ Parse example get text, source etc.
 
         :param example: bs4.element.Tag, example to parse.

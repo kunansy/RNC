@@ -36,11 +36,11 @@ ru = rnc.MainCorpus(
 
 ru.request_examples()
 ```
-* **query** – one str or dict with tags. Words to find, you should give the vocabulary form of them.
-* **p_count** – count of **PAGES**.
-* **file** – path to local csv file, optional. Example: `file='data\\filename.csv'`. 
-* **marker** – function, with which found wordforms will be marked, optional. 
-* **kwargs** – additional params.
+* `query` – one str or dict with tags. Words to find, you should give the vocabulary form of them.
+* `p_count` – count of **PAGES**.
+* `file` – path to local csv file, optional. Example: `file='data\\filename.csv'`. 
+* `marker` – function, with which found wordforms will be marked, optional. 
+* `kwargs` – additional params.
 
 [Corpora](https://github.com/kunansy/RNC/blob/master/docs/Corpora.md) you can use.
 
@@ -95,7 +95,7 @@ corp = rnc.ParallelCorpus(
     out='normal' or 'kwic', # output format
     kwsz=5, # if out=kwic, count of words in context
     sort='i_grtagging', # way to sort the results, see HOWTO section below
-    subcorpus='', # see HOWTO section below
+    mycorp='', # see HOWTO section below
     accent=0, # with accentology (1) or without (0), if it is available
 )
 ```
@@ -153,6 +153,10 @@ Key is applied to the `Example` objects.
 * `corp.open_url()` – open the first RNC page.
 * `corp.open_graphic()` – open the graphic of the distribution of query 
   occurrences by years.
+* `corp.findall(pattern, kwargs)` – get all examples where the pattern found and 
+  the match.
+* `corp.finditer(pattern, kwargs)` – get all examples where the pattern found and 
+  the match.
 
 Magic methods: 
 * `corp.dpp` or another request param (only getter).
@@ -182,7 +186,7 @@ from_2_to_10 = corp[2:10:2]
 corp = rnc.ParallelCorpus(
     'corpus', 5, 
     out='kwic', kwsz=7, 
-    subcorpus=rnc.subcorpus.en
+    mycorp=rnc.mycorp.en
 )
 corp.request_examples()
 
@@ -209,7 +213,7 @@ If it is equal to `False`, the Corpus shows all examples.
 
 #### MultilingualParaCorpus
 * Working with files is removed.
-* Param `subcorpus` is not demanded by default, but it might be passed, see 
+* Param `mycorp` is not demanded by default, but it might be passed, see 
   **HOWTO** section below.
 
 #### MultimodalCorpus
@@ -286,11 +290,11 @@ There are some sort keys:
 
 ### How to set language in ParallelCorpus?
 ```python
-en = rnc.ParallelCorpus('get', 5, subcorpus=rnc.subcorpus.en)
+en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp.en)
 ```
 **OR**
 ```python
-en = rnc.ParallelCorpus('get', 5, subcorpus=rnc.subcorpus['en'])
+en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp['en'])
 ```
 Language keys list:
 1. English – 'en'
@@ -314,11 +318,13 @@ Language keys list:
 1. Estonian – 'es'
 
 If you want to search something by several languages, choose and set the 
-subcorpus in the site, pass this param to Corpus. 
+`mycorp` in the site, pass this param to Corpus. 
 
 
 ### How to set subcorpus?
-There are default keys in rnc.subcorpus.Person (working checked in 
+Means specify the sample where you want to search the query. <br>
+
+There are default keys in `rnc.mycorp` (working checked in 
 **MainCorpus**) – Russian writers and poets: 
 * Pushkin
 * Dostoyevsky
@@ -329,14 +335,14 @@ There are default keys in rnc.subcorpus.Person (working checked in
 
 Example:
 ```python
-ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus['Pushkin'])
+ru = rnc.MainCorpus('нету', 1, mycorp=rnc.mycorp['Pushkin'])
 ```
 
 
 **OR**
 
 ```python
-ru = rnc.MainCorpus('нету', 1, subcorpus=rnc.subcorpus.Pushkin)
+ru = rnc.MainCorpus('нету', 1, mycorp=rnc.mycorp.Pushkin)
 ```
 
 
