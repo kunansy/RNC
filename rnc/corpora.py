@@ -1039,17 +1039,17 @@ class Corpus:
             raise
 
         # get additional info from the first RNC page.
-        logger.info("Requesting additional info from the first RNC page")
+        logger.debug("Requesting additional info from the first RNC page")
         self._get_additional_info()
-        logger.info("Additional info was successfully received")
+        logger.debug("Additional info was successfully received")
 
-        logger.info("Main request")
+        logger.debug("Main request")
         coro_start = time.time()
         htmls = creq.get_htmls(RNC_URL, 0, self.p_count, **self.params)
-        logger.info("Main request was successfully completed")
+        logger.debug("Main request was successfully completed")
         logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
 
-        logger.info("Parsing html was started")
+        logger.debug("Parsing html was started")
         try:
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
@@ -1058,7 +1058,7 @@ class Corpus:
             logger.exception(f"Error while parsing, query = {self.params}")
             raise
         else:
-            logger.info("Parsing was successfully completed")
+            logger.debug("Parsing was successfully completed")
             logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
             logger.info(f"Overall time: {parsing_stop - coro_start:.2f}")
             self._data = parsed[:]
@@ -1349,7 +1349,7 @@ class MainCorpus(Corpus):
         :param doc: bs4.element.ResultSet,
         """
         if not doc:
-            logger.info(f"Empty doc found, params: {self.params}")
+            logger.debug(f"Empty doc found, params: {self.params}")
             return []
         res = []
 
