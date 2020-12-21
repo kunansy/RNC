@@ -23,10 +23,10 @@ import random
 import re
 import string
 import time
+import urllib.parse
 import webbrowser
 from pathlib import Path
-from typing import Dict, Callable, List, Any, Tuple
-from urllib.parse import unquote
+from typing import Dict, Callable, List, Any, Tuple, Pattern
 
 import bs4
 
@@ -233,7 +233,7 @@ class Corpus:
             try:
                 self._from_file()
             except FileExistsError:
-                logger.exception('')
+                logger.exception('Probably there is no json file with config')
                 raise
         # or work with RNC
         else:
@@ -257,7 +257,7 @@ class Corpus:
         self._query = query
 
         if p_count <= 0:
-            msg = "Page count must be > 0"
+            msg = "Pages count must be > 0"
             logger.error(msg)
             raise ValueError(msg)
         self._p_count = p_count
@@ -485,6 +485,8 @@ class Corpus:
         if not src:
             return "Not found"
         src = clean_text_up(src.text)
+
+        # TODO: use regexp gere
         # here src like '[...]'
         src = src[1:-1].strip()
         return src
@@ -658,6 +660,8 @@ class Corpus:
         of query occurrences by years.
 
         :return: None.
+        :exception RuntimeError: if the URL doesn't exist.
+        :exception ...: if it's impossible to open the link.
         """
         url = self.graphic_link
         if url is None:
@@ -874,7 +878,7 @@ class Corpus:
             src = right.a.attrs['msg'].strip()
             url = right.a.attrs['href']
         except Exception:
-            logger.exception("Source or url not found")
+            logger.error("Source or url not found")
             src = url = ''
 
         url = create_doc_url(url)
@@ -898,8 +902,9 @@ class Corpus:
 
         content = soup.find('table', {'align': 'left'})
         if not content:
-            msg = "Content is None, this behavior is undefined, contact the developer"
-            logger.error(msg)
+            msg = "Content is None, this behavior " \
+                  "is undefined, contact the developer"
+            logger.critical(msg)
             raise ValueError(msg)
 
         nobr = content.find_all('nobr')
@@ -1063,7 +1068,8 @@ class Corpus:
         :return: copied object.
         """
         copy_obj = self.__class__(
-            self.query, self.p_count, file=self.file, marker=self.marker, **self.params)
+            self.query, self.p_count, file=self.file,
+            marker=self.marker, **self.params)
         copy_obj._data = self.data.copy()
         return copy_obj
 
@@ -1159,9 +1165,9 @@ class Corpus:
         :return: str with the format.
         """
         res = (f"{self.__class__.__name__}\n"
-               f"{len(self)}\n" 
-               f"{self.file}\n" 
-               f"{self.params}\n" 
+               f"{len(self)}\n"
+               f"{self.file}\n"
+               f"{self.params}\n"
                f"{self.p_count}\n"
                f"{self.query}\n")
         return res
@@ -1186,8 +1192,7 @@ class Corpus:
             f"{num}.\n{str(example)}"
             for num, example in enumerate(data, 1)
         )
-        if is_restricted:
-            examples += '\n...'
+        examples += '\n...' * is_restricted
 
         return f"{metainfo}\n\n{examples}"
 
@@ -1561,7 +1566,8 @@ class MultimodalCorpus(Corpus):
         self._params['mode'] = self._MODE
 
     def _parse_example(self,
-                       example: bs4.element.Tag) -> Tuple[str, str, str, list, str]:
+                       example: bs4.element.Tag) -> Tuple[
+        str, str, str, list, str]:
         """ Parse example get text, source etc.
 
         :param example: bs4.element.Tag, example to parse.
