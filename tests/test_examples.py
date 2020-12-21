@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
 
-import rnc.corpora as corp
-import rnc.examples as expl
 import pytest
+
+import rnc.corpora as corp
+import rnc.corpora_params as params
+import rnc.examples as expl
 
 
 class TemplateTestExamples:
@@ -81,7 +83,10 @@ class TemplateTestExamples:
     def test_items(self):
         items = self.ex.items
 
-        assert all(isinstance(i, str) and i for i in items)
+        assert all(
+            isinstance(i, str) and i
+            for i in items
+        )
 
     def test_data(self):
         data = self.ex.data
@@ -246,8 +251,10 @@ class TestKwicExample(TemplateTestExamples):
 
 
 class TestParallelExample(TemplateTestExamples):
+    mycorp = params.Mycorp()
     corpus_res = corp.ParallelCorpus(
-        'тест', 1, marker=str.upper, subcorpus=corp.Subcorpus.Parallel.English)
+        'тест', 1, marker=str.upper, subcorpus=mycorp.en)
+
     corpus_res.request_examples()
     ex: expl.ParallelExample = corpus_res[0]
 
@@ -461,6 +468,12 @@ class TestMultimodalExample(TemplateTestExamples):
 
         assert all(isinstance(i, (str, Path)) and i for i in items)
 
+    def test_download_file(self):
+        self.ex.download_file()
+        files = os.listdir(f'data{os.sep}media')
+
+        assert self.ex.filepath.name in files
+
     def test_filepath_getter(self):
         path = self.ex.filepath
 
@@ -468,9 +481,3 @@ class TestMultimodalExample(TemplateTestExamples):
 
     def test_filepath_setter(self):
         self.ex.filepath = 'path'
-
-    def test_download_file(self):
-        self.ex.download_file()
-        files = os.listdir('data\\media')
-
-        assert self.ex.filepath.name in files
