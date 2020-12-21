@@ -218,9 +218,9 @@ class Corpus:
 
         # path to local database
         class_name = self.__class__.__name__.replace('Corpus', '')
-        path = Path(file) or create_unique_filename(
+        path = file or create_unique_filename(
             self.DATA_FOLDER, class_name, p_count)
-
+        path = Path(path)
         # change or add right extension
         path = path.with_suffix('.csv')
 
