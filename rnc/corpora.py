@@ -435,11 +435,13 @@ class Corpus:
         :param tag: bs4.element.Tag, example.
         :return: str, 'disambiguated' or 'not disambiguated' or 'Not found'.
         """
-        ambiguation = (tag.find('span', {'class': 'on'}) or
-                       tag.find('span', {'class': 'off'}))
+        ambiguation = (tag.find('span', {'class': 'off'}) or
+                       tag.find('span', {'class': 'on'}))
         if not ambiguation:
             return 'Not found'
         ambiguation = ambiguation.text.strip()
+
+        # TODO: use regexp here
         # here ambiguation like '[...]'
         ambiguation = ambiguation[1:-1].strip()
         return ambiguation
