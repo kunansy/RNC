@@ -36,11 +36,11 @@ ru = rnc.MainCorpus(
 
 ru.request_examples()
 ```
-* **query** – one str or dict with tags. Words to find, you should give the vocabulary form of them.
-* **p_count** – count of **PAGES**.
-* **file** – path to local csv file, optional. Example: `file='data\\filename.csv'`. 
-* **marker** – function, with which found wordforms will be marked, optional. 
-* **kwargs** – additional params.
+* `query` – one str or dict with tags. Words to find, you should give the vocabulary form of them.
+* `p_count` – count of **PAGES**.
+* `file` – path to local csv file, optional. Example: `file='data\\filename.csv'`. 
+* `marker` – function, with which found wordforms will be marked, optional. 
+* `kwargs` – additional params.
 
 [Corpora](https://github.com/kunansy/RNC/blob/master/docs/Corpora.md) you can use.
 
@@ -153,6 +153,10 @@ Key is applied to the `Example` objects.
 * `corp.open_url()` – open the first RNC page.
 * `corp.open_graphic()` – open the graphic of the distribution of query 
   occurrences by years.
+* `corp.findall(pattern, kwargs)` – get all examples where the pattern found and 
+  the match.
+* `corp.finditer(pattern, kwargs)` – get all examples where the pattern found and 
+  the match.
 
 Magic methods: 
 * `corp.dpp` or another request param (only getter).
