@@ -150,15 +150,15 @@ def whether_result_found(url: str,
     :param kwargs: request HTTP tags.
     :exception RuntimeError: if HTTP request was wrong.
     """
-    logger.info("Validating that the request is OK")
+    logger.debug("Validating that the request is OK")
     try:
         page_html = get_htmls(url, **kwargs)[0]
     except Exception:
         logger.exception("The request is not correct")
         raise RuntimeError
-    logger.info("The request is correct")
+    logger.debug("The request is correct")
 
-    logger.info("Validating that the result exits")
+    logger.debug("Validating that the result exits")
     soup = bs4.BeautifulSoup(page_html, 'lxml')
 
     # TODO: сузить круг поиска
@@ -225,7 +225,7 @@ def is_request_correct(url: str,
     :return: True if everything's OK, an exception otherwise.
     :exception ValueError: something's wrong.
     """
-    logger.info("Validating that everything is OK")
+    logger.debug("Validating that everything is OK")
     try:
         # to reduce the number of requests
         # the two checks are combined into one.
@@ -238,15 +238,15 @@ def is_request_correct(url: str,
         logger.exception("HTTP request is wrong")
         raise ValueError("Wrong HTTP request")
     else:
-        logger.info("HTTP request is correct, result found")
+        logger.debug("HTTP request is correct, result found")
 
-    logger.info("Validating that the last page exists")
+    logger.debug("Validating that the last page exists")
     if not does_page_exist(url, p_count - 1, **kwargs):
         logger.error("Everything is OK, but last page doesn't exist")
         raise ValueError("Last page doesn't exist")
-    logger.info("The last page exists")
+    logger.debug("The last page exists")
 
-    logger.info("Validated successfully")
+    logger.debug("Validated successfully")
     return True
 
 
