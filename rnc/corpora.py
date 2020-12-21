@@ -771,19 +771,22 @@ class Corpus:
         for word_num, (word, params) in enumerate(self.query.items(), 1):
             # add distance
             if word_num > 1:
-                min_distance = f'min{word_num}'
-                max_distance = f'max{word_num}'
+                min_ = f'min{word_num}'
+                max_ = f'max{word_num}'
                 # given or default values
                 if isinstance(params, dict):
-                    self._params[min_distance] = params.get('min', None) or self.__MIN
-                    self._params[max_distance] = params.get('max', None) or self.__MAX
+                    self._params[min_] = params.get('min', None) or self.__MIN
+                    self._params[max_] = params.get('max', None) or self.__MAX
                 else:
-                    self._params[min_distance] = self.__MIN
-                    self._params[max_distance] = self.__MAX
+                    self._params[min_] = self.__MIN
+                    self._params[max_] = self.__MAX
 
             self._params[f"lex{word_num}"] = join_with_plus(word)
 
             if isinstance(params, str):
+                assert len(params) is 0, \
+                    f"If the key is str it must be empty " \
+                    f"(is not set) but it is: '{params}'"
                 # empty param, skip it
                 continue
 
