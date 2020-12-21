@@ -143,3 +143,8 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 ### 0.6.2
 #### Changed
 * Docs were improved.
+* Params validating was added. Issue #17 closed.
+* Encoding was changed from `utf-16` to `utf-8`. Issue #16 closed.
+* `findall` and `finditer` implemented. Issue #19 closed.
+* Using `ujson` instead of `json`. Issue #15 closed.
+* Some useless validating requests removed. Issue #21 closed.
