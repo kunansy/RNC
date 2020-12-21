@@ -16,7 +16,6 @@ __all__ = (
 )
 
 import csv
-import json
 import logging
 import os
 import random
@@ -29,6 +28,7 @@ from pathlib import Path
 from typing import Dict, Callable, List, Any, Tuple, Pattern
 
 import bs4
+import ujson
 
 import rnc.corpora_requests as creq
 import rnc.examples as expl
@@ -364,7 +364,7 @@ class Corpus:
         :return: json dict.
         """
         with self._config_path.open('r', encoding='utf-8') as f:
-            return json.load(f)
+            return ujson.load(f)
 
     @classmethod
     def set_dpp(cls, value: int) -> None:
@@ -971,7 +971,7 @@ class Corpus:
             'params': self.params
         }
         with self._config_path.open('w', encoding='utf-8') as f:
-            json.dump(to_write, f, indent=4, ensure_ascii=False)
+            ujson.dump(to_write, f, indent=4, ensure_ascii=False)
 
     def dump(self) -> None:
         """ Write the data to csv file, request params to json file.
