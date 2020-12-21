@@ -1228,7 +1228,10 @@ class Corpus:
         :param item: item, param name.
         :return: param value or None if it does not exist.
         """
-        return self.params.get(item, None)
+        try:
+            return getattr(super(), item)
+        except AttributeError:
+            return self.params.get(item, None)
 
     def __getitem__(self,
                     item: int or slice) -> Any:
