@@ -20,81 +20,119 @@ WAIT = 24
 
 async def fetch(url: str,
                 ses: aiohttp.ClientSession,
-                queue: asyncio.Queue,
-                **kwargs) -> None:
-    """ Coro, obtaining page's html code.
-
-    If response status == 429 sleep and try again.
+                **kwargs) -> Tuple[int, str] or None:
+    """ Coro, obtaining page's HTML code.
 
     :param url: str, URL to get its html code.
     :param ses: aiohttp.ClientSession.
-    :param queue: asyncio.Queue, queue to where put the results:
-    'p' key to sort results and html code, decoded to UTF-8.
     :param kwargs: HTTP tags.
-    :return: None.
+
+    :return: tuple of int and str, page index and its HTML code.
+     None if there's an error, -1 if it's 429 and the worker should
+     wait some time and make request again.
     :exception: all exceptions should be processed here.
     """
+    worker_name = kwargs.pop('worker_name', '')
     try:
         resp = await ses.get(url, params=kwargs)
     except Exception:
-        logger.exception("Cannot get answer from RNC")
+        logger.exception(f"{worker_name}: cannot get answer from RNC")
         return
 
     if resp.status == 200:
         text = await resp.text('utf-8')
-        await queue.put((kwargs['p'], text))
+        resp.close()
+        return kwargs['p'], text
     elif resp.status == 429:
         logger.debug(
-            f"429, {resp.reason} Page: {kwargs['p']}, wait {WAIT}s"
+            f"{worker_name}: 429 'Too many requests', "
+            f"page: {kwargs['p']}; wait {WAIT}s"
         )
         resp.close()
-        await asyncio.sleep(WAIT)
-        await fetch(url, ses, queue, **kwargs)
-    else:
-        logger.error(
-            f"{resp.status}: {resp.reason} requesting to {resp.url}"
-        )
+        return -1
 
+    logger.error(
+        f"{worker_name}: {resp.status} -- '{resp.reason}' "
+        f"requesting to {resp.url}"
+    )
     resp.close()
+
+
+async def worker(worker_name: str,
+                 q_args: asyncio.Queue,
+                 q_results: asyncio.Queue) -> None:
+    """
+    Worker requested to URL with params using fetch(...),
+     with args from q_args and put results to q_results.
+
+    Wait some time and request again if there's 429 error.
+
+    :param worker_name: str, name of the worker to set it in logs.
+    :param q_args: asyncio.Queue of args for fetch(...).
+    :param q_results: asyncio.Queue of results from fetch(...).
+
+    :return: None.
+    """
+    while True:
+        url, ses, kwargs = await q_args.get()
+        logger.debug(
+            f"{worker_name}: requested to '{url}' with '{kwargs}'")
+
+        res = await fetch(url, ses, **kwargs, worker_name=worker_name)
+        while res == -1:
+            await asyncio.sleep(WAIT)
+            res = await fetch(url, ses, **kwargs)
+
+        logger.debug(
+            f"{worker_name}: received from '{url}' with '{kwargs}'")
+        q_args.task_done()
+
+        await q_results.put((res[0], res[1]))
 
 
 async def get_htmls_coro(url: str,
                          start: int,
                          stop: int,
                          **kwargs) -> List[str]:
-    """ Coro doing requests and catching exceptions.
+    """
+    Coro running 5 workers doing requests and
+     getting HTML codes of the pages.
 
     URLs will be created for i in range(start, stop),
     HTTP tag 'p' (page) is i.
 
-    :param url: str, URL.
+    :param url: str, URL from where get HTML code.
     :param start: int, start page index.
     :param stop: int, stop page index.
     :param kwargs: HTTP tags.
-    :return: list of str, html codes of the pages.
+
+    :return: list of str, HTML codes of the pages.
     """
     timeout = aiohttp.ClientTimeout(WAIT)
     # this limit might be wrong, it is
     # just not demanded to set any limit
-    queue = asyncio.Queue(maxsize=100_000)
+    q_results = asyncio.Queue(maxsize=-1)
+    q_args = asyncio.Queue(maxsize=-1)
 
     async with aiohttp.ClientSession(timeout=timeout) as ses:
-        scheduler = await aiojobs.create_scheduler(limit=None)
         for p_index in range(start, stop):
-            try:
-                await scheduler.spawn(
-                    fetch(url, ses, queue, **kwargs, p=p_index)
-                )
-            except Exception as e:
-                logger.error(f"{e} requesting to {url} with {kwargs}")
+            await q_args.put((url, ses, {**kwargs, 'p': p_index}))
 
-        while len(scheduler) is not 0:
-            await asyncio.sleep(.5)
-        await scheduler.close()
+        tasks = []
+        for worker_number in range(1, 6):
+            task = asyncio.create_task(
+                worker(f"Worker-{worker_number}", q_args, q_results)
+            )
+            tasks += [task]
+
+        await q_args.join()
+
+        for task in tasks:
+            task.cancel()
 
         results = [
-            await queue.get()
-            for _ in range(queue.qsize())
+            await q_results.get()
+            for _ in range(q_results.qsize())
         ]
     results.sort(key=lambda res: res[0])
     return [
