@@ -144,15 +144,17 @@ def get_htmls(url: str,
               start: int = 0,
               stop: int = 1,
               **kwargs) -> List[str]:
-    """ Run coro, get html codes of the pages.
+    """
+    Run coro, get html codes of the pages.
 
     URLs will be created for i in range(start, stop),
      HTTP tag 'p' (page) is i.
 
-    :param url: str, URL.
+    :param url: str, URL from where get HTML code.
     :param start: int, start page index.
     :param stop: int, stop page index.
     :param kwargs: HTTP tags.
+
     :return: list of str, html codes of the pages.
     """
     logger.info(f"Requested: ({start};{stop}), with params {kwargs}")
@@ -165,11 +167,13 @@ def get_htmls(url: str,
 
 def is_http_request_correct(url: str,
                             **kwargs) -> bool:
-    """ Whether the request is correct.
+    """
+    Whether the request is correct.
     It's correct If there's no exception catch.
 
     :param url: str, request url.
     :param kwargs: request HTTP tags.
+
     :return: bool, whether the request is correct.
     """
     # coro writes logs by itself
@@ -182,10 +186,12 @@ def is_http_request_correct(url: str,
 
 def whether_result_found(url: str,
                          **kwargs) -> str:
-    """ Whether the page contains results.
+    """
+    Whether the page contains results.
 
     :param url: str, request url.
     :param kwargs: request HTTP tags.
+
     :return: str, first page HTML code if everything is OK.
 
     :exception RuntimeError: if HTTP request was wrong.
@@ -215,7 +221,8 @@ def does_page_exist(url: str,
                     p_index: int,
                     first_page: str,
                     **kwargs) -> str:
-    """ Whether a page at the index exists.
+    """
+    Whether a page at the index exists.
 
     It means, the number of the page in 'pager' is equal to expected index.
     RNC redirects to the first page if the page at the number doesn't exist.
@@ -225,6 +232,7 @@ def does_page_exist(url: str,
     :param p_index: int, index of page. Indexing starts with 0.
     :param first_page: str, first page code.
     :param kwargs: HTTP tags.
+
     :return: str, last page code if everything is OK, an exception otherwise.
     """
     # indexing starts with 0
@@ -259,7 +267,8 @@ def does_page_exist(url: str,
 def is_request_correct(url: str,
                        p_count: int,
                        **kwargs) -> Tuple[str, str]:
-    """ Check:
+    """
+    Check:
         – is the HTTP request correct (means there're no exceptions catch).
 
         – has there been any result.
@@ -270,8 +279,10 @@ def is_request_correct(url: str,
     :param url: str, request url.
     :param p_count: int, request count of pages.
     :param kwargs: request HTTP tags.
+
     :return: tuple of str, first and last pages if everything's OK,
      an exception otherwise.
+
     :exception ValueError: HTTP request is wrong, no result found or
      the last page doesn't exist.
     """
@@ -307,7 +318,8 @@ async def fetch_download(url: str,
                          ses: aiohttp.ClientSession,
                          filename: str,
                          **kwargs) -> None:
-    """ Coro, downloading and writing media file from RNC.
+    """
+    Coro, downloading and writing media file from RNC.
 
     If response status == 429 sleep 24s and try again.
 
@@ -315,6 +327,7 @@ async def fetch_download(url: str,
     :param ses: aiohttp.ClientSession.
     :param filename: str, name of the file.
     :param kwargs: HTTP tags to request.
+
     :return: None.
     :exception: all exceptions should be processed here.
     """
@@ -343,7 +356,8 @@ async def fetch_download(url: str,
 
 
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
-    """ Coro executing fetch_download coro, catching exceptions.
+    """
+    Coro executing fetch_download coro, catching exceptions.
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
     :return None.
@@ -366,7 +380,8 @@ async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
 
 
 def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
-    """ Run coro, download the files.
+    """
+    Run coro, download the files.
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
     :return: None.
