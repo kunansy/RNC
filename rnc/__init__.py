@@ -5,37 +5,6 @@ import os
 from pathlib import Path
 from typing import Union
 
-MSG_FMT = "[{levelname}:{module}:{funcName}:{lineno} line:" \
-          "{asctime},{msecs:.0f}] {message}"
-DATE_FMT = "%d.%m.%Y %H:%M:%S"
-
-LOGGER_NAME = "rnc"
-LOG_FOLDER = Path('logs')
-LOG_FILE = LOG_FOLDER / f"{LOGGER_NAME}.log"
-os.makedirs(LOG_FOLDER, exist_ok=True)
-
-LEVEL = Union[str, int]
-
-
-formatter = logging.Formatter(
-    fmt=MSG_FMT, datefmt=DATE_FMT, style='{')
-
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.WARNING)
-stream_handler.setFormatter(formatter)
-
-file_handler = logging.FileHandler(
-    LOG_FILE, delay=True, encoding='utf-8')
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-
-logger = logging.getLogger(LOGGER_NAME)
-logger.setLevel(logging.DEBUG)
-
-logger.addHandler(stream_handler)
-logger.addHandler(file_handler)
-
-
 from .corpora import (
     MainCorpus,
     Paper2000Corpus,
@@ -66,6 +35,36 @@ from .examples import (
     MultimodalExample,
     KwicExample
 )
+
+MSG_FMT = "[{levelname}:{module}:{funcName}:{lineno} line:" \
+          "{asctime},{msecs:.0f}] {message}"
+DATE_FMT = "%d.%m.%Y %H:%M:%S"
+
+LOGGER_NAME = "rnc"
+LOG_FOLDER = Path('logs')
+LOG_FILE = LOG_FOLDER / f"{LOGGER_NAME}.log"
+os.makedirs(LOG_FOLDER, exist_ok=True)
+
+LEVEL = Union[str, int]
+
+
+formatter = logging.Formatter(
+    fmt=MSG_FMT, datefmt=DATE_FMT, style='{')
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.WARNING)
+stream_handler.setFormatter(formatter)
+
+file_handler = logging.FileHandler(
+    LOG_FILE, delay=True, encoding='utf-8')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+
+logger = logging.getLogger(LOGGER_NAME)
+logger.setLevel(logging.DEBUG)
+
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
 
 
 class HandlerNotExistError(Exception):
