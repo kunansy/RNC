@@ -234,7 +234,8 @@ class Corpus:
             try:
                 self._from_file()
             except FileExistsError:
-                logger.exception('Probably there is no json file with config')
+                logger.exception(
+                    f"Probably config not found: '{self._config_path}'")
                 raise
         # or work with RNC
         else:
@@ -252,13 +253,13 @@ class Corpus:
          number; out, sort, text key is wrong.
         """
         if not query:
-            msg = "Query must be not empty"
+            msg = f"Query must be not empty, but '{query}' found"
             logger.error(msg)
             raise ValueError(msg)
         self._query = query
 
         if p_count <= 0:
-            msg = "Pages count must be > 0"
+            msg = f"Pages count must be > 0, but '{p_count}' found"
             logger.error(msg)
             raise ValueError(msg)
         self._p_count = p_count
@@ -370,21 +371,23 @@ class Corpus:
     @classmethod
     def set_dpp(cls, value: int) -> None:
         if not isinstance(value, int) or value <= 0:
-            logger.error("DPP must be int > 0")
-            raise ValueError("DPP must be int > 0")
+            msg = f"DPP must be int > 0, but '{value}' found"
+            logger.error(msg)
+            raise ValueError(msg)
         cls.__DPP = value
 
     @classmethod
     def set_spd(cls, value: int) -> None:
         if not isinstance(value, int) or value <= 0:
-            logger.error("SPD must be int > 0")
-            raise ValueError("SPD must be int > 0")
+            msg = f"SPD must be int > 0, but '{value}' found"
+            logger.error(msg)
+            raise ValueError(msg)
         cls.__SPD = value
 
     @classmethod
     def set_text(cls, value: str) -> None:
         if value not in SEARCH_FORMATS:
-            msg = f"Valid search formats: {SEARCH_FORMATS}, '{value}' was given"
+            msg = f"Search formats: {SEARCH_FORMATS},\nbut '{value}' found"
             logger.error(msg)
             raise ValueError(msg)
 
@@ -393,7 +396,7 @@ class Corpus:
     @classmethod
     def set_sort(cls, value: str) -> None:
         if value not in SORT_KEYS:
-            msg = f"Valid sort keys: {SORT_KEYS}, '{value}' was given"
+            msg = f"Sort keys: {SORT_KEYS},\nbut '{value}' found"
             logger.error(msg)
             raise ValueError(msg)
 
@@ -402,7 +405,7 @@ class Corpus:
     @classmethod
     def set_out(cls, value: str) -> None:
         if value not in OUTPUT_FORMATS:
-            msg = f"Valid out formats: {OUTPUT_FORMATS}, '{value}' was given"
+            msg = f"Out formats: {OUTPUT_FORMATS},\nbut '{value}' found"
             logger.error(msg)
             raise ValueError(msg)
 
@@ -411,22 +414,25 @@ class Corpus:
     @classmethod
     def set_min(cls, value: int) -> None:
         if not isinstance(value, int) or value <= 0:
-            logger.error("min must be int > 0")
-            raise ValueError("min must be int > 0")
+            msg = f"min must be int > 0, but '{value}' found"
+            logger.error(msg)
+            raise ValueError(msg)
         cls.__MIN = value
 
     @classmethod
     def set_max(cls, value: int) -> None:
         if not isinstance(value, int) or value <= 0:
-            logger.error("max must be int > 0")
-            raise ValueError("max must be int > 0")
+            msg = f"max must be int > 0, but '{value}' found"
+            logger.error(msg)
+            raise ValueError(msg)
         cls.__MAX = value
 
     @classmethod
     def set_restrict_show(cls, value: int or bool) -> None:
         if not isinstance(value, (int, bool)):
-            logger.error("Restrict count must be int or bool")
-            raise TypeError("Restrict count must be int or bool")
+            msg = f"Restrict count must be int or bool, but '{value}' found"
+            logger.error(msg)
+            raise TypeError(msg)
         cls.__RESTRICT_SHOW = value
 
     @staticmethod
@@ -505,7 +511,8 @@ class Corpus:
         :return: str, joined with ',' params.
         """
         if not (isinstance(params, (str, dict)) and ' ' not in params):
-            msg = f"Param must be str without spaces or dict, given: {params}"
+            msg = f"Params must be str without spaces " \
+                  f"or dict, but '{params}' found"
             logger.error(msg)
             raise ValueError(msg)
         # let the user to give only one param:
@@ -516,7 +523,8 @@ class Corpus:
         res = []
         for val in params.values():
             if not isinstance(val, (str, int, list)):
-                msg = "One should give to tags only str, list or int"
+                msg = f"One should give to tags only " \
+                      f"str, list or int, but '{val}' found"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -750,7 +758,8 @@ class Corpus:
         """
         if self.text == 'lexform':
             if not isinstance(self.query, str):
-                msg = "Query must be str if search is 'lexform'"
+                msg = f"Query must be str if search is " \
+                      f"'lexform', but '{self.query}' found"
                 logger.error(msg)
                 raise ValueError(msg)
             self._params['req'] = join_with_plus(self.query)
@@ -815,8 +824,8 @@ class Corpus:
                 logger.warning("Semantic properties does not support")
 
             if params:
-                msg = f"Oops, 'gramm', 'flags' and 'sem' were expected, but " \
-                      f"another keys given: {params}"
+                msg = f"Oops, 'gramm', 'flags' and 'sem' expected, but " \
+                      f"another keys found: {params}"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -842,7 +851,8 @@ class Corpus:
         the method redefined at the descendants.
         """
         # TODO: remake this func to generator?
-        msg = "The func not implemented to the parent Corpus class"
+        msg = f"'{self._parse_doc.__name__}' not implemented " \
+              f"in the parent Corpus class"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -854,7 +864,8 @@ class Corpus:
         Parsing depends on the subcorpus,
         the method redefined at the descendants.
         """
-        msg = "The func not implemented to the parent Corpus class"
+        msg = f"'{self._parse_doc.__name__}' not implemented " \
+              f"in the parent Corpus class"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -983,12 +994,13 @@ class Corpus:
         :return: None.
         :exception RuntimeError: If there are no data, params or files exist.
         """
+        msg = "There is no data to write"
         if not self.data:
-            logger.error("There is no data to write")
-            raise RuntimeError("There is no data to write")
+            logger.error(msg)
+            raise RuntimeError(msg)
         if not (self.query and self.p_count and self.params):
-            logger.error("There is no data to write")
-            raise RuntimeError("There is no data to write")
+            logger.error(msg)
+            raise RuntimeError(msg)
 
         os.makedirs(self.DATA_FOLDER, exist_ok=True)
 
@@ -996,7 +1008,7 @@ class Corpus:
         self._params_to_json()
 
         logger.debug(
-            f"Data was wrote to files: {self.file} and {self._config_path}")
+            f"Data wrote to files: {self.file} and {self._config_path}")
 
     def open_url(self) -> None:
         """ Open first page of RNC results in the new
@@ -1027,7 +1039,7 @@ class Corpus:
             logger.error("Tried to request new examples, however data exist")
             raise RuntimeError("Data still exist")
 
-        coro_start = time.time()
+        start = time.time()
         try:
             first, last = creq.is_request_correct(
                 RNC_URL, self.p_count, **self.params)
@@ -1043,19 +1055,19 @@ class Corpus:
             self._get_additional_info(first)
         else:
             self._get_additional_info()
-        logger.debug("Additional info was successfully received")
+        logger.debug("Additional info received")
 
         if self.p_count > 2:
             logger.debug("Main request")
             htmls = creq.get_htmls(RNC_URL, 1, self.p_count - 1, **self.params)
             htmls = [first] + htmls + [last]
-            logger.debug("Main request was successfully completed")
-            logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
+            logger.debug("Main request completed")
         else:
             htmls = [first]
             if self.p_count == 2:
                 htmls += [last]
-        logger.debug("Parsing html was started")
+
+        logger.debug("Parsing html started")
         try:
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
@@ -1064,9 +1076,9 @@ class Corpus:
             logger.exception(f"Error while parsing, query = {self.params}")
             raise
         else:
-            logger.debug("Parsing was successfully completed")
+            logger.debug("Parsing completed")
             logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
-            logger.info(f"Overall time: {parsing_stop - coro_start:.2f}")
+            logger.info(f"Overall time: {parsing_stop - start:.2f}")
             self._data = parsed[:]
 
     def copy(self) -> Any:
@@ -1233,7 +1245,8 @@ class Corpus:
         :exception TypeError: if wrong type (different Example) given.
         """
         if not isinstance(item, self.ex_type):
-            msg = "in supports with the same Example objects"
+            msg = f"'in' must get the same Example " \
+                  f"objects, but '{item.__class__.__name__}' found"
             logger.error(msg)
             raise TypeError(msg)
         return any(
@@ -1263,8 +1276,9 @@ class Corpus:
         :exception TypeError: if wrong type given.
         """
         if not isinstance(item, (int, slice)):
-            logger.error("Int or slice expected")
-            raise TypeError("Int or slice expected")
+            msg = f"Int or slice expected, but '{item}' found"
+            logger.error(msg)
+            raise TypeError(msg)
 
         if isinstance(item, int):
             return self.data[item]
@@ -1285,8 +1299,8 @@ class Corpus:
         :exception TypeError: if wrong type given.
         """
         if not isinstance(value, self.ex_type):
-            msg = f"Wrong type {type(value)}, " \
-                  f"{type(self.ex_type)} expected"
+            msg = f"{type(self.ex_type)} expected, " \
+                  f"but {type(value)} found"
             logger.error(msg)
             raise TypeError(msg)
 
@@ -1505,12 +1519,12 @@ class MultilingualParaCorpus(ParallelCorpus):
         self._params['mode'] = self._MODE
 
     def _from_file(self) -> None:
-        msg = "Working with files does not support"
+        msg = "Working with files not supported"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     def dump(self) -> None:
-        msg = "Working with files does not support"
+        msg = "Working with files not supported"
         logger.error(msg)
         raise NotImplementedError(msg)
 
