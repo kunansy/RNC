@@ -257,11 +257,11 @@ For example requesting 100 pages you should wait about 3 minutes:
 
 **RIGHT:**
 ```python
-ru = rnc.MainCorpus(marker=str.upper)
+ru = rnc.MainCorpus(...,  marker=str.upper)
 ```
 **WRONG:**
 ```python
-ru = rnc.MainCorpus(marker=str.upper())
+ru = rnc.MainCorpus(..., marker=str.upper())
 ```
 * Pass an empty string as a param if you do not want to set them
 ```python
