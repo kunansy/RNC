@@ -15,6 +15,7 @@ __all__ = (
     'OUTPUT_FORMATS'
 )
 
+import copy
 import csv
 import logging
 import os
@@ -707,7 +708,7 @@ class Corpus:
         :params first_page_code: str, code of the first page.
         :return: None.
         """
-        params = self.params.copy()
+        params = copy.deepcopy(self.params)
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
@@ -724,7 +725,7 @@ class Corpus:
         if graphic_url:
             additional_info['graphic_link'] = graphic_url
 
-        self._add_info = additional_info.copy()
+        self._add_info = additional_info
 
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
@@ -1075,7 +1076,7 @@ class Corpus:
         copy_obj = self.__class__(
             self.query, self.p_count, file=self.file,
             marker=self.marker, **self.params)
-        copy_obj._data = self.data.copy()
+        copy_obj._data = copy.deepcopy(self.data)
         return copy_obj
 
     def sort_data(self,
@@ -1270,7 +1271,7 @@ class Corpus:
 
         new_data = self.data[item]
         new_obj = self.copy()
-        new_obj._data = new_data.copy()
+        new_obj._data = copy.deepcopy(new_data)
         return new_obj
 
     def __setitem__(self,
@@ -1309,13 +1310,6 @@ class Corpus:
         except Exception:
             logger.exception(f"Deleting item: {key}")
             raise
-
-    def __copy__(self) -> Any:
-        """ Copy self.
-
-        :return: copied obj.
-        """
-        return self[:]
 
 
 class MainCorpus(Corpus):
