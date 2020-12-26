@@ -681,7 +681,7 @@ class Corpus:
 
         contexts = blocks[-1].get_text()
         res['contexts'] = str_to_int(contexts)
-        if len(blocks) is 2:
+        if len(blocks) == 2:
             docs = blocks[0].get_text()
             res['docs'] = str_to_int(docs)
         return res
@@ -785,7 +785,7 @@ class Corpus:
             self._params[f"lex{word_num}"] = join_with_plus(word)
 
             if isinstance(params, str):
-                assert len(params) is 0, \
+                assert len(params) == 0, \
                     f"If the key is str it must be empty " \
                     f"(is not set) but it is: '{params}'"
                 # empty param, skip it
@@ -1053,7 +1053,7 @@ class Corpus:
             logger.info(f"Coro executing time: {time.time() - coro_start:.2f}")
         else:
             htmls = [first]
-            if self.p_count is 2:
+            if self.p_count == 2:
                 htmls += [last]
         logger.debug("Parsing html was started")
         try:
