@@ -7,6 +7,7 @@ __all__ = 'get_htmls', 'is_request_correct'
 
 import asyncio
 import logging
+import time
 from typing import List, Tuple
 
 import aiofiles
@@ -18,10 +19,12 @@ logger = logging.getLogger("rnc")
 WAIT = 24
 
 
-async def fetch(url: str,
-                ses: aiohttp.ClientSession,
-                **kwargs) -> Tuple[int, str] or None:
+async def fetch_html(url: str,
+                     ses: aiohttp.ClientSession,
+                     **kwargs) -> Tuple[int, str] or None:
     """ Coro, obtaining page's HTML code.
+
+    This coro should be awaited from a worker.
 
     :param url: str, URL to get its html code.
     :param ses: aiohttp.ClientSession.
@@ -30,13 +33,16 @@ async def fetch(url: str,
     :return: tuple of int and str, page index and its HTML code.
      None if there's an error, -1 if it's 429 and the worker should
      wait some time and make request again.
+
     :exception: all exceptions should be processed here.
     """
     worker_name = kwargs.pop('worker_name', '')
+    worker_name = f"{worker_name}: " * bool(worker_name)
     try:
         resp = await ses.get(url, params=kwargs)
     except Exception:
-        logger.exception(f"{worker_name}: cannot get answer from RNC")
+        logger.exception(
+            f"{worker_name}Cannot get answer from '{url}' with {kwargs}")
         return
 
     if resp.status == 200:
@@ -44,32 +50,28 @@ async def fetch(url: str,
         resp.close()
         return kwargs['p'], text
     elif resp.status == 429:
-        logger.debug(
-            f"{worker_name}: 429 'Too many requests', "
-            f"page: {kwargs['p']}; wait {WAIT}s"
-        )
         resp.close()
         return -1
 
     logger.error(
-        f"{worker_name}: {resp.status} -- '{resp.reason}' "
+        f"{worker_name}{resp.status} -- '{resp.reason}' "
         f"requesting to {resp.url}"
     )
     resp.close()
 
 
-async def worker(worker_name: str,
-                 q_args: asyncio.Queue,
-                 q_results: asyncio.Queue) -> None:
+async def worker_fetching_html(worker_name: str,
+                               q_args: asyncio.Queue,
+                               q_results: asyncio.Queue) -> None:
     """
-    Worker requested to URL with params using fetch(...),
-     with args from q_args and put results to q_results.
+    Worker requesting to URL with params using fetch_html(...),
+     with args from q_args and putting results to q_results.
 
     Wait some time and request again if there's 429 error.
 
     :param worker_name: str, name of the worker to set it in logs.
-    :param q_args: asyncio.Queue of args for fetch(...).
-    :param q_results: asyncio.Queue of results from fetch(...).
+    :param q_args: asyncio.Queue of args for fetch_html(...).
+    :param q_results: asyncio.Queue of results from fetch_html(...).
 
     :return: None.
     """
@@ -78,10 +80,14 @@ async def worker(worker_name: str,
         logger.debug(
             f"{worker_name}: requested to '{url}' with '{kwargs}'")
 
-        res = await fetch(url, ses, **kwargs, worker_name=worker_name)
+        res = await fetch_html(url, ses, **kwargs, worker_name=worker_name)
         while res == -1:
+            logger.debug(
+                    f"{worker_name}: 429 'Too many requests', "
+                    f"page: {kwargs['p']}; wait {WAIT}s"
+            )
             await asyncio.sleep(WAIT)
-            res = await fetch(url, ses, **kwargs)
+            res = await fetch_html(url, ses, **kwargs, worker_name=worker_name)
 
         logger.debug(
             f"{worker_name}: received from '{url}' with '{kwargs}'")
@@ -109,8 +115,7 @@ async def get_htmls_coro(url: str,
     :return: list of str, HTML codes of the pages.
     """
     timeout = aiohttp.ClientTimeout(WAIT)
-    # this limit might be wrong, it is
-    # just not demanded to set any limit
+
     q_results = asyncio.Queue(maxsize=-1)
     q_args = asyncio.Queue(maxsize=-1)
 
@@ -119,9 +124,9 @@ async def get_htmls_coro(url: str,
             await q_args.put((url, ses, {**kwargs, 'p': p_index}))
 
         tasks = []
-        for worker_number in range(1, 6):
+        for worker_index in range(5):
             task = asyncio.create_task(
-                worker(f"Worker-{worker_number}", q_args, q_results)
+                worker_fetching_html(f"Worker-{worker_index + 1}", q_args, q_results)
             )
             tasks += [task]
 
@@ -157,11 +162,15 @@ def get_htmls(url: str,
 
     :return: list of str, html codes of the pages.
     """
-    logger.info(f"Requested: ({start};{stop}), with params {kwargs}")
+    logger.info(f"Requested to '{url}' ({start};{stop}) with params {kwargs}")
+    coro_start = time.time()
+
     html_codes = asyncio.run(
         get_htmls_coro(url, start, stop, **kwargs)
     )
-    logger.info("Request was successfully completed ")
+
+    logger.info("Request was successfully completed")
+    logger.info(f"Coro executing time: {round(time.time() - coro_start, 2)}")
     return html_codes
 
 
@@ -241,7 +250,7 @@ def does_page_exist(url: str,
     stop = p_index + 1
 
     # request's correct → first page exists
-    if stop is 1:
+    if stop == 1:
         return first_page
 
     last_page = get_htmls(url, start, stop, **kwargs)[0]
