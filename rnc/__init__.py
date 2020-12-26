@@ -5,8 +5,9 @@ import os
 from pathlib import Path
 from typing import Union
 
-DEFAULT_MSG_FMT = "[{name}:{module}:{levelname}:{funcName}:{asctime}] {message}"
-DEFAULT_DATE_FMT = "%d.%m.%Y %H:%M:%S"
+MSG_FMT = "[{levelname}:{module}:{funcName}:{lineno} line:" \
+          "{asctime},{msecs:.0f}] {message}"
+DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 LOGGER_NAME = "rnc"
 LOG_FOLDER = Path('logs')
