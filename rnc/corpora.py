@@ -15,7 +15,6 @@ __all__ = (
     'OUTPUT_FORMATS'
 )
 
-import copy
 import csv
 import logging
 import os
@@ -716,7 +715,7 @@ class Corpus:
         :params first_page_code: str, code of the first page.
         :return: None.
         """
-        params = copy.deepcopy(self.params)
+        params = self.params.copy()
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
@@ -1088,7 +1087,7 @@ class Corpus:
         copy_obj = self.__class__(
             self.query, self.p_count, file=self.file,
             marker=self.marker, **self.params)
-        copy_obj._data = copy.deepcopy(self.data)
+        copy_obj._data = self.data.copy()
         return copy_obj
 
     def sort_data(self,
@@ -1285,7 +1284,7 @@ class Corpus:
 
         new_data = self.data[item]
         new_obj = self.copy()
-        new_obj._data = copy.deepcopy(new_data)
+        new_obj._data = new_data.copy()
         return new_obj
 
     def __setitem__(self,
