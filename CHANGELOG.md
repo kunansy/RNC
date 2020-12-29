@@ -36,7 +36,7 @@ First release
 One can change this param or turn the restriction off.
 
 
-##### To \_\_init__
+##### To `__init__`
 * Func to set stream_handlers levels.
 * Func to set file_handlers levels.
 * Func to set loggers levels.
@@ -51,7 +51,7 @@ One can change this param or turn the restriction off.
 * Parsing structure corrected.
 * `is_http_request_correct` and `whether_result_found` joined, amount of operations deteriorated.
 * Order of receiving pages corrected.
-* Corpus init divided: _from_file, _from_Corpus.
+* Corpus init divided: `_from_file`, `_from_Corpus`.
  
 #### Added
 * ParallelCorpus.
@@ -59,7 +59,7 @@ One can change this param or turn the restriction off.
 
 
 #### 0.3.1 – 04.08.2020
-Searching with gramm params fixed – **Issue 3** closed.
+Searching with gramm params fixed – Issue #3 closed.
 
 
 #### 0.3.2 – 06.08.2020
@@ -70,13 +70,13 @@ Searching with gramm params fixed – **Issue 3** closed.
 * Corpora classes to `rnc.`
 * Working with file: validating, that the Corpus type in the file
 is equal to the Corpus class type.   
-* Requesting two or more words with one str – **Issue 5** closed.
-* Deleting the example by the index – **Issue 6** closed.
-* Method `filter` to Corpus – **Issue 9** closed. 
+* Requesting two or more words with one str – Issue #5 closed.
+* Deleting the example by the index – Issue #6 closed.
+* Method `filter` to Corpus – Issue #9 closed. 
 
 #### Fixed
-* Distance between words set – **Issue 7** closed. 
-* Order of texts in the ParallelCorpus – **Issue 8** closed.
+* Distance between words set – Issue #7 closed. 
+* Order of texts in the ParallelCorpus – Issue #8 closed.
 
 Other minor fixes and improvements.
 
@@ -140,7 +140,7 @@ Other minor fixes and improvements.
 Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 
 
-### 0.6.2
+### 0.6.2 – 21.12.2020
 #### Changed
 * Docs were improved.
 * Params validating was added. Issue #17 closed.
