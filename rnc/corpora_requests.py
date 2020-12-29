@@ -37,7 +37,6 @@ async def fetch_html(url: str,
     :exception: all exceptions should be processed here.
     """
     worker_name = kwargs.pop('worker_name', '')
-    worker_name = f"{worker_name}: " * bool(worker_name)
     try:
         resp = await ses.get(url, params=kwargs)
     except Exception:
@@ -78,19 +77,20 @@ async def worker_fetching_html(worker_name: str,
     while True:
         url, ses, kwargs = await q_args.get()
         logger.debug(
-            f"{worker_name}: requested to '{url}' with '{kwargs}'")
+            f"{worker_name}Requested to '{url}' with '{kwargs}'")
 
         res = await fetch_html(url, ses, **kwargs, worker_name=worker_name)
         while res == -1:
             logger.debug(
-                    f"{worker_name}: 429 'Too many requests', "
+                    f"{worker_name}429 'Too many requests', "
                     f"page: {kwargs['p']}; wait {WAIT}s"
             )
+
             await asyncio.sleep(WAIT)
             res = await fetch_html(url, ses, **kwargs, worker_name=worker_name)
 
         logger.debug(
-            f"{worker_name}: received from '{url}' with '{kwargs}'")
+            f"{worker_name}Received from '{url}' with '{kwargs}'")
         q_args.task_done()
 
         await q_results.put((res[0], res[1]))
@@ -125,8 +125,9 @@ async def get_htmls_coro(url: str,
 
         tasks = []
         for worker_index in range(5):
+            name = f"Worker-{worker_index + 1}: "
             task = asyncio.create_task(
-                worker_fetching_html(f"Worker-{worker_index + 1}", q_args, q_results)
+                worker_fetching_html(name, q_args, q_results)
             )
             tasks += [task]
 
@@ -288,8 +289,7 @@ def is_request_correct(url: str,
     except RuntimeError:
         logger.exception("HTTP request is wrong")
         raise ValueError("Wrong HTTP request")
-    else:
-        logger.debug("HTTP request is correct, result found")
+    logger.debug("HTTP request is correct, result found")
 
     logger.debug("Validating that the last page exists")
     try:
@@ -300,7 +300,6 @@ def is_request_correct(url: str,
     logger.debug("The last page exists")
 
     logger.debug("Validated successfully")
-
     return first_page, last_page
 
 
