@@ -3,7 +3,9 @@ Module for requesting to URL and get page's html code from there,
 download media files, check that the request if correct, page in RNC exists.
 """
 
-__all__ = 'get_htmls', 'is_request_correct'
+__all__ = (
+    'get_htmls', 'is_request_correct', 'download_docs'
+)
 
 import asyncio
 import logging
