@@ -157,3 +157,7 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 * Versions of requirements specified. Issue #27 closed.
 * Email changed. Issue #28 closed.
 * Other performance improvements.
+
+
+### 0.6.4 – 29.12.2020
+* Quickfix: deepcopy removed
