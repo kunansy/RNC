@@ -12,7 +12,6 @@ from typing import List, Tuple
 
 import aiofiles
 import aiohttp
-import aiojobs
 import bs4
 
 logger = logging.getLogger("rnc")
