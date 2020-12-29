@@ -83,6 +83,7 @@ async def worker_fetching_html(worker_name: str,
         res = await fetch_html(url, ses, **kwargs, worker_name=worker_name)
 
         if res is None:
+            q_args.task_done()
             return
 
         while res == -1:
@@ -377,6 +378,7 @@ async def worker_fetching_media(worker_name: str,
         content = await fetch_media_file(url, ses, worker_name=worker_name)
 
         if content is None:
+            q_args.task_done()
             return
 
         while content == -1:
