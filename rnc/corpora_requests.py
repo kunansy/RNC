@@ -141,7 +141,7 @@ async def get_htmls_coro(url: str,
             task.cancel()
 
         results = [
-            await q_results.get()
+            q_results.get_nowait()
             for _ in range(q_results.qsize())
         ]
     results.sort(key=lambda res: res[0])
@@ -389,7 +389,8 @@ async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
         tasks = []
         for worker_number in range(5):
             name = f"Worker-{worker_number + 1}: "
-            task = asyncio.create_task(worker_fetching_media(name, q_args))
+            task = asyncio.create_task(
+                worker_fetching_media(name, q_args))
             tasks += [task]
 
         await q_args.join()
