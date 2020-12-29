@@ -406,5 +406,9 @@ def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
     :return: None.
     """
     logger.info(f"Requested {len(url_to_name)} files to download")
+    coro_start = time.time()
+
     asyncio.run(download_docs_coro(url_to_name))
-    logger.info(f"Downloading successfully completed")
+
+    logger.info(f"Downloading completed, coro executing time: "
+                f"{round(time.time() - coro_start, 2)}s")
