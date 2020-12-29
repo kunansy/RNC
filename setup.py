@@ -32,7 +32,7 @@ setup(
                       "lxml==4.6.2",
                       "ujson==4.0.1"],
     author="Kolobov Kirill",
-    author_email='alniconim@gmail.com',
+    author_email="thekunansy@gmail.com",
     description='API for Russian National Corpus',
     long_description=open('README.md', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
