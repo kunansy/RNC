@@ -174,25 +174,6 @@ def get_htmls(url: str,
     return html_codes
 
 
-def is_http_request_correct(url: str,
-                            **kwargs) -> bool:
-    """
-    Whether the request is correct.
-    It's correct If there's no exception catch.
-
-    :param url: str, request url.
-    :param kwargs: request HTTP tags.
-
-    :return: bool, whether the request is correct.
-    """
-    # coro writes logs by itself
-    try:
-        htmls = get_htmls(url, **kwargs)
-    except Exception:
-        return False
-    return bool(htmls)
-
-
 def whether_result_found(url: str,
                          **kwargs) -> str:
     """
