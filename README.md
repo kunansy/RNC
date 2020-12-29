@@ -257,11 +257,11 @@ For example requesting 100 pages you should wait about 3 minutes:
 
 **RIGHT:**
 ```python
-ru = rnc.MainCorpus(marker=str.upper)
+ru = rnc.MainCorpus(...,  marker=str.upper)
 ```
 **WRONG:**
 ```python
-ru = rnc.MainCorpus(marker=str.upper())
+ru = rnc.MainCorpus(..., marker=str.upper())
 ```
 * Pass an empty string as a param if you do not want to set them
 ```python
@@ -297,25 +297,25 @@ en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp.en)
 en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp['en'])
 ```
 Language keys list:
-1. English – 'en'
 1. Armenian – 'arm'
 1. Bashkir – 'bas'
 1. Belarusian – 'bel'
 1. Bulgarian – 'bul'
 1. Buryatian – 'bur'
-1. Spanish – 'sp'
-1. Italian – 'it'
 1. Chinese – 'ch'
+1. Czech – 'cz'
+1. English – 'en'
+1. Estonian – 'es'
+1. Finnish – 'fin'
+1. French – 'fr'
+1. German – 'ger'
+1. Italian – 'it'
 1. Latvian – 'lat'
 1. Lithuanian – 'lit'
-1. German – 'ger'
 1. Polish – 'pol'
-1. Ukrainian – 'ukr'
-1. French – 'fr'
-1. Finnish – 'fin'
-1. Czech – 'cz'
+1. Spanish – 'sp'
 1. Swedish – 'sw'
-1. Estonian – 'es'
+1. Ukrainian – 'ukr'
 
 If you want to search something by several languages, choose and set the 
 `mycorp` in the site, pass this param to Corpus. 
