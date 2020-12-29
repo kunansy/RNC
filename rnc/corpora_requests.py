@@ -75,11 +75,15 @@ async def worker_fetching_html(worker_name: str,
     :return: None.
     """
     while True:
-        url, ses, kwargs = await q_args.get()
+        url, ses, kwargs = q_args.get_nowait()
         logger.debug(
             f"{worker_name}Requested to '{url}' with '{kwargs}'")
 
         res = await fetch_html(url, ses, **kwargs, worker_name=worker_name)
+
+        if res is None:
+            return
+
         while res == -1:
             logger.debug(
                     f"{worker_name}429 'Too many requests', "
