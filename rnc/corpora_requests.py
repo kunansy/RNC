@@ -307,10 +307,9 @@ def is_request_correct(url: str,
     return first_page, last_page
 
 
-async def fetch_download(url: str,
-                         ses: aiohttp.ClientSession,
-                         filename: str,
-                         **kwargs) -> None:
+async def fetch_media_file(url: str,
+                           ses: aiohttp.ClientSession,
+                           **kwargs) -> bytes or int:
     """
     Coro, downloading and writing media file from RNC.
 
@@ -318,7 +317,6 @@ async def fetch_download(url: str,
 
     :param url: str, file's url.
     :param ses: aiohttp.ClientSession.
-    :param filename: str, name of the file.
     :param kwargs: HTTP tags to request.
 
     :return: None.
