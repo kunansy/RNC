@@ -343,6 +343,20 @@ async def fetch_media_file(url: str,
     resp.close()
 
 
+async def dump(content: bytes,
+               filename: str) -> None:
+    """
+    Dump content to media file.
+
+    :param content: bytes, content to dump.
+    :param filename: str, filename.
+
+    :return: None.
+    """
+    async with aiofiles.open(filename, 'wb') as f:
+        await f.write(content)
+
+
 async def worker_fetching_media(worker_name: str,
                                 q_args: asyncio.Queue) -> None:
     """
