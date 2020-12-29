@@ -264,7 +264,7 @@ def is_request_correct(url: str,
                        **kwargs) -> Tuple[str, str]:
     """
     Check:
-        – is the HTTP request correct (means there're no exceptions catch).
+        – is the HTTP request correct (means there are no exceptions catch).
 
         – has there been any result.
 
@@ -311,15 +311,14 @@ async def fetch_media_file(url: str,
                            ses: aiohttp.ClientSession,
                            **kwargs) -> bytes or int:
     """
-    Coro, downloading and writing media file from RNC.
-
-    If response status == 429 sleep 24s and try again.
+    Coro, getting media content to write.
 
     :param url: str, file's url.
     :param ses: aiohttp.ClientSession.
     :param kwargs: HTTP tags to request.
 
-    :return: None.
+    :return: bytes (media) if everything is OK,
+     -1 if there's 429 error, None if it is another error.
     :exception: all exceptions should be processed here.
     """
     worker_name = kwargs.pop('worker_name', '')
@@ -346,6 +345,16 @@ async def fetch_media_file(url: str,
 
 async def worker_fetching_media(worker_name: str,
                                 q_args: asyncio.Queue) -> None:
+    """
+    Worker getting media file and dumping it to file.
+
+    Wait some time and request again if there's 429 error.
+
+    :param worker_name: str, worker name to set it in logs.
+    :param q_args: asyncio.Queue with args for fetch_media_file(...).
+
+    :return: None.
+    """
     while True:
         url, ses, filename = q_args.get_nowait()
 
