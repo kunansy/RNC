@@ -168,7 +168,7 @@ def get_htmls(url: str,
 
     :return: list of str, html codes of the pages.
     """
-    logger.info(f"Requested to '{url}' ({start};{stop}) with params {kwargs}")
+    logger.info(f"Requested to '{url}' [{start};{stop}) with params {kwargs}")
     coro_start = time.time()
 
     html_codes = asyncio.run(
