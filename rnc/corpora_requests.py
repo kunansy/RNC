@@ -238,6 +238,7 @@ def does_page_exist(url: str,
     stop = p_index + 1
 
     # request's correct → first page exists
+
     if stop == 1:
         return first_page
 
@@ -295,7 +296,9 @@ def is_request_correct(url: str,
     except RuntimeError:
         logger.exception("HTTP request is wrong")
         raise ValueError("Wrong HTTP request")
+
     logger.debug("HTTP request is correct, result found")
+
 
     logger.debug("Validating that the last page exists")
     try:

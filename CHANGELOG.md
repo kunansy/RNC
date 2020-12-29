@@ -150,7 +150,7 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 * Some useless validating requests removed. Issue #21 closed.
 
 
-### 0.6.3
+### 0.6.3 – 29.12.2020
 #### Changed
 * Logging improved.
 * Use workers and queue instead of aiojobs. Issue #26 closed.
