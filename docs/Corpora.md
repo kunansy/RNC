@@ -11,25 +11,25 @@
 1. Parallel – class **ParallelCorpus**. Use `rnc.mycorp.<lang>` or 
   `rnc.mycorp[<lang>]` to set language via `mycorp=`. 
 Docs to all [subcorpora](https://github.com/kunansy/RNC/tree/master/docs/Lexgram%20search%20params/Parallel%20Corpus) 
-   1. English 
    1. Armenian
-   1. Bashkir 
+   1. Bashkir
    1. Belarusian
    1. Bulgarian
    1. Buryatian
-   1. Spanish
-   1. Italian
    1. Chinese
+   1. Czech
+   1. English
+   1. Estonian
+   1. Finnish
+   1. French
+   1. German
+   1. Italian
    1. Latvian
    1. Lithuanian
-   1. German
    1. Polish
-   1. Ukrainian
-   1. French
-   1. Finnish
-   1. Czech
+   1. Spanish
    1. Swedish
-   1. Estonian 
+   1. Ukrainian
 1. Multilingual – class **MultilingualParaCorpus**
 1. Tutoring – class **TutoringCorpus**
 1. Dialectal – class **DialectalCorpus** 
