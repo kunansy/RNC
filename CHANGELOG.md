@@ -148,3 +148,12 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 * `findall` and `finditer` implemented. Issue #19 closed.
 * Using `ujson` instead of `json`. Issue #15 closed.
 * Some useless validating requests removed. Issue #21 closed.
+
+
+### 0.6.3
+#### Changed
+* Logging improved.
+* Use workers and queue instead of aiojobs. Issue #26 closed.
+* Versions of requirements specified. Issue #27 closed.
+* Email changed. Issue #28 closed.
+* Other performance improvements.
