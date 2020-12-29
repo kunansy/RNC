@@ -156,3 +156,4 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 * Use workers and queue instead of aiojobs. Issue #26 closed.
 * Versions of requirements specified. Issue #27 closed.
 * Email changed. Issue #28 closed.
+* Other performance improvements.
