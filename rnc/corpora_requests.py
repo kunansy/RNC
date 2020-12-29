@@ -324,52 +324,80 @@ async def fetch_download(url: str,
     :return: None.
     :exception: all exceptions should be processed here.
     """
+    worker_name = kwargs.pop('worker_name', '')
     try:
         resp = await ses.get(url, allow_redirects=True, params=kwargs)
     except Exception:
-        logger.exception("Cannot get answer from RNC")
+        logger.exception(
+            f"{worker_name}Cannot get answer from '{url}' with {kwargs}")
         return
 
     if resp.status == 200:
         content = await resp.read()
-        async with aiofiles.open(filename, 'wb') as f:
-            await f.write(content)
-    elif resp.status == 429:
-        logger.debug(
-            f"429, {resp.reason} downloading '{filename}', wait {WAIT}s"
-        )
         resp.close()
-        await asyncio.sleep(WAIT)
-        await fetch_download(url, ses, filename)
-    else:
-        logger.error(
-            f"{resp.status}: {resp.reason} requesting to {resp.url}"
-        )
+        return content
+    elif resp.status == 429:
+        resp.close()
+        return -1
+
+    logger.error(
+        f"{resp.status}: {resp.reason} requesting to {resp.url}"
+    )
     resp.close()
+
+
+async def worker_fetching_media(worker_name: str,
+                                q_args: asyncio.Queue) -> None:
+    while True:
+        url, ses, filename = q_args.get_nowait()
+
+        logger.debug(f"{worker_name}Requested to '{url}'")
+        content = await fetch_media_file(url, ses, worker_name=worker_name)
+
+        if content is None:
+            return
+
+        while content == -1:
+            logger.debug(
+                f"{worker_name}: 429 'Too many requests', "
+                f"url: {url}; wait {WAIT}s"
+            )
+
+            await asyncio.sleep(WAIT)
+            content = await fetch_media_file(url, ses, worker_name=worker_name)
+
+        logger.debug(f"{worker_name}Received from '{url}'")
+        logger.debug(f"{worker_name}Dumping '{url}' to '{filename}'")
+        await dump(content, filename)
+        logger.debug(f"{worker_name}'{filename}' dumped")
+
+        q_args.task_done()
 
 
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
     """
-    Coro executing fetch_download coro, catching exceptions.
+    Coro running 5 workers to download media files.
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
     :return None.
     """
     timeout = aiohttp.ClientTimeout(WAIT)
+    q_args = asyncio.Queue(maxsize=-1)
+
     async with aiohttp.ClientSession(timeout=timeout) as ses:
-        scheduler = await aiojobs.create_scheduler(limit=None)
         for url, filename in url_to_name:
-            try:
-                await scheduler.spawn(
-                    fetch_download(url, ses, filename)
-                )
-            except Exception as e:
-                logger.error(f"{e} requesting to {url}")
+            await q_args.put((url, ses, filename))
 
-        while len(scheduler) != 0:
-            await asyncio.sleep(.5)
+        tasks = []
+        for worker_number in range(5):
+            name = f"Worker-{worker_number + 1}: "
+            task = asyncio.create_task(worker_fetching_media(name, q_args))
+            tasks += [task]
 
-        await scheduler.close()
+        await q_args.join()
+
+        for task in tasks:
+            task.cancel()
 
 
 def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
