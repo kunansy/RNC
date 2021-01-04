@@ -68,38 +68,25 @@ logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
 
 
-class HandlerNotExistError(Exception):
-    pass
+def set_handler_level(handler_class: type):
+    def wrapped(level: int or str) -> None:
+        try:
+            level = level.upper()
+        except AttributeError:
+            pass
+
+        for handler_index in range(len(logger.handlers)):
+            if logger.handlers[handler_index].__class__ == handler_class:
+                logger.handlers[handler_index].setLevel(level)
+                return
+        print(f"There is no '{handler_class}' handler\n"
+              f"This behavior is undefined, contact the developer")
+
+    return wrapped
 
 
-def set_handler_level(level: LEVEL,
-                      handler_class: type) -> None:
-    try:
-        level = level.upper()
-    except AttributeError:
-        pass
- 
-    for handler_index in range(len(logger.handlers)):
-        if logger.handlers[handler_index].__class__ == handler_class:
-            logger.handlers[handler_index].setLevel(level)
-            return
-    raise HandlerNotExistError(f"There is no '{handler_class}' handler")
-
-
-def set_stream_handler_level(level: LEVEL) -> None:
-    try:
-        set_handler_level(level, logging.StreamHandler)
-    except HandlerNotExistError:
-        print("Stream handler doesn't exist. This behavior "
-              "is undefined, contact the developer")
-
-
-def set_file_handler_level(level: LEVEL) -> None:
-    try:
-        set_handler_level(level, logging.FileHandler)
-    except HandlerNotExistError:
-        print("File handler doesn't exist. This behavior "
-              "is undefined, contact the developer")
+set_stream_handler_level = set_handler_level(logging.StreamHandler)
+set_file_handler_level = set_handler_level(logging.FileHandler)
 
 
 def set_logger_level(level: LEVEL) -> None:
