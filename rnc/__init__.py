@@ -4,7 +4,6 @@ __version__ = '0.6.4'
 import logging
 import os
 from pathlib import Path
-from typing import Union
 
 from .corpora import (
     MainCorpus,
@@ -45,8 +44,6 @@ LOGGER_NAME = "rnc"
 LOG_FOLDER = Path('logs')
 LOG_FILE = LOG_FOLDER / f"{LOGGER_NAME}.log"
 os.makedirs(LOG_FOLDER, exist_ok=True)
-
-LEVEL = Union[str, int]
 
 
 formatter = logging.Formatter(
@@ -89,7 +86,7 @@ set_stream_handler_level = set_handler_level(logging.StreamHandler)
 set_file_handler_level = set_handler_level(logging.FileHandler)
 
 
-def set_logger_level(level: LEVEL) -> None:
+def set_logger_level(level: int or str) -> None:
     try:
         level = level.upper()
     except AttributeError:
