@@ -37,8 +37,8 @@ from .examples import (
     KwicExample
 )
 
-MSG_FMT = "[{levelname}:{module}:{funcName}:{lineno} line:" \
-          "{asctime},{msecs:.0f}] {message}"
+MSG_FMT = "[{asctime},{msecs:3.0f}] [{levelname}] " \
+          "[{module}:{funcName}] {message}"
 DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 LOGGER_NAME = "rnc"
