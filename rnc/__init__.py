@@ -3,6 +3,7 @@ __version__ = '0.6.4'
 
 import logging
 import os
+import sys
 from pathlib import Path
 
 from .corpora import (
@@ -72,12 +73,13 @@ def set_handler_level(handler_class: type):
         except AttributeError:
             pass
 
-        for handler_index in range(len(logger.handlers)):
-            if logger.handlers[handler_index].__class__ == handler_class:
-                logger.handlers[handler_index].setLevel(level)
+        for handler in logger.handlers:
+            if isinstance(handler, handler_class):
+                handler.setLevel(level)
                 return
-        print(f"There is no '{handler_class}' handler\n"
-              f"This behavior is undefined, contact the developer")
+        print(f"There is no '{handler_class}' handler."
+              f"This behavior is undefined, contact the developer",
+              file=sys.stderr)
 
     return wrapped
 
