@@ -683,8 +683,8 @@ class Corpus:
         :param content: bs4.element.Tag, here these values are.
         """
         res = {}
-        amount = content.find('p', {'class': 'found'})
-        blocks = amount.find_all('span', {'class': 'stat-number'})
+        amount = list(content.find_all('p', {'class': 'res'}))
+        blocks = amount[-1].find_all('span', {'class': 'stat-number'})
 
         contexts = blocks[-1].get_text()
         res['contexts'] = str_to_int(contexts)
@@ -708,31 +708,34 @@ class Corpus:
         return f"{BASE_RNC_URL}/{link}"
 
     def _get_additional_info(self,
-                             first_page_code: str = None) -> None:
+                             first_page: str = None) -> None:
         """ Get additional info (amount of found docs and contexts,
         link to graphic with distribution by years).
 
-        :params first_page_code: str, code of the first page.
+        :params first_page: str, code of the first page.
         :return: None.
         """
         params = self.params.copy()
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
-            first_page_code = first_page_code or \
-                              creq.get_htmls(RNC_URL, **params)[0]
+            first_page = first_page or creq.get_htmls(RNC_URL, **params)[0]
         except Exception:
             raise
 
-        soup = bs4.BeautifulSoup(first_page_code, 'lxml')
+        soup = bs4.BeautifulSoup(first_page, 'lxml')
         content = soup.find('div', {'class': 'content'})
 
-        additional_info = Corpus._get_where_query_found(content)
-        graphic_url = Corpus._get_graphic_url(content)
-        if graphic_url:
-            additional_info['graphic_link'] = graphic_url
+        try:
+            additional_info = Corpus._get_where_query_found(content)
+            graphic_url = Corpus._get_graphic_url(content)
+        except Exception:
+            logger.exception("Sth went wrong while getting additional info")
+        else:
+            if graphic_url:
+                additional_info['graphic_link'] = graphic_url
 
-        self._add_info = additional_info
+            self._add_info = additional_info
 
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
