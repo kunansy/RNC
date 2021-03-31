@@ -65,7 +65,7 @@ setup(
                       "beautifulsoup4==4.9.3",
                       "aiohttp==3.7.3",
                       "aiofiles==0.6.0",
-                      "lxml==4.6.2",
+                      "lxml==4.6.3",
                       "ujson==4.0.1"],
     extras_require={
       "dev": [
