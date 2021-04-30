@@ -29,10 +29,6 @@ class TestMultimodalCorpus(TemplateCorpusTest):
     def test_mycorp(self):
         pass
 
-    def test_open_graphic(self):
-        with pytest.raises(RuntimeError):
-            self.corp_normal_obj.open_graphic()
-
     def test_full_query_with_lexform(self):
         corp = self.corp_type('ты это', 1, text='lexform')
         corp.request_examples()

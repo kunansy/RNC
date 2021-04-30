@@ -26,7 +26,3 @@ class TestAccentologicalCorpus(TemplateCorpusTest):
 
         assert len(corp) >= 1
         sleep(5)
-
-    def test_open_graphic(self):
-        with pytest.raises(RuntimeError):
-            self.corp_normal_obj.open_graphic()
