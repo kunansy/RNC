@@ -614,9 +614,7 @@ class Corpus(ABC):
         a = content.find('a', {'target': '_blank'})
         try:
             link = a['href']
-        except KeyError:
-            return
-        except TypeError:
+        except (KeyError, TypeError, AttributeError):
             return
         return f"{BASE_RNC_URL}/{link}"
 
@@ -630,7 +628,7 @@ class Corpus(ABC):
         params.pop('expand', None)
         try:
             first_page = first_page or creq.get_htmls(RNC_URL, **params)[0]
-        except Exception:
+        except creq.BaseRequestError:
             raise
 
         soup = bs4.BeautifulSoup(first_page, 'lxml')
@@ -785,7 +783,7 @@ class Corpus(ABC):
         try:
             src = right.a.attrs['msg'].strip()
             url = right.a.attrs['href']
-        except KeyError as e:
+        except (KeyError, AttributeError, TypeError) as e:
             logger.error(f"Source or url not found:\n{e}")
             src = url = ''
 
