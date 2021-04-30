@@ -20,6 +20,22 @@ logger = logging.getLogger("rnc")
 WAIT = 24
 
 
+class BaseRequestError(Exception):
+    pass
+
+
+class NoResultFound(BaseRequestError):
+    pass
+
+
+class LastPageDoesntExist(BaseRequestError):
+    pass
+
+
+class WrongHTTPRequest(BaseRequestError):
+    pass
+
+
 async def fetch_html(url: str,
                      ses: aiohttp.ClientSession,
                      **kwargs) -> Tuple[int, str] or None:
@@ -251,11 +267,9 @@ def is_request_correct(url: str,
     :param p_count: int, request count of pages.
     :param kwargs: request HTTP tags.
 
-    :return: tuple of str, first and last pages if everything's OK,
-     an exception otherwise.
-
-    :exception ValueError: HTTP request is wrong, no result found or
-     the last page doesn't exist.
+    :exception WrongHTTPRequest: HTTP request is wrong.
+    :exception NoResultFound: no result found.
+    :exception LastPageDoesntExist: the last page doesn't exist.
     """
     logger.debug("Validating that everything is OK")
     try:
@@ -264,12 +278,11 @@ def is_request_correct(url: str,
         # coro writes logs by itself
         first_page = whether_result_found(url, **kwargs)
     except ValueError:
-        logger.exception("HTTP request is OK, but no result found")
-        raise ValueError("No result found")
+        logger.error("HTTP request is OK, but no result found")
+        raise NoResultFound(f"{kwargs}")
     except RuntimeError:
-        logger.exception("HTTP request is wrong")
-        raise ValueError("Wrong HTTP request")
-
+        logger.error("HTTP request is wrong")
+        raise WrongHTTPRequest(f"{kwargs}")
     logger.debug("HTTP request is correct, result found")
 
 
@@ -278,7 +291,7 @@ def is_request_correct(url: str,
         last_page = does_page_exist(url, p_count - 1, first_page, **kwargs)
     except ValueError:
         logger.error("Everything is OK, but last page doesn't exist")
-        raise ValueError("Last page doesn't exist")
+        raise LastPageDoesntExist(f"{kwargs}")
     logger.debug("The last page exists")
 
     logger.debug("Validated successfully")
