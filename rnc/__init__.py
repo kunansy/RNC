@@ -1,10 +1,10 @@
-__version__ = '0.6.4.1'
+__version__ = '0.6.5'
 
 
 import logging
 import os
+import sys
 from pathlib import Path
-from typing import Union
 
 from .corpora import (
     MainCorpus,
@@ -37,16 +37,14 @@ from .examples import (
     KwicExample
 )
 
-MSG_FMT = "[{levelname}:{module}:{funcName}:{lineno} line:" \
-          "{asctime},{msecs:.0f}] {message}"
+MSG_FMT = "[{asctime},{msecs:3.0f}] [{levelname}] " \
+          "[{module}:{funcName}] {message}"
 DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 LOGGER_NAME = "rnc"
 LOG_FOLDER = Path('logs')
 LOG_FILE = LOG_FOLDER / f"{LOGGER_NAME}.log"
 os.makedirs(LOG_FOLDER, exist_ok=True)
-
-LEVEL = Union[str, int]
 
 
 formatter = logging.Formatter(
@@ -68,41 +66,29 @@ logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
 
 
-class HandlerNotExistError(Exception):
-    pass
+def set_handler_level(handler_class: type):
+    def wrapped(level: int or str) -> None:
+        try:
+            level = level.upper()
+        except AttributeError:
+            pass
+
+        for handler in logger.handlers:
+            if isinstance(handler, handler_class):
+                handler.setLevel(level)
+                return
+        print(f"There is no '{handler_class}' handler."
+              f"This behavior is undefined, contact the developer",
+              file=sys.stderr)
+
+    return wrapped
 
 
-def set_handler_level(level: LEVEL,
-                      handler_class: type) -> None:
-    try:
-        level = level.upper()
-    except AttributeError:
-        pass
- 
-    for handler_index in range(len(logger.handlers)):
-        if logger.handlers[handler_index].__class__ == handler_class:
-            logger.handlers[handler_index].setLevel(level)
-            return
-    raise HandlerNotExistError(f"There is no '{handler_class}' handler")
+set_stream_handler_level = set_handler_level(logging.StreamHandler)
+set_file_handler_level = set_handler_level(logging.FileHandler)
 
 
-def set_stream_handler_level(level: LEVEL) -> None:
-    try:
-        set_handler_level(level, logging.StreamHandler)
-    except HandlerNotExistError:
-        print("Stream handler doesn't exist. This behavior "
-              "is undefined, contact the developer")
-
-
-def set_file_handler_level(level: LEVEL) -> None:
-    try:
-        set_handler_level(level, logging.FileHandler)
-    except HandlerNotExistError:
-        print("File handler doesn't exist. This behavior "
-              "is undefined, contact the developer")
-
-
-def set_logger_level(level: LEVEL) -> None:
+def set_logger_level(level: int or str) -> None:
     try:
         level = level.upper()
     except AttributeError:
