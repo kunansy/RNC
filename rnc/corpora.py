@@ -637,8 +637,9 @@ class Corpus(ABC):
         try:
             additional_info = Corpus._get_where_query_found(content)
             graphic_url = Corpus._get_graphic_url(content)
-        except Exception:
-            logger.exception("Sth went wrong while getting additional info")
+        except Exception as e:
+            logger.error("Sth went wrong while "
+                         f"getting additional info:\n{e}")
         else:
             if graphic_url:
                 additional_info['graphic_link'] = graphic_url
@@ -917,7 +918,7 @@ class Corpus(ABC):
         try:
             first, last = creq.is_request_correct(
                 RNC_URL, self.p_count, **self.params)
-        except Exception as e:
+        except creq.BaseRequestError as e:
             msg = f"Query = {self.forms_in_query}, " \
                   f"{self.p_count}, {self.params}\ne = {e}"
             logger.error(msg)
