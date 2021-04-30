@@ -1440,7 +1440,7 @@ class MultimodalCorpus(Corpus):
                      media: bs4.element.Tag) -> Tuple[str, str]:
         """ Get link to the media file and filepath. """
         try:
-            media_link = media.find('td').a['href']
+            media_link = media.find('a')['href']
         except Exception:
             raise
 
