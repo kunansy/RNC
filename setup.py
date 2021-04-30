@@ -24,8 +24,11 @@ setup(
     url='https://github.com/kunansy/RNC',
     packages=find_packages(exclude='tests'),
     project_urls={
+        "Source": "https://github.com/kunansy/RNC",
         "Changelog": "https://github.com/kunansy/RNC/blob/master/CHANGELOG.md",
         "Documentation": "https://github.com/kunansy/RNC#api-for-russian-national-corpus",
+        "Tracker": "https://github.com/kunansy/RNC/issues",
+        "Funding": "https://paypal.me/ansth"
     },
     keywords=["rnc", "Russian National Corpus", "Linguistics", "API"],
     python_requires='>=3.7',
