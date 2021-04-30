@@ -23,7 +23,6 @@ import re
 import string
 import time
 import urllib.parse
-import webbrowser
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
@@ -615,12 +614,14 @@ class Corpus(ABC):
         a = content.find('a', {'target': '_blank'})
         try:
             link = a['href']
-        except Exception:
+        except KeyError:
+            return
+        except TypeError:
             return
         return f"{BASE_RNC_URL}/{link}"
 
     def _get_additional_info(self,
-                             first_page_code: str = None) -> None:
+                             first_page: str = None) -> None:
         """ Get additional info (amount of found
         docs and contexts, link to the graphic).
         """
@@ -1011,10 +1012,10 @@ class Corpus(ABC):
         """ Apply the pattern to the examples' text with re.findall.
         Yield all examples which are satisfy the pattern and match.
         """
-        for expl in self:
-            match = re.findall(pattern, expl.txt, *args)
+        for example in self:
+            match = re.findall(pattern, example.txt, *args)
             if match:
-                yield expl, match
+                yield example, match
 
     def finditer(self,
                  pattern: Pattern or str,
@@ -1022,10 +1023,10 @@ class Corpus(ABC):
         """ Apply the pattern to the examples' text with re.finditer.
         Yield all examples which are satisfy the pattern and match.
         """
-        for expl in self:
-            match = re.finditer(pattern, expl.txt, *args)
+        for example in self:
+            match = re.finditer(pattern, example.txt, *args)
             if match:
-                yield expl, match
+                yield example, match
 
     def __repr__(self) -> str:
         """ Format:
