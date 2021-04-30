@@ -599,8 +599,8 @@ class Corpus(ABC):
     def _get_where_query_found(content: bs4.element.Tag) -> Dict[str, Any]:
         """ Get converted to int amount of found docs and contexts. """
         res = {}
-        amount = content.find('p', {'class': 'found'})
-        blocks = amount.find_all('span', {'class': 'stat-number'})
+        amount = list(content.find_all('p', {'class': 'res'}))
+        blocks = amount[-1].find_all('span', {'class': 'stat-number'})
 
         contexts = blocks[-1].get_text()
         res['contexts'] = str_to_int(contexts)
@@ -628,20 +628,23 @@ class Corpus(ABC):
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
-            first_page_code = first_page_code or \
-                              creq.get_htmls(RNC_URL, **params)[0]
+            first_page = first_page or creq.get_htmls(RNC_URL, **params)[0]
         except Exception:
             raise
 
-        soup = bs4.BeautifulSoup(first_page_code, 'lxml')
+        soup = bs4.BeautifulSoup(first_page, 'lxml')
         content = soup.find('div', {'class': 'content'})
 
-        additional_info = Corpus._get_where_query_found(content)
-        graphic_url = Corpus._get_graphic_url(content)
-        if graphic_url:
-            additional_info['graphic_link'] = graphic_url
+        try:
+            additional_info = Corpus._get_where_query_found(content)
+            graphic_url = Corpus._get_graphic_url(content)
+        except Exception:
+            logger.exception("Sth went wrong while getting additional info")
+        else:
+            if graphic_url:
+                additional_info['graphic_link'] = graphic_url
 
-        self._add_info = additional_info
+            self._add_info = additional_info
 
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
