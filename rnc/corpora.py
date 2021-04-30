@@ -24,6 +24,8 @@ import string
 import time
 import urllib.parse
 import webbrowser
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Callable, List, Any, Tuple, Pattern
 
@@ -128,7 +130,7 @@ def str_to_int(value: str) -> int:
     return int(value.replace(' ', ''))
 
 
-class Corpus:
+class Corpus(ABC):
     """ Base class for Corpora """
     # default params
     # documents per page
@@ -842,31 +844,27 @@ class Corpus:
             form = clean_text_up(form).lower()
             self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
 
+    @abstractmethod
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> Any:
         """ Parse the doc to list of Examples.
 
         Parsing depends on the subcorpus,
-        the method redefined at the descendants.
+         the method redefined at the descendants.
         """
         # TODO: remake this func to generator?
-        msg = f"'{self._parse_doc.__name__}' not implemented " \
-              f"in the parent Corpus class"
-        logger.error(msg)
-        raise NotImplementedError(msg)
+        pass
 
+    @abstractmethod
     def _parse_example(self,
                        *args,
                        **kwargs) -> Any:
         """ Parse the example to Example object.
 
         Parsing depends on the subcorpus,
-        the method redefined at the descendants.
+         the method redefined at the descendants.
         """
-        msg = f"'{self._parse_doc.__name__}' not implemented " \
-              f"in the parent Corpus class"
-        logger.error(msg)
-        raise NotImplementedError(msg)
+        pass
 
     def _parse_kwic_example(self,
                             left: bs4.element.Tag,
