@@ -894,21 +894,6 @@ class Corpus(ABC):
         logger.info(
             f"Data wrote to files: {self.file} and {self._config_path}")
 
-    def open_url(self) -> None:
-        """ Open first page of RNC results in the new
-        tab of the default browser.
-
-        :return: None.
-        :exception ValueError: if url is wrong.
-        :exception: if sth went wrong.
-        """
-        try:
-            webbrowser.open_new_tab(self.url)
-        except Exception:
-            logger.exception(
-                f"Error while opening doc with url: {self.url}")
-            raise
-
     def request_examples(self) -> None:
         """ Request examples, parse them and update the data.
 
