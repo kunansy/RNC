@@ -172,3 +172,4 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 6. `Corpus.findall()/finditer()` fixed
 7. Docs and logging improved.
 8. Setting on GitHub added: issue templates etc.
+9. Parsing `MultimodalCorpus` fixed. 
