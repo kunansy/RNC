@@ -246,12 +246,6 @@ class TemplateCorpusTest:
     # Test working with data #
     ##########################
 
-    def test_open_url(self):
-        self.corp_normal_obj.open_url()
-
-    def test_open_graphic(self):
-        self.corp_normal_obj.open_graphic()
-
     def test_copy(self):
         copy = self.corp_normal_obj.copy()
 
