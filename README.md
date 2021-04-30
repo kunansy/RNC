@@ -10,6 +10,7 @@ Corpus object contains list of obtained examples.
 There are two types of examples:
 ![](https://github.com/kunansy/RNC/blob/master/docs/Two_ex_types.png?raw=true) <br> 
 * If `out` is `normal`, API uses normal example, which name is equal to the Corpus class name:
+
 ```python
 ru = rnc.MainCorpus(...)
 ru.request_examples()
@@ -150,12 +151,9 @@ key is applied to Example objects.
 * `corp.filter(key)` – filter the data list, remove some examples using the key. 
 Key is applied to the `Example` objects.
 * `corp.url` – URL of the first RNC page (only getter).
-* `corp.open_url()` – open the first RNC page.
-* `corp.open_graphic()` – open the graphic of the distribution of query 
-  occurrences by years.
-* `corp.findall(pattern, kwargs)` – get all examples where the pattern found and 
+* `corp.findall(pattern, args)` – get all examples where the pattern found and 
   the match.
-* `corp.finditer(pattern, kwargs)` – get all examples where the pattern found and 
+* `corp.finditer(pattern, args)` – get all examples where the pattern found and 
   the match.
 
 Magic methods: 
@@ -275,6 +273,8 @@ query = {
 ---
 
 ## HOWTO
+You can ask any question you want [here](https://github.com/kunansy/RNC/discussions).
+
 ### How to set sort?
 There are some sort keys:
 1. `i_grtagging` – by default.
