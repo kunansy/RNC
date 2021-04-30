@@ -1451,19 +1451,20 @@ class MultimodalCorpus(Corpus):
                    doc: bs4.element.Tag) -> List[Any]:
         """ Parse the documents to examples. """
         try:
-            media, example = doc.find_all('td', {'valign': 'top'})
+            media = doc.find('td', {'valign': 'top'})
+            example = doc.find('td', {'class': 'murco-snippet'})
         except ValueError:
             return []
         examples = []
 
         media_url, filename = self._parse_media(media)
-        for example in example.find_all('li'):
-            data_from_example = self._parse_example(example)
+        # for example in example:
+        data_from_example = self._parse_example(example)
 
-            new_ex = self.ex_type(*data_from_example, media_url, filename)
-            new_ex.mark_found_words(self.marker)
-            self._add_wordforms(new_ex.found_wordforms)
-            examples += [new_ex]
+        new_ex = self.ex_type(*data_from_example, media_url, filename)
+        new_ex.mark_found_words(self.marker)
+        self._add_wordforms(new_ex.found_wordforms)
+        examples += [new_ex]
 
         return examples
 
