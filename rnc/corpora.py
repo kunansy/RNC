@@ -207,9 +207,9 @@ class Corpus(ABC):
         if self._csv_path.exists():
             try:
                 self._from_file()
-            except FileExistsError:
-                logger.exception(
-                    f"Probably config not found: '{self._config_path}'")
+            except FileExistsError as e:
+                logger.error(
+                    f"Config file not found: '{self._config_path}'\n{e}")
                 raise
         # or work with RNC
         else:
@@ -312,8 +312,9 @@ class Corpus(ABC):
         # add info about
         try:
             self._get_additional_info()
-        except Exception:
-            logger.exception("It is impossible to get additional info from RNC")
+        except Exception as e:
+            logger.warning("It is impossible to get "
+                           f"additional info from RNC:\n{e}")
 
     def _load_data(self) -> List:
         """ Load data from csv file. """
@@ -800,8 +801,8 @@ class Corpus(ABC):
         try:
             src = right.a.attrs['msg'].strip()
             url = right.a.attrs['href']
-        except Exception:
-            logger.error("Source or url not found")
+        except KeyError as e:
+            logger.error(f"Source or url not found:\n{e}")
             src = url = ''
 
         url = create_doc_url(url)
@@ -847,8 +848,8 @@ class Corpus(ABC):
         for doc in soup.find_all('li'):
             try:
                 parsed_doc = self._parse_doc(doc)
-            except Exception:
-                logger.exception("Error while parsing doc")
+            except Exception as e:
+                logger.error(f"Error while parsing doc:\n{e}")
             else:
                 res += parsed_doc
 
@@ -910,7 +911,7 @@ class Corpus(ABC):
         self._data_to_csv()
         self._params_to_json()
 
-        logger.debug(
+        logger.info(
             f"Data wrote to files: {self.file} and {self._config_path}")
 
     def open_url(self) -> None:
@@ -946,10 +947,10 @@ class Corpus(ABC):
         try:
             first, last = creq.is_request_correct(
                 RNC_URL, self.p_count, **self.params)
-        except Exception:
+        except Exception as e:
             msg = f"Query = {self.forms_in_query}, " \
-                  f"{self.p_count}, {self.params}"
-            logger.exception(msg)
+                  f"{self.p_count}, {self.params}\ne = {e}"
+            logger.error(msg)
             raise
 
         # get additional info from the first RNC page.
@@ -975,8 +976,8 @@ class Corpus(ABC):
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
             parsing_stop = time.time()
-        except Exception:
-            logger.exception(f"Error while parsing, query = {self.params}")
+        except Exception as e:
+            logger.error(f"Error while parsing, query = {self.params}\n{e}")
             raise
         else:
             logger.debug("Parsing completed")
@@ -1209,8 +1210,8 @@ class Corpus(ABC):
         """
         try:
             del self._data[key]
-        except Exception:
-            logger.exception(f"Deleting item: {key}")
+        except Exception as e:
+            logger.error(f"Deleting item: {key}\n{e}")
             raise
 
 
@@ -1386,12 +1387,14 @@ class MultilingualParaCorpus(ParallelCorpus):
         self._params['mode'] = self._MODE
 
     def _from_file(self) -> None:
-        msg = "Working with files not supported"
+        msg = f"Working with files not supported" \
+              f" in {self.__class__.__name__}"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     def dump(self) -> None:
-        msg = "Working with files not supported"
+        msg = f"Working with files not supported" \
+              f" in {self.__class__.__name__}"
         logger.error(msg)
         raise NotImplementedError(msg)
 
