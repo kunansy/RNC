@@ -27,10 +27,6 @@ async def fetch_html(url: str,
 
     This coro should be awaited from a worker.
 
-    :param url: str, URL to get its html code.
-    :param ses: aiohttp.ClientSession.
-    :param kwargs: HTTP tags.
-
     :return: tuple of int and str, page index and its HTML code.
      None if there's an error, -1 if it's 429 and the worker should
      wait some time and make request again.
@@ -64,16 +60,10 @@ async def worker_fetching_html(worker_name: str,
                                q_args: asyncio.Queue,
                                q_results: asyncio.Queue) -> None:
     """
-    Worker requesting to URL with params using fetch_html(...),
-     with args from q_args and putting results to q_results.
+    Worker requesting to URL with args from
+     q_args and putting results to q_results.
 
     Wait some time and request again if there's 429 error.
-
-    :param worker_name: str, name of the worker to set it in logs.
-    :param q_args: asyncio.Queue of args for fetch_html(...).
-    :param q_results: asyncio.Queue of results from fetch_html(...).
-
-    :return: None.
     """
     while True:
         url, ses, kwargs = q_args.get_nowait()
@@ -113,12 +103,6 @@ async def get_htmls_coro(url: str,
     URLs will be created for i in range(start, stop),
     HTTP tag 'p' (page) is i.
 
-    :param url: str, URL from where get HTML code.
-    :param start: int, start page index.
-    :param stop: int, stop page index.
-    :param kwargs: HTTP tags.
-
-    :return: list of str, HTML codes of the pages.
     """
     timeout = aiohttp.ClientTimeout(WAIT)
 
@@ -156,19 +140,7 @@ def get_htmls(url: str,
               start: int = 0,
               stop: int = 1,
               **kwargs) -> List[str]:
-    """
-    Run coro, get html codes of the pages.
-
-    URLs will be created for i in range(start, stop),
-     HTTP tag 'p' (page) is i.
-
-    :param url: str, URL from where get HTML code.
-    :param start: int, start page index.
-    :param stop: int, stop page index.
-    :param kwargs: HTTP tags.
-
-    :return: list of str, html codes of the pages.
-    """
+    """ Run coro, get html codes of the pages."""
     logger.info(f"Requested to '{url}' [{start};{stop}) with params {kwargs}")
     coro_start = time.time()
 
@@ -318,12 +290,9 @@ async def fetch_media_file(url: str,
     """
     Coro, getting media content to write.
 
-    :param url: str, file's url.
-    :param ses: aiohttp.ClientSession.
-    :param kwargs: HTTP tags to request.
-
     :return: bytes (media) if everything is OK,
      -1 if there's 429 error, None if it is another error.
+
     :exception: all exceptions should be processed here.
     """
     worker_name = kwargs.pop('worker_name', '')
@@ -350,14 +319,7 @@ async def fetch_media_file(url: str,
 
 async def dump(content: bytes,
                filename: str) -> None:
-    """
-    Dump content to media file.
-
-    :param content: bytes, content to dump.
-    :param filename: str, filename.
-
-    :return: None.
-    """
+    """ Dump content to media file."""
     async with aiofiles.open(filename, 'wb') as f:
         await f.write(content)
 
@@ -368,11 +330,6 @@ async def worker_fetching_media(worker_name: str,
     Worker getting media file and dumping it to file.
 
     Wait some time and request again if there's 429 error.
-
-    :param worker_name: str, worker name to set it in logs.
-    :param q_args: asyncio.Queue with args for fetch_media_file(...).
-
-    :return: None.
     """
     while True:
         url, ses, filename = q_args.get_nowait()
@@ -402,12 +359,7 @@ async def worker_fetching_media(worker_name: str,
 
 
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
-    """
-    Coro running 5 workers to download media files.
-
-    :param url_to_name: list of tuples of str, pairs: url – filename.
-    :return None.
-    """
+    """ Coro running 5 workers to download media files. """
     timeout = aiohttp.ClientTimeout(WAIT)
     q_args = asyncio.Queue(maxsize=-1)
 
@@ -433,7 +385,6 @@ def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
     Run coro, download the files.
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
-    :return: None.
     """
     logger.info(f"Requested {len(url_to_name)} files to download")
     coro_start = time.time()
