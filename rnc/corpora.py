@@ -848,7 +848,10 @@ class Corpus(ABC):
         """ Dump the data to csv file.
         Here it is assumed that the data exist.
         """
-        data = [example.items for example in self.data]
+        data = [
+            example.items
+            for example in self.data
+        ]
         columns = self[0].columns
         with self.file.open('w', encoding='utf-8', newline='') as f:
             # class constants
@@ -1030,13 +1033,12 @@ class Corpus(ABC):
                 Pages count
                 Request
         """
-        res = (f"{self.__class__.__name__}\n"
-               f"{len(self)}\n"
-               f"{self.file}\n"
-               f"{self.params}\n"
-               f"{self.p_count}\n"
-               f"{self.query}\n")
-        return res
+        return f"{self.__class__.__name__}\n" \
+               f"{len(self)}\n" \
+               f"{self.file}\n" \
+               f"{self.params}\n" \
+               f"{self.p_count}\n" \
+               f"{self.query}\n"
 
     def __str__(self) -> str:
         """
@@ -1045,7 +1047,7 @@ class Corpus(ABC):
         q_forms = ', '.join(self.forms_in_query)
         metainfo = f"Russian National Corpus (https://ruscorpora.ru)\n" \
                    f"Class: {self.__class__.__name__}, len = {len(self)}\n" \
-                   f"Pages: {self.p_count} of '{q_forms}' requested"
+                   f"{self.p_count} pages of '{q_forms}' requested"
 
         data = self.data
         is_restricted = False
@@ -1135,8 +1137,8 @@ class Corpus(ABC):
         return new_obj
 
     def __setitem__(self,
-                    key: int,
-                    value: Any) -> None:
+                    index: int,
+                    new_example: Any) -> None:
         """ Change the example.
 
         Examples:
@@ -1145,16 +1147,16 @@ class Corpus(ABC):
 
         :exception TypeError: if wrong type given.
         """
-        if not isinstance(value, self.ex_type):
+        if not isinstance(new_example, self.ex_type):
             msg = f"{type(self.ex_type)} expected, " \
-                  f"but {type(value)} found"
+                  f"but {type(new_example)} found"
             logger.error(msg)
             raise TypeError(msg)
 
         try:
-            self._data[key] = value
-        except Exception:
-            logger.exception(f'Setting item: {value} to {key}')
+            self._data[index] = new_example
+        except Exception as e:
+            logger.error(f'Setting item: {new_example} to {index}\n{e}')
             raise
 
     def __delitem__(self,
@@ -1277,8 +1279,6 @@ class ParallelCorpus(Corpus):
         Means parse original or translation.
         """
         src = Corpus._get_source(text)
-        ambiguation = Corpus._get_ambiguation(text)
-        doc_url = Corpus._get_doc_url(text)
         txt = Corpus._get_text(text)
         # remove source from text
         txt = txt[:txt.index(src)]
@@ -1287,7 +1287,12 @@ class ParallelCorpus(Corpus):
         found_words = Corpus._find_searched_words(text)
 
         new_txt = self.ex_type(
-            {lang: txt}, src, ambiguation, found_words, doc_url)
+            txt={lang: txt},
+            src=src,
+            ambiguation=Corpus._get_ambiguation(text),
+            found_wordforms=found_words,
+            doc_url=Corpus._get_doc_url(text)
+        )
         new_txt.mark_found_words(self.marker)
         return new_txt
 
@@ -1319,6 +1324,7 @@ class ParallelCorpus(Corpus):
         """ Load data from csv file. """
         if self.out == 'kwic':
             return super()._load_data()
+
         with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
@@ -1435,6 +1441,7 @@ class MultimodalCorpus(Corpus):
             media_link = media.find('td').a['href']
         except Exception:
             raise
+
         media_link, filename = media_link.split('?name=')
         return media_link, self.MEDIA_FOLDER / filename
 
