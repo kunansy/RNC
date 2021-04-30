@@ -178,7 +178,7 @@ class Corpus(ABC):
         # http tags to request
         self._params = {}
         # found wordforms with their frequency
-        self._found_wordforms = {}
+        self._found_wordforms = defaultdict(int)
         # query, wordforms to find
         self._query = {}
         # count of PAGES
@@ -760,7 +760,7 @@ class Corpus(ABC):
 
         for form in forms:
             form = clean_text_up(form).lower()
-            self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
+            self._found_wordforms[form] += 1
 
     @abstractmethod
     def _parse_doc(self,
