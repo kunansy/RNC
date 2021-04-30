@@ -1001,23 +1001,23 @@ class Corpus(ABC):
 
     def findall(self,
                 pattern: Pattern or str,
-                **kwargs) -> Tuple[expl.Example, List[str]]:
+                *args) -> Tuple[expl.Example, List[str]]:
         """ Apply the pattern to the examples' text with re.findall.
         Yield all examples which are satisfy the pattern and match.
         """
         for expl in self:
-            match = re.findall(pattern, expl.txt, **kwargs)
+            match = re.findall(pattern, expl.txt, *args)
             if match:
                 yield expl, match
 
     def finditer(self,
                  pattern: Pattern or str,
-                 **kwargs) -> Tuple[expl.Example, Any]:
+                 *args) -> Tuple[expl.Example, Any]:
         """ Apply the pattern to the examples' text with re.finditer.
         Yield all examples which are satisfy the pattern and match.
         """
         for expl in self:
-            match = re.finditer(pattern, expl.txt, **kwargs)
+            match = re.finditer(pattern, expl.txt, *args)
             if match:
                 yield expl, match
 
