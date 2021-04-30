@@ -595,26 +595,6 @@ class Corpus(ABC):
         """
         return self._add_info.get('graphic_link', None)
 
-    def open_graphic(self) -> None:
-        """ Open the graph of the distribution
-        of query occurrences by years.
-
-        :return: None.
-        :exception RuntimeError: if the URL doesn't exist.
-        :exception ...: if it's impossible to open the link.
-        """
-        url = self.graphic_link
-        if url is None:
-            msg = "Graphic does not exist"
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        try:
-            webbrowser.open_new_tab(url)
-        except Exception:
-            logger.exception("It is impossible to open the graphic")
-            raise
-
     @staticmethod
     def _get_where_query_found(content: bs4.element.Tag) -> Dict[str, Any]:
         """ Get converted to int amount of found docs and contexts. """
