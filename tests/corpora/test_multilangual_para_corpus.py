@@ -68,7 +68,3 @@ class TestMultilingualParaCorpus(TemplateCorpusTest):
 
     def test_found_wordforms_from_file(self):
         pass
-
-    def test_open_graphic(self):
-        with pytest.raises(RuntimeError):
-            self.corp_normal_obj.open_graphic()

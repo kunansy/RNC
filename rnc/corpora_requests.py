@@ -20,16 +20,28 @@ logger = logging.getLogger("rnc")
 WAIT = 24
 
 
+class BaseRequestError(Exception):
+    pass
+
+
+class NoResultFound(BaseRequestError):
+    pass
+
+
+class LastPageDoesntExist(BaseRequestError):
+    pass
+
+
+class WrongHTTPRequest(BaseRequestError):
+    pass
+
+
 async def fetch_html(url: str,
                      ses: aiohttp.ClientSession,
                      **kwargs) -> Tuple[int, str] or None:
     """ Coro, obtaining page's HTML code.
 
     This coro should be awaited from a worker.
-
-    :param url: str, URL to get its html code.
-    :param ses: aiohttp.ClientSession.
-    :param kwargs: HTTP tags.
 
     :return: tuple of int and str, page index and its HTML code.
      None if there's an error, -1 if it's 429 and the worker should
@@ -40,9 +52,10 @@ async def fetch_html(url: str,
     worker_name = kwargs.pop('worker_name', '')
     try:
         resp = await ses.get(url, params=kwargs)
-    except Exception:
-        logger.exception(
-            f"{worker_name}Cannot get answer from '{url}' with {kwargs}")
+    except Exception as e:
+        logger.error(
+            f"{e}\n{worker_name}Cannot get "
+            f"answer from '{url}' with {kwargs}")
         return
 
     if resp.status == 200:
@@ -64,16 +77,10 @@ async def worker_fetching_html(worker_name: str,
                                q_args: asyncio.Queue,
                                q_results: asyncio.Queue) -> None:
     """
-    Worker requesting to URL with params using fetch_html(...),
-     with args from q_args and putting results to q_results.
+    Worker requesting to URL with args from
+     q_args and putting results to q_results.
 
     Wait some time and request again if there's 429 error.
-
-    :param worker_name: str, name of the worker to set it in logs.
-    :param q_args: asyncio.Queue of args for fetch_html(...).
-    :param q_results: asyncio.Queue of results from fetch_html(...).
-
-    :return: None.
     """
     while True:
         url, ses, kwargs = q_args.get_nowait()
@@ -113,12 +120,6 @@ async def get_htmls_coro(url: str,
     URLs will be created for i in range(start, stop),
     HTTP tag 'p' (page) is i.
 
-    :param url: str, URL from where get HTML code.
-    :param start: int, start page index.
-    :param stop: int, stop page index.
-    :param kwargs: HTTP tags.
-
-    :return: list of str, HTML codes of the pages.
     """
     timeout = aiohttp.ClientTimeout(WAIT)
 
@@ -156,19 +157,7 @@ def get_htmls(url: str,
               start: int = 0,
               stop: int = 1,
               **kwargs) -> List[str]:
-    """
-    Run coro, get html codes of the pages.
-
-    URLs will be created for i in range(start, stop),
-     HTTP tag 'p' (page) is i.
-
-    :param url: str, URL from where get HTML code.
-    :param start: int, start page index.
-    :param stop: int, stop page index.
-    :param kwargs: HTTP tags.
-
-    :return: list of str, html codes of the pages.
-    """
+    """ Run coro, get html codes of the pages."""
     logger.info(f"Requested to '{url}' [{start};{stop}) with params {kwargs}")
     coro_start = time.time()
 
@@ -186,10 +175,7 @@ def whether_result_found(url: str,
     """
     Whether the page contains results.
 
-    :param url: str, request url.
-    :param kwargs: request HTTP tags.
-
-    :return: str, first page HTML code if everything is OK.
+    :return: first page HTML code if everything is OK.
 
     :exception RuntimeError: if HTTP request was wrong.
     :exception ValueError: if the result not found.
@@ -198,7 +184,7 @@ def whether_result_found(url: str,
     try:
         page_html = get_htmls(url, **kwargs)[0]
     except Exception:
-        logger.exception("The request is not correct")
+        logger.error(f"The request is not correct: {kwargs}")
         raise RuntimeError
     logger.debug("The request is correct")
 
@@ -225,12 +211,9 @@ def does_page_exist(url: str,
     RNC redirects to the first page if the page at the number doesn't exist.
     Here it's assumed, that the request's correct.
 
-    :param url: str, URL.
-    :param p_index: int, index of page. Indexing starts with 0.
-    :param first_page: str, first page code.
-    :param kwargs: HTTP tags.
+    :return: last page code if everything is OK.
 
-    :return: str, last page code if everything is OK, an exception otherwise.
+    :exception ValueError: the page doesn't exist.
     """
     # indexing starts with 0
     start = p_index
@@ -274,15 +257,11 @@ def is_request_correct(url: str,
         – does a page at the number exist (
         means RNC doesn't redirect to the first page).
 
-    :param url: str, request url.
-    :param p_count: int, request count of pages.
-    :param kwargs: request HTTP tags.
+    :return: first and last pages if everything's OK.
 
-    :return: tuple of str, first and last pages if everything's OK,
-     an exception otherwise.
-
-    :exception ValueError: HTTP request is wrong, no result found or
-     the last page doesn't exist.
+    :exception WrongHTTPRequest: HTTP request is wrong.
+    :exception NoResultFound: no result found.
+    :exception LastPageDoesntExist: the last page doesn't exist.
     """
     logger.debug("Validating that everything is OK")
     try:
@@ -291,21 +270,19 @@ def is_request_correct(url: str,
         # coro writes logs by itself
         first_page = whether_result_found(url, **kwargs)
     except ValueError:
-        logger.exception("HTTP request is OK, but no result found")
-        raise ValueError("No result found")
+        logger.error("HTTP request is OK, but no result found")
+        raise NoResultFound(f"{kwargs}")
     except RuntimeError:
-        logger.exception("HTTP request is wrong")
-        raise ValueError("Wrong HTTP request")
-
+        logger.error("HTTP request is wrong")
+        raise WrongHTTPRequest(f"{kwargs}")
     logger.debug("HTTP request is correct, result found")
-
 
     logger.debug("Validating that the last page exists")
     try:
         last_page = does_page_exist(url, p_count - 1, first_page, **kwargs)
     except ValueError:
         logger.error("Everything is OK, but last page doesn't exist")
-        raise ValueError("Last page doesn't exist")
+        raise LastPageDoesntExist(f"{kwargs}")
     logger.debug("The last page exists")
 
     logger.debug("Validated successfully")
@@ -318,20 +295,18 @@ async def fetch_media_file(url: str,
     """
     Coro, getting media content to write.
 
-    :param url: str, file's url.
-    :param ses: aiohttp.ClientSession.
-    :param kwargs: HTTP tags to request.
-
     :return: bytes (media) if everything is OK,
      -1 if there's 429 error, None if it is another error.
+
     :exception: all exceptions should be processed here.
     """
     worker_name = kwargs.pop('worker_name', '')
     try:
         resp = await ses.get(url, allow_redirects=True, params=kwargs)
-    except Exception:
-        logger.exception(
-            f"{worker_name}Cannot get answer from '{url}' with {kwargs}")
+    except Exception as e:
+        logger.error(
+            f"{e}\n{worker_name}Cannot get "
+            f"answer from '{url}' with {kwargs}")
         return
 
     if resp.status == 200:
@@ -350,14 +325,7 @@ async def fetch_media_file(url: str,
 
 async def dump(content: bytes,
                filename: str) -> None:
-    """
-    Dump content to media file.
-
-    :param content: bytes, content to dump.
-    :param filename: str, filename.
-
-    :return: None.
-    """
+    """ Dump content to media file."""
     async with aiofiles.open(filename, 'wb') as f:
         await f.write(content)
 
@@ -368,11 +336,6 @@ async def worker_fetching_media(worker_name: str,
     Worker getting media file and dumping it to file.
 
     Wait some time and request again if there's 429 error.
-
-    :param worker_name: str, worker name to set it in logs.
-    :param q_args: asyncio.Queue with args for fetch_media_file(...).
-
-    :return: None.
     """
     while True:
         url, ses, filename = q_args.get_nowait()
@@ -402,12 +365,7 @@ async def worker_fetching_media(worker_name: str,
 
 
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
-    """
-    Coro running 5 workers to download media files.
-
-    :param url_to_name: list of tuples of str, pairs: url – filename.
-    :return None.
-    """
+    """ Coro running 5 workers to download media files. """
     timeout = aiohttp.ClientTimeout(WAIT)
     q_args = asyncio.Queue(maxsize=-1)
 
@@ -433,7 +391,6 @@ def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
     Run coro, download the files.
 
     :param url_to_name: list of tuples of str, pairs: url – filename.
-    :return: None.
     """
     logger.info(f"Requested {len(url_to_name)} files to download")
     coro_start = time.time()

@@ -23,7 +23,8 @@ import re
 import string
 import time
 import urllib.parse
-import webbrowser
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Callable, List, Any, Tuple, Pattern
 
@@ -56,11 +57,7 @@ OUTPUT_FORMATS = (
 
 
 def create_filename(length: int = 8) -> str:
-    """ Create random filename.
-
-    :param length: int, length of result (8 by default).
-    :return: str, random symbols.
-    """
+    """ Create random filename. """
     name = random.sample(ALPHABET, length)
     return ''.join(name)
 
@@ -73,11 +70,6 @@ def create_unique_filename(folder: Path,
 
     Name format:
     <class_name><p_count>_<some random symbols>
-
-    :param folder: Path to the data folder.
-    :param class_name: name of the class.
-    :param p_count: int, count of pages.
-    :return: Path, unique filename.
     """
     name_template = "{}{}_{}.csv"
     name = name_template.format(class_name, p_count, create_filename())
@@ -89,46 +81,29 @@ def create_unique_filename(folder: Path,
 
 
 def clean_text_up(text: str) -> str:
-    """ Remove duplicate spaces from str and strip it.
-
-    :param text: str to clean up.
-    :return: str, clean str.
-    """
+    """ Remove duplicate spaces from str and strip it. """
     return ' '.join(text.split()).strip()
 
 
 def create_doc_url(doc_url: str) -> str:
-    """ Create full url to document in RNC.
-    Add https://... to doc.
-
-    :param doc_url: str, doc url to extend.
-    :return: str, extended url.
-    """
+    """ Create full url to document in RNC. Add https://... to the url. """
     if not doc_url:
         return doc_url
     return f"{BASE_RNC_URL}/{doc_url}"
 
 
 def join_with_plus(item: str) -> str:
-    """ Split txt and join it with '+'.
-
-    :param item: str, text to convert.
-    :return: str, converted text.
-    """
+    """ Split txt and join it with '+'. """
     res = item.split()
     return '+'.join(res)
 
 
 def str_to_int(value: str) -> int:
-    """ Convert str like '350 000 134' to int.
-
-    :param value: str to convert.
-    :return: int.
-    """
+    """ Convert str like '350 000 134' to int. """
     return int(value.replace(' ', ''))
 
 
-class Corpus:
+class Corpus(ABC):
     """ Base class for Corpora """
     # default params
     # documents per page
@@ -190,7 +165,6 @@ class Corpus:
         :keyword marker: function, with which found words will be marked.
          Optional.
 
-        :return: None.
         :exception FileExistsError: if csv file is given but json file
          with config doesn't exist.
         :exception ValueError: if the query is empty; page count is a negative 
@@ -203,7 +177,7 @@ class Corpus:
         # http tags to request
         self._params = {}
         # found wordforms with their frequency
-        self._found_wordforms = {}
+        self._found_wordforms = defaultdict(int)
         # query, wordforms to find
         self._query = {}
         # count of PAGES
@@ -232,9 +206,9 @@ class Corpus:
         if self._csv_path.exists():
             try:
                 self._from_file()
-            except FileExistsError:
-                logger.exception(
-                    f"Probably config not found: '{self._config_path}'")
+            except FileExistsError as e:
+                logger.error(
+                    f"Config file not found: '{self._config_path}'\n{e}")
                 raise
         # or work with RNC
         else:
@@ -247,7 +221,6 @@ class Corpus:
         """ Set given values to the object. If the file does not exist.
         Params the same as in the init method.
 
-        :return: None.
         :exception ValueError: if the query is empty; pages count is a negative
          number; out, sort, text key is wrong.
         """
@@ -313,7 +286,8 @@ class Corpus:
         """ Load data and params from the local databases.
         If the file exists.
 
-        :return: None.
+        :exception FileExistsError: if csv file with data or
+         json file with config do not exist.
         """
         if not (self._csv_path.exists() and self._config_path.exists()):
             raise FileExistsError("Data and config file must exist together")
@@ -337,14 +311,12 @@ class Corpus:
         # add info about
         try:
             self._get_additional_info()
-        except Exception:
-            logger.exception("It is impossible to get additional info from RNC")
+        except Exception as e:
+            logger.warning("It is impossible to get "
+                           f"additional info from RNC:\n{e}")
 
     def _load_data(self) -> List:
-        """ Load data from csv file.
-
-        :return: list of examples.
-        """
+        """ Load data from csv file. """
         with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
@@ -360,10 +332,7 @@ class Corpus:
         return data
 
     def _load_params(self) -> Dict:
-        """ Load request params from json file.
-
-        :return: json dict.
-        """
+        """ Load request params from json file. """
         with self._config_path.open('r', encoding='utf-8') as f:
             return ujson.load(f)
 
@@ -428,6 +397,9 @@ class Corpus:
 
     @classmethod
     def set_restrict_show(cls, value: int or bool) -> None:
+        """ Set amount of showing examples.
+        Show all examples if `False` given.
+        """
         if not isinstance(value, (int, bool)):
             msg = f"Restrict count must be int or bool, but '{value}' found"
             logger.error(msg)
@@ -438,8 +410,7 @@ class Corpus:
     def _get_ambiguation(tag: bs4.element.Tag) -> str:
         """ Get pretty ambiguation from example.
 
-        :param tag: bs4.element.Tag, example.
-        :return: str, 'disambiguated' or 'not disambiguated' or 'Not found'.
+        :return: 'disambiguated' or 'not disambiguated' or 'Not found'.
         """
         ambiguation = (tag.find('span', {'class': 'off'}) or
                        tag.find('span', {'class': 'on'}))
@@ -458,9 +429,6 @@ class Corpus:
         from there duplicate spaces.
 
         Here it is assumed, that all examples have text.
-
-        :param tag: bs4.element.Tag, example.
-        :return: str, text.
         """
         # using 'findall' method removes punctuation marks
         txt = tag.get_text()
@@ -471,8 +439,7 @@ class Corpus:
     def _get_doc_url(tag: bs4.element.Tag) -> str:
         """ Get pretty doc url from example.
 
-        :param tag: bs4.element.Tag, example.
-        :return: str, doc url or 'Not found'.
+        :return: doc url or 'Not found'.
         """
         doc_url = tag.a
         if not doc_url:
@@ -484,8 +451,7 @@ class Corpus:
     def _get_source(tag: bs4.element.Tag) -> str:
         """ Get pretty source from example.
 
-        :param tag: bs4.element.Tag, example.
-        :return: str, examples source or 'Not found'.
+        :return: examples source or 'Not found'.
         """
         src = tag.find('span', {'class': 'doc'})
         if not src:
@@ -503,11 +469,10 @@ class Corpus:
                                with_braces: bool = False) -> str:
         """ Convert lexgramm params to str for HTTP request.
 
-        :param params: dict, params to convert.
-        :param join_inside_symbol: str, symbol to join params.
-        :param with_braces: bool, whether the braces 
-        will be added around the param.
-        :return: str, joined with ',' params.
+        :param join_inside_symbol: symbol to join params.
+        :param with_braces: whether the braces
+         will be added around the param.
+        :return: joined with ',' params.
         """
         if not (isinstance(params, (str, dict)) and ' ' not in params):
             msg = f"Params must be str without spaces " \
@@ -538,11 +503,8 @@ class Corpus:
 
     @staticmethod
     def _find_searched_words(tag: bs4.element.Tag) -> List[str]:
-        """ Get searched words from tag, they are marked with 'g-em'
+        """ Get found words, they are marked with 'g-em'
         parameter in the class name. Strip them.
-
-        :param tag: bs4.element.Tag, tag with result.
-        :return: list of string, words to which request was.
         """
         # searched words are marked by class parameter 'g-em'
         return [
@@ -554,23 +516,19 @@ class Corpus:
 
     @property
     def data(self) -> List:
-        """
-        :return: list of examples.
-        """
+        """ Get list of all examples """
         return self._data
 
     @property
     def query(self) -> Dict[str, dict] or str:
-        """
-        :return: dict or str, requested items.
+        """ Get requested words items (dict of words
+        with params or str with words)
         """
         return self._query
 
     @property
     def forms_in_query(self) -> List[str]:
-        """
-        :return: list of str, requested words.
-        """
+        """ Requested wordforms """
         req = self.query
         if isinstance(req, str):
             return req.split()
@@ -578,46 +536,32 @@ class Corpus:
 
     @property
     def p_count(self) -> int:
-        """
-        :return: int, requested count of pages.
-        """
+        """ Requested count of pages """
         return self._p_count
 
     @property
     def file(self) -> Path:
-        """
-        :return: Path, path to local database file.
-        """
+        """ Get path to local database file. """
         return self._csv_path
 
     @property
     def marker(self) -> Callable:
-        """
-        :return: function to mark found wordforms.
-        """
+        """ Get function to mark found wordforms. """
         return self._marker
 
     @property
     def params(self) -> dict:
-        """
-        :return: dict of HTTP params.
-        """
+        """ Get all HTTP params """
         return self._params
 
     @property
-    def found_wordforms(self) -> dict:
-        """ Get info about found wordforms, {form: frequency}.
-
-        :return: dict of str, found wordforms and their frequency.
-        """
+    def found_wordforms(self) -> Dict[str, int]:
+        """ Get info about found wordforms, {form: frequency}. """
         return self._found_wordforms
 
     @property
     def url(self) -> str:
-        """ Return URL, first page of RNC results.
-
-        :return: str, URL.
-        """
+        """ Get URL to first page of RNC results. """
         params = '&'.join(
             f"{key}={val}"
             for key, val in self.params.items()
@@ -626,62 +570,33 @@ class Corpus:
 
     @property
     def ex_type(self) -> Any:
-        """
-        :return: example type of the Corpus.
-        """
+        """ get type of Example objects """
         return self._ex_type
 
     @property
     def amount_of_docs(self) -> int or None:
-        """ Get amount of documents, where the query was found.
-
-        :return: int, this amount or None if it does not exist.
+        """ Get amount of documents, where the query was found
+        or None if there's no this info.
         """
         return self._add_info.get('docs', None)
 
     @property
     def amount_of_contexts(self) -> int or None:
-        """ Get amount of contexts, where the query was found.
-
-        :return: int, this amount or None if it does not exist.
+        """ Get amount of contexts, where the query was found
+        or None if there's no this info.
         """
         return self._add_info.get('contexts', None)
 
     @property
     def graphic_link(self) -> str or None:
-        """ Get the link the graphic of the
-        distribution of query occurrences by years.
-
-        :return: str, this link or None if it does not exist.
+        """ Get the link to the graphic
+        or None if there's no this info.
         """
         return self._add_info.get('graphic_link', None)
 
-    def open_graphic(self) -> None:
-        """ Open the graph of the distribution
-        of query occurrences by years.
-
-        :return: None.
-        :exception RuntimeError: if the URL doesn't exist.
-        :exception ...: if it's impossible to open the link.
-        """
-        url = self.graphic_link
-        if url is None:
-            msg = "Graphic does not exist"
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        try:
-            webbrowser.open_new_tab(url)
-        except Exception:
-            logger.exception("It is impossible to open the graphic")
-            raise
-
     @staticmethod
     def _get_where_query_found(content: bs4.element.Tag) -> Dict[str, Any]:
-        """ Get converted to int amount of found docs and contexts.
-
-        :param content: bs4.element.Tag, here these values are.
-        """
+        """ Get converted to int amount of found docs and contexts. """
         res = {}
         amount = list(content.find_all('p', {'class': 'res'}))
         blocks = amount[-1].find_all('span', {'class': 'stat-number'})
@@ -695,32 +610,25 @@ class Corpus:
 
     @staticmethod
     def _get_graphic_url(content: bs4.element.Tag) -> str or None:
-        """ Get distribution by years graphic URL.
-
-        :param content: bs4.element.Tag, here the link is.
-        :return: str, full URL.
-        """
+        """ Get URL to the graphic. """
         a = content.find('a', {'target': '_blank'})
         try:
             link = a['href']
-        except Exception:
+        except (KeyError, TypeError, AttributeError):
             return
         return f"{BASE_RNC_URL}/{link}"
 
     def _get_additional_info(self,
                              first_page: str = None) -> None:
-        """ Get additional info (amount of found docs and contexts,
-        link to graphic with distribution by years).
-
-        :params first_page: str, code of the first page.
-        :return: None.
+        """ Get additional info (amount of found
+        docs and contexts, link to the graphic).
         """
         params = self.params.copy()
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
             first_page = first_page or creq.get_htmls(RNC_URL, **params)[0]
-        except Exception:
+        except creq.BaseRequestError:
             raise
 
         soup = bs4.BeautifulSoup(first_page, 'lxml')
@@ -729,8 +637,9 @@ class Corpus:
         try:
             additional_info = Corpus._get_where_query_found(content)
             graphic_url = Corpus._get_graphic_url(content)
-        except Exception:
-            logger.exception("Sth went wrong while getting additional info")
+        except Exception as e:
+            logger.error("Sth went wrong while "
+                         f"getting additional info:\n{e}")
         else:
             if graphic_url:
                 additional_info['graphic_link'] = graphic_url
@@ -740,8 +649,6 @@ class Corpus:
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
         They are depended on 'out' tag.
-
-        :return: None
         """
         if self.out == 'normal':
             # ex_type is defined above in this case
@@ -753,10 +660,8 @@ class Corpus:
     def _query_to_http(self) -> None:
         """ Convert the query to HTTP tags, add them to params.
 
-        :return: None.
-        :exception ValueError: if the query is not str however out is lexform;
-
-        :exception AssertionError:
+        :exception ValueError: if the query is not
+        str however out is lexform;
         """
         if self.text == 'lexform':
             if not isinstance(self.query, str):
@@ -833,43 +738,35 @@ class Corpus:
 
     def _add_wordforms(self,
                        forms: List[str]) -> None:
-        """ Add found wordforms to counter. Low and strip items.
-
-        :param forms: list of str, wordforms to add.
-        :return: None.
-        """
+        """ Add found wordforms to counter. """
         if not forms:
             return
 
         for form in forms:
             form = clean_text_up(form).lower()
-            self._found_wordforms[form] = self.found_wordforms.get(form, 0) + 1
+            self._found_wordforms[form] += 1
 
+    @abstractmethod
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> Any:
         """ Parse the doc to list of Examples.
 
         Parsing depends on the subcorpus,
-        the method redefined at the descendants.
+         the method redefined at the descendants.
         """
         # TODO: remake this func to generator?
-        msg = f"'{self._parse_doc.__name__}' not implemented " \
-              f"in the parent Corpus class"
-        logger.error(msg)
-        raise NotImplementedError(msg)
+        pass
 
+    @abstractmethod
     def _parse_example(self,
                        *args,
                        **kwargs) -> Any:
         """ Parse the example to Example object.
 
         Parsing depends on the subcorpus,
-        the method redefined at the descendants.
+         the method redefined at the descendants.
         """
-        msg = f"'{self._parse_doc.__name__}' not implemented " \
-              f"in the parent Corpus class"
-        logger.error(msg)
-        raise NotImplementedError(msg)
+        pass
 
     def _parse_kwic_example(self,
                             left: bs4.element.Tag,
@@ -887,8 +784,8 @@ class Corpus:
         try:
             src = right.a.attrs['msg'].strip()
             url = right.a.attrs['href']
-        except Exception:
-            logger.error("Source or url not found")
+        except (KeyError, AttributeError, TypeError) as e:
+            logger.error(f"Source or url not found:\n{e}")
             src = url = ''
 
         url = create_doc_url(url)
@@ -903,8 +800,6 @@ class Corpus:
                          page: str) -> List[expl.KwicExample]:
         """ Parse page if 'out' is 'kwic'.
 
-        :param page: str, html code of page to parse.
-        :return: list of examples.
         :exception ValueError: if the content not found.
         """
         soup = bs4.BeautifulSoup(page, 'lxml')
@@ -929,19 +824,15 @@ class Corpus:
 
     def _parse_page_normal(self,
                            page: str) -> List:
-        """ Parse page if 'out' is 'normal'.
-
-        :param page: str, html code to parse.
-        :return: list of examples.
-        """
+        """ Parse page if 'out' is 'normal'. """
         soup = bs4.BeautifulSoup(page, 'lxml')
         res = []
 
         for doc in soup.find_all('li'):
             try:
                 parsed_doc = self._parse_doc(doc)
-            except Exception:
-                logger.exception("Error while parsing doc")
+            except Exception as e:
+                logger.error(f"Error while parsing doc:\n{e}")
             else:
                 res += parsed_doc
 
@@ -949,21 +840,21 @@ class Corpus:
 
     def _parse_all_pages(self,
                          pages: List[str]) -> List:
-        """ Parse all pages.
-
-        :param pages: list of str, html codes of the pages.
-        :return: list of examples.
-        """
-        parsed = [self._page_parser(page) for page in pages]
+        """ Parse all pages. """
+        parsed = [
+            self._page_parser(page)
+            for page in pages
+        ]
         return sum(parsed, [])
 
     def _data_to_csv(self) -> None:
         """ Dump the data to csv file.
         Here it is assumed that the data exist.
-
-        :return: None.
         """
-        data = [example.items for example in self.data]
+        data = [
+            example.items
+            for example in self.data
+        ]
         columns = self[0].columns
         with self.file.open('w', encoding='utf-8', newline='') as f:
             # class constants
@@ -975,12 +866,9 @@ class Corpus:
             writer.writerows([columns] + data)
 
     def _params_to_json(self) -> None:
-        """ Write the request params: query,
-        p_count and http tags to json file.
+        """ Write the request params to json file.
 
         Here it is assumed that these params exist.
-
-        :return: None.
         """
         to_write = {
             'query': self.query,
@@ -1009,23 +897,8 @@ class Corpus:
         self._data_to_csv()
         self._params_to_json()
 
-        logger.debug(
+        logger.info(
             f"Data wrote to files: {self.file} and {self._config_path}")
-
-    def open_url(self) -> None:
-        """ Open first page of RNC results in the new
-        tab of the default browser.
-
-        :return: None.
-        :exception ValueError: if url is wrong.
-        :exception: if sth went wrong.
-        """
-        try:
-            webbrowser.open_new_tab(self.url)
-        except Exception:
-            logger.exception(
-                f"Error while opening doc with url: {self.url}")
-            raise
 
     def request_examples(self) -> None:
         """ Request examples, parse them and update the data.
@@ -1045,10 +918,10 @@ class Corpus:
         try:
             first, last = creq.is_request_correct(
                 RNC_URL, self.p_count, **self.params)
-        except Exception:
+        except creq.BaseRequestError as e:
             msg = f"Query = {self.forms_in_query}, " \
-                  f"{self.p_count}, {self.params}"
-            logger.exception(msg)
+                  f"{self.p_count}, {self.params}\ne = {e}"
+            logger.error(msg)
             raise
 
         # get additional info from the first RNC page.
@@ -1074,8 +947,8 @@ class Corpus:
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
             parsing_stop = time.time()
-        except Exception:
-            logger.exception(f"Error while parsing, query = {self.params}")
+        except Exception as e:
+            logger.error(f"Error while parsing, query = {self.params}\n{e}")
             raise
         else:
             logger.debug("Parsing completed")
@@ -1084,9 +957,6 @@ class Corpus:
             self._data = parsed[:]
 
     def copy(self) -> Any:
-        """
-        :return: copied object.
-        """
         copy_obj = self.__class__(
             self.query, self.p_count, file=self.file,
             marker=self.marker, **self.params)
@@ -1100,7 +970,7 @@ class Corpus:
         :keyword key: func to sort, called to Example objects, by default – len.
         :keyword reverse: bool, whether the data will sort in reversed order,
          by default – False.
-        :return None.
+
         :exception TypeError: if the key is uncallable.
         """
         key = kwargs.pop('key', lambda example: len(example))
@@ -1113,24 +983,15 @@ class Corpus:
 
     def pop(self,
             index: int) -> Any:
-        """ Remove and return element from data at the index.
-
-        :param index: int, index of the element.
-        :return: Example object.
-        """
+        """ Remove and return element from data at the index. """
         return self._data.pop(index)
 
     def shuffle(self) -> None:
-        """ Shuffle list of examples.
-        :return: None.
-        """
+        """ Shuffle list of examples. """
         random.shuffle(self._data)
 
     def clear(self) -> None:
-        """ Clear examples list.
-
-        :return: None.
-        """
+        """ Clear examples list. """
         self._data.clear()
 
     def filter(self,
@@ -1146,32 +1007,25 @@ class Corpus:
 
     def findall(self,
                 pattern: Pattern or str,
-                **kwargs) -> Tuple[expl.Example, List[str]]:
+                *args) -> Tuple[expl.Example, List[str]]:
         """ Apply the pattern to the examples' text with re.findall.
-        Yield all examples which are satisfy the pattern.
-
-        :param pattern: r str or re.pattern to apply.
-        :param kwargs: kwargs to re.findall.
-        :return: yield example and match.
+        Yield all examples which are satisfy the pattern and match.
         """
-        for expl in self:
-            match = re.findall(pattern, expl.txt, **kwargs)
+        for example in self:
+            match = re.findall(pattern, example.txt, *args)
             if match:
-                yield expl, match
+                yield example, match
 
     def finditer(self,
                  pattern: Pattern or str,
-                 **kwargs) -> Tuple[expl.Example, Any]:
+                 *args) -> Tuple[expl.Example, Any]:
         """ Apply the pattern to the examples' text with re.finditer.
-
-        :param pattern: r str or re.pattern to apply.
-        :param kwargs: kwargs to re.findall.
-        :return: yield example and match.
+        Yield all examples which are satisfy the pattern and match.
         """
-        for expl in self:
-            match = re.finditer(pattern, expl.txt, **kwargs)
+        for example in self:
+            match = re.finditer(pattern, example.txt, *args)
             if match:
-                yield expl, match
+                yield example, match
 
     def __repr__(self) -> str:
         """ Format:
@@ -1181,25 +1035,22 @@ class Corpus:
                 Request params
                 Pages count
                 Request
-
-        :return: str with the format.
         """
-        res = (f"{self.__class__.__name__}\n"
-               f"{len(self)}\n"
-               f"{self.file}\n"
-               f"{self.params}\n"
-               f"{self.p_count}\n"
-               f"{self.query}\n")
-        return res
+        return f"{self.__class__.__name__}\n" \
+               f"{len(self)}\n" \
+               f"{self.file}\n" \
+               f"{self.params}\n" \
+               f"{self.p_count}\n" \
+               f"{self.query}\n"
 
     def __str__(self) -> str:
         """
-        :return: str, info about Corpus and enumerated examples.
+        :return: info about Corpus and enumerated examples.
         """
         q_forms = ', '.join(self.forms_in_query)
         metainfo = f"Russian National Corpus (https://ruscorpora.ru)\n" \
                    f"Class: {self.__class__.__name__}, len = {len(self)}\n" \
-                   f"Pages: {self.p_count} of '{q_forms}' requested"
+                   f"{self.p_count} pages of '{q_forms}' requested"
 
         data = self.data
         is_restricted = False
@@ -1217,15 +1068,9 @@ class Corpus:
         return f"{metainfo}\n\n{examples}"
 
     def __len__(self) -> int:
-        """
-        :return: int, count of examples.
-        """
         return len(self.data)
 
     def __bool__(self) -> bool:
-        """
-        :return: bool, whether data exist.
-        """
         return bool(self.data)
 
     def __call__(self) -> None:
@@ -1233,9 +1078,6 @@ class Corpus:
         self.request_examples()
 
     def __iter__(self) -> iter:
-        """
-        :return: iter, iterator for data.
-        """
         return iter(self.data)
 
     def __contains__(self,
@@ -1243,7 +1085,7 @@ class Corpus:
         """ Whether the Corpus obj contains the Example obj.
 
         :param item: obj with the same ex_type.
-        :return: whether Corpus obj contains the Example obj.
+
         :exception TypeError: if wrong type (different Example) given.
         """
         if not isinstance(item, self.ex_type):
@@ -1260,7 +1102,6 @@ class Corpus:
                     item: str) -> str or int or List or None:
         """ Get request param.
 
-        :param item: item, param name.
         :return: param value or None if it does not exist.
         """
         try:
@@ -1270,10 +1111,18 @@ class Corpus:
 
     def __getitem__(self,
                     item: int or slice) -> Any:
-        """ Get example from data or create
-        new obj with sliced data.
+        r""" Get example from data or create
+         new obj with sliced data.
 
-        :param item: int or slice.
+         Examples:
+         =========
+         .. code-block:: python
+             >>> corp = MainCorpus(...)
+             # get second example (1 is index, not number!)
+             >>> corp[1]
+             # create new copus with the first 50 example
+             >>> new_corp = corp[:50]
+
         :return: one example or new obj with the same class and sliced data.
         :exception TypeError: if wrong type given.
         """
@@ -1291,40 +1140,48 @@ class Corpus:
         return new_obj
 
     def __setitem__(self,
-                    key: int,
-                    value: Any) -> None:
+                    index: int,
+                    new_example: Any) -> None:
         """ Change the example.
 
-        :param key: int, index of the example.
-        :param value: ex_type, new example.
-        :return: None.
+        Examples:
+        >>> corp = MainCorpus(...)
+        >>> corp[10] = MainExample(...)
+
         :exception TypeError: if wrong type given.
         """
-        if not isinstance(value, self.ex_type):
+        if not isinstance(new_example, self.ex_type):
             msg = f"{type(self.ex_type)} expected, " \
-                  f"but {type(value)} found"
+                  f"but {type(new_example)} found"
             logger.error(msg)
             raise TypeError(msg)
 
         try:
-            self._data[key] = value
-        except Exception:
-            logger.exception(f'Setting item: {value} to {key}')
+            self._data[index] = new_example
+        except Exception as e:
+            logger.error(f'Setting item: {new_example} to {index}\n{e}')
             raise
 
     def __delitem__(self,
                     key: int or slice) -> None:
         """ Delete example at the index or
-        remove several ones using slice.
+         remove several ones using slice.
+
+        Examples:
+        >>> corp = MainCoprus(...)
+        # delete forth example (3 is index, not number!)
+        >>> del corp[3]
+        # delete all examples after 10th
+        >>> del corp[10:]
+        # delete all exampes at even indexes from 0 to 10
+        >>> del corp[0:10:2]
 
         :param key: int or slice, address of item(s) to delete.
-        :return: None.
-        :exception: if sth went wrong.
         """
         try:
             del self._data[key]
-        except Exception:
-            logger.exception(f"Deleting item: {key}")
+        except Exception as e:
+            logger.error(f"Deleting item: {key}\n{e}")
             raise
 
 
@@ -1339,11 +1196,7 @@ class MainCorpus(Corpus):
 
     def _parse_example(self,
                        example: bs4.element.Tag):
-        """ Parse example to Example object.
-
-        :param example: tag, example to parse.
-        :return: example obj.
-        """
+        """ Parse example to Example object. """
         src = Corpus._get_source(example)
         txt = Corpus._get_text(example)
         txt = txt[:txt.index(src)]
@@ -1359,10 +1212,7 @@ class MainCorpus(Corpus):
 
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> List[expl.MainExample]:
-        """ Parse document to list of examples.
-
-        :param doc: bs4.element.ResultSet,
-        """
+        """ Parse document to list of examples. """
         if not doc:
             logger.debug(f"Empty doc found, params: {self.params}")
             return []
@@ -1428,15 +1278,10 @@ class ParallelCorpus(Corpus):
     def _parse_text(self,
                     lang: str,
                     text: bs4.element.Tag) -> Any:
-        """ Parse one pair element of pair: original – translation.
-
-        :param lang: str, language of text. This param
-        :return: Example with one translation of text.
-        ParallelExample supports '+=' method.
+        """ Parse one element of the pair: original – translation.
+        Means parse original or translation.
         """
         src = Corpus._get_source(text)
-        ambiguation = Corpus._get_ambiguation(text)
-        doc_url = Corpus._get_doc_url(text)
         txt = Corpus._get_text(text)
         # remove source from text
         txt = txt[:txt.index(src)]
@@ -1445,18 +1290,19 @@ class ParallelCorpus(Corpus):
         found_words = Corpus._find_searched_words(text)
 
         new_txt = self.ex_type(
-            {lang: txt}, src, ambiguation, found_words, doc_url)
+            txt={lang: txt},
+            src=src,
+            ambiguation=Corpus._get_ambiguation(text),
+            found_wordforms=found_words,
+            doc_url=Corpus._get_doc_url(text)
+        )
         new_txt.mark_found_words(self.marker)
         return new_txt
 
     def _parse_example(self,
                        tag: bs4.element.Tag) -> Any:
-        """ Parse a pair: original – translation to Example.
-
-        :param tag: bs4.element.Tag, pair to parse.
-        :return: Example.
-        """
-        # this example's expected to have default args
+        """ Parse a pair: original – translation to Example. """
+        # this example is expected to have default args
         result_example = self.ex_type()
 
         langs = tag.find_all('td', {'class': "para-lang"})
@@ -1469,11 +1315,7 @@ class ParallelCorpus(Corpus):
 
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> List:
-        """ Parse one document.
-
-        :param doc: bs4.element.Tag, document to parse.
-        :return: list of Examples.
-        """
+        """ Parse one document. """
         res = []
         for example in doc.find_all('table', {'class': 'para'}):
             new_ex = self._parse_example(example)
@@ -1482,12 +1324,10 @@ class ParallelCorpus(Corpus):
         return res
 
     def _load_data(self) -> List:
-        """ Load data from csv file.
-
-        :return: list of examples.
-        """
+        """ Load data from csv file. """
         if self.out == 'kwic':
             return super()._load_data()
+
         with self.file.open('r', encoding='utf-8') as f:
             dm = self._DATA_W_DELIMITER
             qch = self._DATA_W_QUOTCHAR
@@ -1521,12 +1361,14 @@ class MultilingualParaCorpus(ParallelCorpus):
         self._params['mode'] = self._MODE
 
     def _from_file(self) -> None:
-        msg = "Working with files not supported"
+        msg = f"Working with files not supported" \
+              f" in {self.__class__.__name__}"
         logger.error(msg)
         raise NotImplementedError(msg)
 
     def dump(self) -> None:
-        msg = "Working with files not supported"
+        msg = f"Working with files not supported" \
+              f" in {self.__class__.__name__}"
         logger.error(msg)
         raise NotImplementedError(msg)
 
@@ -1583,11 +1425,7 @@ class MultimodalCorpus(Corpus):
     def _parse_example(self,
                        example: bs4.element.Tag) -> Tuple[
         str, str, str, list, str]:
-        """ Parse example get text, source etc.
-
-        :param example: bs4.element.Tag, example to parse.
-        :return: tuple of parsed values.
-        """
+        """ Parse example get text, source etc. """
         src = Corpus._get_source(example)
         txt = Corpus._get_text(example)
         txt = txt[:txt.index(src)]
@@ -1601,47 +1439,38 @@ class MultimodalCorpus(Corpus):
 
     def _parse_media(self,
                      media: bs4.element.Tag) -> Tuple[str, str]:
-        """ Get link to the media file, filepath.
-
-        :param media: bs4.element.Tag, here they are.
-        :return: tuple of str and Path, link and filepath.
-        """
+        """ Get link to the media file and filepath. """
         try:
-            media_link = media.find('td').a['href']
+            media_link = media.find('a')['href']
         except Exception:
             raise
+
         media_link, filename = media_link.split('?name=')
         return media_link, self.MEDIA_FOLDER / filename
 
     def _parse_doc(self,
                    doc: bs4.element.Tag) -> List[Any]:
-        """ Parse the documents to examples.
-
-        :param doc: doc to parse.
-        :return: list of examples.
-        """
+        """ Parse the documents to examples. """
         try:
-            media, example = doc.find_all('td', {'valign': 'top'})
+            media = doc.find('td', {'valign': 'top'})
+            example = doc.find('td', {'class': 'murco-snippet'})
         except ValueError:
             return []
         examples = []
 
         media_url, filename = self._parse_media(media)
-        for example in example.find_all('li'):
-            data_from_example = self._parse_example(example)
+        # for example in example:
+        data_from_example = self._parse_example(example)
 
-            new_ex = self.ex_type(*data_from_example, media_url, filename)
-            new_ex.mark_found_words(self.marker)
-            self._add_wordforms(new_ex.found_wordforms)
-            examples += [new_ex]
+        new_ex = self.ex_type(*data_from_example, media_url, filename)
+        new_ex.mark_found_words(self.marker)
+        self._add_wordforms(new_ex.found_wordforms)
+        examples += [new_ex]
 
         return examples
 
     def download_all(self) -> None:
-        """ Download all files.
-
-        :return: None.
-        """
+        """ Download all files. """
         os.makedirs(self.MEDIA_FOLDER, exist_ok=True)
 
         urls_to_names = [

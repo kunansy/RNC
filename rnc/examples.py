@@ -734,7 +734,8 @@ class MultimodalExample(Example):
         data = [(self._media_url, str(self.filepath))]
         try:
             creq.download_docs(data)
-        except Exception:
+        except Exception as e:
+            logger.error(str(e))
             raise
 
     def copy(self) -> Any:

@@ -161,3 +161,15 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 
 ### 0.6.4 – 29.12.2020
 * Quickfix: deepcopy removed
+
+
+### 0.6.5 – 30.04.2021
+1. Log message format changed, #34 closed.
+2. Custom exceptions created, #36 closed.
+3. ABC used, #37 closed.
+4. Log message added, #39 closed.
+5. Requirements version updated according to security vulnerability.
+6. `Corpus.findall()/finditer()` fixed
+7. Docs and logging improved.
+8. Setting on GitHub added: issue templates etc.
+9. Parsing `MultimodalCorpus` fixed. 

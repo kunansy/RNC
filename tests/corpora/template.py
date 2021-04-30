@@ -204,7 +204,7 @@ class TemplateCorpusTest:
 
         assert isinstance(corp.forms_in_query, list)
         assert all(isinstance(form, str) for form in corp.forms_in_query)
-        assert len(corp.forms_in_query) is 2
+        assert len(corp.forms_in_query) == 2
         assert corp.forms_in_query == ['ты', 'готов']
 
     def test_forms_in_query_str(self):
@@ -212,13 +212,13 @@ class TemplateCorpusTest:
 
         assert isinstance(corp.forms_in_query, list)
         assert all(isinstance(form, str) for form in corp.forms_in_query)
-        assert len(corp.forms_in_query) is 2
+        assert len(corp.forms_in_query) == 2
         assert corp.forms_in_query == ['ты', 'готов']
 
     def test_p_count(self):
         corp = self.corp_type('ты', 1)
 
-        assert corp.p_count is 1
+        assert corp.p_count == 1
 
     def test_found_wordforms_from_file(self):
         corp = self.corp_type(file=self.corp_normal_obj.file)
@@ -245,12 +245,6 @@ class TemplateCorpusTest:
     ##########################
     # Test working with data #
     ##########################
-
-    def test_open_url(self):
-        self.corp_normal_obj.open_url()
-
-    def test_open_graphic(self):
-        self.corp_normal_obj.open_graphic()
 
     def test_copy(self):
         copy = self.corp_normal_obj.copy()
@@ -338,7 +332,7 @@ class TemplateCorpusTest:
         self.corp_type.set_spd(20)
         corp = self.corp_type('ты', 1)
 
-        assert corp.spd is 20
+        assert corp.spd == 20
 
     def test_set_spd_exception(self):
         with pytest.raises(ValueError):
@@ -348,7 +342,7 @@ class TemplateCorpusTest:
         self.corp_type.set_dpp(20)
         corp = self.corp_type('ты', 1)
 
-        assert corp.dpp is 20
+        assert corp.dpp == 20
 
     def test_set_dpp_exception(self):
         with pytest.raises(ValueError):
@@ -378,7 +372,7 @@ class TemplateCorpusTest:
         self.corp_type.set_min(10)
         corp = self.corp_type('ты готов', 1)
 
-        assert corp.min2 is 10
+        assert corp.min2 == 10
 
     def test_set_min_exception(self):
         with pytest.raises(ValueError):
@@ -388,7 +382,7 @@ class TemplateCorpusTest:
         self.corp_type.set_max(10)
         corp = self.corp_type('ты готов', 1)
 
-        assert corp.max2 is 10
+        assert corp.max2 == 10
 
     def test_set_max_exception(self):
         with pytest.raises(ValueError):

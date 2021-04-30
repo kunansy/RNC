@@ -91,10 +91,7 @@ class TemplateTestExamples:
     def test_data(self):
         data = self.ex.data
 
-        assert isinstance(data, dict) and len(data) is 4
-
-    def test_open_doc(self):
-        self.ex.open_doc()
+        assert isinstance(data, dict) and len(data) == 4
 
     def test_mark_words(self):
         txt_template = "{}, aghA{}12g_HGH g,.,,{},.,a{}s agsd :'{}'!"
@@ -219,7 +216,7 @@ class TestKwicExample(TemplateTestExamples):
     def test_data(self):
         data = self.ex.data
 
-        assert isinstance(data, dict) and len(data) is 5
+        assert isinstance(data, dict) and len(data) == 5
 
     def test_mark_words(self):
         txt_template = "{}, aghA{}12g_HGH g,.,,{},.,a{}s agsd :'{}'!"
@@ -261,7 +258,7 @@ class TestParallelExample(TemplateTestExamples):
     def test_text_getter(self):
         txt = self.ex.txt
 
-        assert isinstance(txt, dict) and len(txt) is 2
+        assert isinstance(txt, dict) and len(txt) == 2
 
     def test_text_setter(self):
         with pytest.raises(NotImplementedError):
@@ -274,7 +271,7 @@ class TestParallelExample(TemplateTestExamples):
     def test_data(self):
         data = self.ex.data
 
-        assert isinstance(data, dict) and len(data) is 5
+        assert isinstance(data, dict) and len(data) == 5
 
     def test_iadd_with_nochanges(self):
         copy = self.ex.copy()

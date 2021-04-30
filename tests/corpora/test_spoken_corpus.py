@@ -16,7 +16,3 @@ class TestSpokenCorpus(TemplateCorpusTest):
     sleep(5)
     corp_kwic_obj.request_examples()
     sleep(5)
-
-    def test_open_graphic(self):
-        with pytest.raises(RuntimeError):
-            self.corp_normal_obj.open_graphic()
