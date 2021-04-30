@@ -25,11 +25,11 @@ def test_wrong_params():
 
 
 def test_incorrect_request():
-    with pytest.raises(ValueError):
+    with pytest.raises(req.WrongHTTPRequest):
         req.is_request_correct(RNC_URL, 1, **wrong_params)
 
 
 def test_wait_some_time():
     correct_params['lex1'] = 'я'
     html_codes = req.get_htmls(RNC_URL, 0, 15, **correct_params)
-    assert len(html_codes) is 15
+    assert len(html_codes) == 15
