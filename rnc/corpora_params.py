@@ -22,11 +22,8 @@ class Page:
 class Mycorp:
     def __getitem__(self, item: str) -> str:
         """ Get attribute from Person or from Parallel.
-        Raise KeyError if there is no the item in both them.
 
-        :param item: str, key name.
-        :return: str, key value.
-        :exception KeyError: if the key doesn't exist.
+        :exception KeyError: if there is no the item in both them.
         """
         try:
             return getattr(self.Person, item)
@@ -39,11 +36,8 @@ class Mycorp:
 
     def __getattr__(self, item: str) -> str:
         """ Get attribute from Person or from Parallel.
-        Raise AttributeError if there is no the item in both them.
 
-        :param item: str, key name.
-        :return: str, key value.
-        :exception AttributeError: if the key doesn't exist.
+        :exception AttributeError: if there is no the item in both them.
         """
         try:
             return getattr(super(), item)
@@ -64,10 +58,7 @@ class Mycorp:
 
         def __getitem__(self, item: str) -> str:
             """ Get attribute from Person.
-            Raise KeyError if there is no the item.
 
-            :param item: str, key name.
-            :return: str, key value.
             :exception KeyError: if the key doesn't exist.
             """
             try:
@@ -98,10 +89,7 @@ class Mycorp:
 
         def __getitem__(self, item: str) -> str:
             """ Get attribute from Parallel.
-            Raise KeyError if there is no the item.
 
-            :param item: str, key name.
-            :return: str, key value.
             :exception KeyError: if the key doesn't exist.
             """
             try:
