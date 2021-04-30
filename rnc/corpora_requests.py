@@ -36,9 +36,10 @@ async def fetch_html(url: str,
     worker_name = kwargs.pop('worker_name', '')
     try:
         resp = await ses.get(url, params=kwargs)
-    except Exception:
-        logger.exception(
-            f"{worker_name}Cannot get answer from '{url}' with {kwargs}")
+    except Exception as e:
+        logger.error(
+            f"{e}\n{worker_name}Cannot get "
+            f"answer from '{url}' with {kwargs}")
         return
 
     if resp.status == 200:
@@ -170,7 +171,7 @@ def whether_result_found(url: str,
     try:
         page_html = get_htmls(url, **kwargs)[0]
     except Exception:
-        logger.exception("The request is not correct")
+        logger.error(f"The request is not correct: {kwargs}")
         raise RuntimeError
     logger.debug("The request is correct")
 
@@ -298,9 +299,10 @@ async def fetch_media_file(url: str,
     worker_name = kwargs.pop('worker_name', '')
     try:
         resp = await ses.get(url, allow_redirects=True, params=kwargs)
-    except Exception:
-        logger.exception(
-            f"{worker_name}Cannot get answer from '{url}' with {kwargs}")
+    except Exception as e:
+        logger.error(
+            f"{e}\n{worker_name}Cannot get "
+            f"answer from '{url}' with {kwargs}")
         return
 
     if resp.status == 200:
