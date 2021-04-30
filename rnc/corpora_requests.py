@@ -175,10 +175,7 @@ def whether_result_found(url: str,
     """
     Whether the page contains results.
 
-    :param url: str, request url.
-    :param kwargs: request HTTP tags.
-
-    :return: str, first page HTML code if everything is OK.
+    :return: first page HTML code if everything is OK.
 
     :exception RuntimeError: if HTTP request was wrong.
     :exception ValueError: if the result not found.
@@ -214,12 +211,9 @@ def does_page_exist(url: str,
     RNC redirects to the first page if the page at the number doesn't exist.
     Here it's assumed, that the request's correct.
 
-    :param url: str, URL.
-    :param p_index: int, index of page. Indexing starts with 0.
-    :param first_page: str, first page code.
-    :param kwargs: HTTP tags.
+    :return: last page code if everything is OK.
 
-    :return: str, last page code if everything is OK, an exception otherwise.
+    :exception ValueError: the page doesn't exist.
     """
     # indexing starts with 0
     start = p_index
@@ -263,9 +257,7 @@ def is_request_correct(url: str,
         – does a page at the number exist (
         means RNC doesn't redirect to the first page).
 
-    :param url: str, request url.
-    :param p_count: int, request count of pages.
-    :param kwargs: request HTTP tags.
+    :return: first and last pages if everything's OK.
 
     :exception WrongHTTPRequest: HTTP request is wrong.
     :exception NoResultFound: no result found.
@@ -284,7 +276,6 @@ def is_request_correct(url: str,
         logger.error("HTTP request is wrong")
         raise WrongHTTPRequest(f"{kwargs}")
     logger.debug("HTTP request is correct, result found")
-
 
     logger.debug("Validating that the last page exists")
     try:
