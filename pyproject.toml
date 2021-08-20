@@ -1,0 +1,69 @@
+[tool.poetry]
+name = "rnc"
+version = "0.6.5"
+description = "API for Russian National Corpus"
+authors = ["kunansy <kolobov.kirill@list.ru>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://kunansy.github.io/RNC/"
+repository = "https://github.com/kunansy/RNC/"
+documentation = "https://kunansy.github.io/RNC/"
+keywords = [
+    "api", "corpus", "ruscorpora",
+    "linguistics", "russian-national-corpus"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+
+    "Natural Language :: Bulgarian",
+    "Natural Language :: Chinese (Simplified)",
+    "Natural Language :: Chinese (Traditional)",
+    "Natural Language :: Czech",
+    "Natural Language :: English",
+    "Natural Language :: Finnish",
+    "Natural Language :: French",
+    "Natural Language :: German",
+    "Natural Language :: Italian",
+    "Natural Language :: Latvian",
+    "Natural Language :: Lithuanian",
+    "Natural Language :: Polish",
+    "Natural Language :: Spanish",
+    "Natural Language :: Swedish",
+    "Natural Language :: Ukrainian",
+
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3 :: Only",
+]
+packages = [
+    { include = "rnc" },
+]
+exclude = ["tests/"]
+
+[tool.poetry.urls]
+"Changelog" = "https://github.com/kunansy/RNC/blob/master/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/kunansy/RNC/issues"
+"Funding" = "https://paypal.me/ansth"
+
+[tool.poetry.dependencies]
+python = ">=3.7,<4.0"
+bs4 = "~0.0.1"
+beautifulsoup4 = "~4.9.3"
+aiohttp = "~3.7.4.post0"
+aiofiles = "~0.7.0"
+lxml = "~4.6.3"
+ujson = "~4.1.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
