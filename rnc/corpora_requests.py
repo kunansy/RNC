@@ -304,6 +304,125 @@ def is_request_correct(url: str,
     return first_page, last_page
 
 
+async def whether_result_found_async(url: str,
+                                     **kwargs) -> str:
+    """
+    Whether the page contains results.
+
+    :return: first page HTML code if everything is OK.
+
+    :exception RuntimeError: if HTTP request was wrong.
+    :exception ValueError: if the result not found.
+    """
+    logger.debug("Validating that the request is OK")
+    try:
+        page_html = (await get_htmls_async(url, **kwargs))[0]
+    except Exception:
+        logger.error(f"The request is not correct: {kwargs}")
+        raise RuntimeError
+    logger.debug("The request is correct")
+
+    logger.debug("Validating that the result exits")
+    soup = bs4.BeautifulSoup(page_html, 'lxml')
+
+    # TODO: сузить круг поиска
+    content = soup.find('div', {'class': 'content'}).text
+    res_msg = ('По этому запросу ничего не найдено.' in content or
+               'No results match the search query.' in content)
+    if res_msg:
+        raise ValueError
+    return page_html
+
+
+async def does_page_exist_async(url: str,
+                                p_index: int,
+                                first_page: str,
+                                **kwargs) -> str:
+    """
+    Whether a page at the index exists.
+
+    It means, the number of the page in 'pager' is equal to expected index.
+    RNC redirects to the first page if the page at the number doesn't exist.
+    Here it's assumed, that the request's correct.
+
+    :return: last page code if everything is OK.
+
+    :exception ValueError: the page doesn't exist.
+    """
+    # indexing starts with 0
+    start = p_index
+    start = start * (start >= 0)
+    stop = p_index + 1
+
+    # request's correct → first page exists
+
+    if stop == 1:
+        return first_page
+
+    last_page = (await get_htmls_async(url, start, stop, **kwargs))[0]
+    soup = bs4.BeautifulSoup(last_page, 'lxml')
+
+    pager = soup.find('p', {'class': 'pager'})
+    if pager:
+        p_num = pager.b
+        if not p_num:
+            raise ValueError
+        # page index from pager should be equal to expected index
+        if p_num.text != str(stop):
+            raise ValueError
+        return last_page
+
+    # if there's no pager, but result exists.
+    # this might happen if expand=full or out=kwic
+    if last_page == first_page:
+        raise ValueError
+    return last_page
+
+
+async def is_request_correct_async(url: str,
+                                   p_count: int,
+                                   **kwargs) -> Tuple[str, str]:
+    """
+    Check:
+        – is the HTTP request correct (means there are no exceptions catch).
+
+        – has there been any result.
+
+        – does a page at the number exist (
+        means RNC doesn't redirect to the first page).
+
+    :return: first and last pages if everything's OK.
+
+    :exception WrongHTTPRequest: HTTP request is wrong.
+    :exception NoResultFound: no result found.
+    :exception LastPageDoesntExist: the last page doesn't exist.
+    """
+    logger.debug("Validating that everything is OK")
+    try:
+        # to reduce the number of requests
+        # the two checks are combined into one.
+        # coro writes logs by itself
+        first_page = await whether_result_found_async(url, **kwargs)
+    except ValueError:
+        logger.error("HTTP request is OK, but no result found")
+        raise NoResultFound(f"{kwargs}")
+    except RuntimeError:
+        logger.error("HTTP request is wrong")
+        raise WrongHTTPRequest(f"{kwargs}")
+    logger.debug("HTTP request is correct, result found")
+
+    logger.debug("Validating that the last page exists")
+    try:
+        last_page = await does_page_exist_async(url, p_count - 1, first_page, **kwargs)
+    except ValueError:
+        logger.error("Everything is OK, but last page doesn't exist")
+        raise LastPageDoesntExist(f"{kwargs}")
+    logger.debug("The last page exists")
+
+    logger.debug("Validated successfully")
+    return first_page, last_page
+
+
 async def fetch_media_file(url: str,
                            ses: aiohttp.ClientSession,
                            **kwargs) -> bytes or int:
