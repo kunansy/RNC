@@ -1508,6 +1508,16 @@ class MultimodalCorpus(Corpus):
         ]
         creq.download_docs(urls_to_names)
 
+    async def download_all_async(self) -> None:
+        """ Download all files. """
+        os.makedirs(self.MEDIA_FOLDER, exist_ok=True)
+
+        urls_to_names = [
+            (example._media_url, example.filepath)
+            for example in self
+        ]
+        await creq.download_docs_async(urls_to_names)
+
 
 class MultiPARCCorpus(Corpus):
     pass
