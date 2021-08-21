@@ -236,7 +236,6 @@ def does_page_exist(url: str,
     stop = p_index + 1
 
     # request's correct → first page exists
-
     if stop == 1:
         return first_page
 
@@ -245,11 +244,14 @@ def does_page_exist(url: str,
 
     pager = soup.find('p', {'class': 'pager'})
     if pager:
-        p_num = pager.b
-        if not p_num:
+        max_page_number = max(
+            int(page.text)
+            for page in pager.find_all('a')
+            if page.text.isdigit()
+        )
+        if not max_page_number:
             raise ValueError
-        # page index from pager should be equal to expected index
-        if p_num.text != str(stop):
+        if max_page_number < stop:
             raise ValueError
         return last_page
 
@@ -355,7 +357,6 @@ async def does_page_exist_async(url: str,
     stop = p_index + 1
 
     # request's correct → first page exists
-
     if stop == 1:
         return first_page
 
@@ -364,11 +365,14 @@ async def does_page_exist_async(url: str,
 
     pager = soup.find('p', {'class': 'pager'})
     if pager:
-        p_num = pager.b
-        if not p_num:
+        max_page_number = max(
+            int(page.text)
+            for page in pager.find_all('a')
+            if page.text.isdigit()
+        )
+        if not max_page_number:
             raise ValueError
-        # page index from pager should be equal to expected index
-        if p_num.text != str(stop):
+        if max_page_number < stop:
             raise ValueError
         return last_page
 
