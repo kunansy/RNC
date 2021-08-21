@@ -738,6 +738,16 @@ class MultimodalExample(Example):
             logger.error(str(e))
             raise
 
+    async def download_file_async(self) -> None:
+        os.makedirs(self.filepath.parent, exist_ok=True)
+
+        data = [(self._media_url, str(self.filepath))]
+        try:
+            await creq.download_docs_async(data)
+        except Exception as e:
+            logger.error(str(e))
+            raise
+
     def copy(self) -> Any:
         return self.__class__(
             *self.data.values(), self.doc_url,
