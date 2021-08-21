@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rnc"
-version = "0.6.5"
+version = "0.7.0"
 description = "API for Russian National Corpus"
 authors = ["kunansy <kolobov.kirill@list.ru>"]
 license = "MIT"
@@ -41,6 +41,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3 :: Only",
 ]
 packages = [

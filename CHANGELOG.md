@@ -173,3 +173,13 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 7. Docs and logging improved.
 8. Setting on GitHub added: issue templates etc.
 9. Parsing `MultimodalCorpus` fixed. 
+
+
+### 0.7.0 – 21.08.2021
+1. Asyncio support added, some methods implemented:
+   1. `corp.request_examples_async()`
+   2. `MultimodalCorpus.dump_all_async()`
+   3. `MultimodalExample.dump_file_async()`
+2. Use poetry instead of `setup.py`; dependencies updated.
+3. Request validation fixed according to new ruscorpora.ru page structure. 
+4. Python 3.9 support added.
