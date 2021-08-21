@@ -15,6 +15,7 @@ __all__ = (
     'OUTPUT_FORMATS'
 )
 
+import asyncio
 import csv
 import logging
 import os
@@ -25,6 +26,7 @@ import time
 import urllib.parse
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, Callable, List, Any, Tuple, Pattern
 
@@ -975,6 +977,68 @@ class Corpus(ABC):
         try:
             parsing_start = time.time()
             parsed = self._parse_all_pages(htmls)
+            parsing_stop = time.time()
+        except Exception as e:
+            logger.error(f"Error while parsing, query = {self.params}\n{e}")
+            raise
+        else:
+            logger.debug("Parsing completed")
+            logger.info(f"Parsing time: {parsing_stop - parsing_start:.2f}")
+            logger.info(f"Overall time: {parsing_stop - start:.2f}")
+            self._data = parsed[:]
+
+    async def request_examples_async(self) -> None:
+        """ Request examples, parse them and update the data.
+
+        If there are no results found, last page does not exist,
+        params or query is wrong then exception.
+
+        :return: None.
+
+        :exception RuntimeError: if the data still exist.
+        """
+        if self.data:
+            logger.error("Tried to request new examples, however data exist")
+            raise RuntimeError("Data still exist")
+        loop = asyncio.get_running_loop()
+
+        start = time.time()
+        try:
+            first, last = await creq.is_request_correct_async(
+                RNC_URL, self.p_count, **self.params)
+        except creq.BaseRequestError as e:
+            msg = f"Query = {self.forms_in_query}, " \
+                  f"{self.p_count}, {self.params}\ne = {e}"
+            logger.error(msg)
+            raise
+
+        # get additional info from the first RNC page.
+        logger.debug("Getting additional info from the first RNC page")
+        if self.out == 'normal':
+            await self._get_additional_info_async(first)
+        else:
+            await self._get_additional_info_async()
+        logger.debug("Additional info received")
+
+        if self.p_count > 2:
+            logger.debug("Main request")
+            htmls = await creq.get_htmls_async(
+                RNC_URL, 1, self.p_count - 1, **self.params)
+            htmls = [first] + htmls + [last]
+            logger.debug("Main request completed")
+        else:
+            htmls = [first]
+            if self.p_count == 2:
+                htmls += [last]
+
+        logger.debug("Parsing html started")
+        try:
+            parsing_start = time.time()
+            # sth wrong with ProcessPoolExecutor
+            with ThreadPoolExecutor(os.cpu_count()) as executor:
+                parsed = await loop.run_in_executor(
+                    executor, self._parse_all_pages, htmls
+                )
             parsing_stop = time.time()
         except Exception as e:
             logger.error(f"Error while parsing, query = {self.params}\n{e}")
