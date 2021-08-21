@@ -646,6 +646,35 @@ class Corpus(ABC):
 
             self._add_info = additional_info
 
+    async def _get_additional_info_async(self,
+                                         first_page: str = None) -> None:
+        """ Get additional info (amount of found
+        docs and contexts, link to the graphic).
+        """
+        params = self.params.copy()
+        params['lang'] = 'ru'
+        params.pop('expand', None)
+        try:
+            first_page = first_page or \
+                         (await creq.get_htmls_async(RNC_URL, **params))[0]
+        except creq.BaseRequestError:
+            raise
+
+        soup = bs4.BeautifulSoup(first_page, 'lxml')
+        content = soup.find('div', {'class': 'content'})
+
+        try:
+            additional_info = Corpus._get_where_query_found(content)
+            graphic_url = Corpus._get_graphic_url(content)
+        except Exception as e:
+            logger.error("Sth went wrong while "
+                         f"getting additional info:\n{e}")
+        else:
+            if graphic_url:
+                additional_info['graphic_link'] = graphic_url
+
+            self._add_info = additional_info
+
     def _page_parser_and_ex_type(self) -> None:
         """ Add 'parser' and 'ex_type' params.
         They are depended on 'out' tag.
