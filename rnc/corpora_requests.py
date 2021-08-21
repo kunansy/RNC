@@ -533,3 +533,18 @@ def download_docs(url_to_name: List[Tuple[str, str]]) -> None:
 
     logger.info(f"Downloading completed, coro executing time: "
                 f"{round(time.time() - coro_start, 2)}s")
+
+
+async def download_docs_async(url_to_name: List[Tuple[str, str]]) -> None:
+    """
+    Run coro, download the files.
+
+    :param url_to_name: list of tuples of str, pairs: url – filename.
+    """
+    logger.info(f"Requested {len(url_to_name)} files to download")
+    coro_start = time.time()
+
+    await download_docs_coro(url_to_name)
+
+    logger.info(f"Downloading completed, coro executing time: "
+                f"{round(time.time() - coro_start, 2)}s")
