@@ -89,4 +89,5 @@ All the same to `MainExample`.
 * `expl.filepath` – path to the local media file (getter and setter).
 The file will not be moved to the new path, you should call `expl.download_file()` again.
 * `expl.download_file()` – download the media file.
+* `async expl.download_file_async()` – download the media file using the running event loop.
 * Other the same to `MainExample`.

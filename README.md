@@ -155,6 +155,7 @@ Key is applied to the `Example` objects.
   the match.
 * `corp.finditer(pattern, args)` – get all examples where the pattern found and 
   the match.
+* `async corp.request_examples_async()` – make request in the running event loop.
 
 Magic methods: 
 * `corp.dpp` or another request param (only getter).
@@ -217,6 +218,7 @@ If it is equal to `False`, the Corpus shows all examples.
 #### MultimodalCorpus
 * `corp.download_all()` – download all media files. **It is recommended** to use 
 this method instead of `expl.download_file()`.
+* `async corp.download_all_async()` – download all media files using the running event loop.
 
 
 ## Logger
