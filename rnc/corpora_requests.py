@@ -170,6 +170,21 @@ def get_htmls(url: str,
     return html_codes
 
 
+async def get_htmls_async(url: str,
+                          start: int = 0,
+                          stop: int = 1,
+                          **kwargs) -> List[str]:
+    """ Run coro, get html codes of the pages."""
+    logger.info(f"Requested to '{url}' [{start};{stop}) with params {kwargs}")
+    coro_start = time.time()
+
+    html_codes = await get_htmls_coro(url, start, stop, **kwargs)
+
+    logger.info("Request was successfully completed")
+    logger.info(f"Coro executing time: {round(time.time() - coro_start, 2)}")
+    return html_codes
+
+
 def whether_result_found(url: str,
                          **kwargs) -> str:
     """
