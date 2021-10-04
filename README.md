@@ -1,4 +1,9 @@
 # API for [Russian National Corpus](http://ruscorpora.ru) 
+[![Downloads](https://pepy.tech/badge/rnc)](https://pepy.tech/project/rnc)
+<!--![Tests status](https://github.com/kunansy/rnc/actions/workflows/python-app.yml/badge.svg)-->
+![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)
+![Latest Release](https://img.shields.io/github/v/release/kunansy/rnc?color=%233D9970)
+
 
 ## Installation
 ```bash
