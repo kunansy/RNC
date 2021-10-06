@@ -137,43 +137,43 @@ class Corpus(ABC):
                  p_count: int = None,
                  file: str or Path = None,
                  **kwargs) -> None:
-        """ 
-        If the file exists, working with a local database.
+        """
+         If the file exists, working with a local database.
 
-        :param query: dict of str, words to search;
+         :param query: dict of str, words to search;
          {word1: {properties}, word2: {properties}...}.
          If you chose 'lexform' as a 'text' param, you must give here a string.
-        :param p_count: int, count of pages to request.
-        :param file: str or Path, filename of a local database.
+         :param p_count: int, count of pages to request.
+         :param file: str or Path, filename of a local database.
          Optional, random filename by default.
-        :keyword dpp: str or int, documents per page.
+         :keyword dpp: str or int, documents per page.
          Optional, 5 by default.
-        :keyword spd: str or int, sentences per document.
+         :keyword spd: str or int, sentences per document.
          Optional, 10 by default.
-        :keyword text: str, search format: 'lexgramm' or 'lexform'.
+         :keyword text: str, search format: 'lexgramm' or 'lexform'.
          Optional, 'lexgramm' by default.
-        :keyword out: str, output format: 'normal' or 'kwic'.
+         :keyword out: str, output format: 'normal' or 'kwic'.
          Optional, 'normal' bu default.
-        :keyword kwsz: str or int, count of words in context;
+         :keyword kwsz: str or int, count of words in context;
          Optional param if 'out' is 'kwic'.
-        :keyword sort: str, sort show order. See docs how to set it.
+         :keyword sort: str, sort show order. See docs how to set it.
          Optional.
-        :keyword mycorp: str, mycorp. This is way to specify the sample of docs
+         :keyword mycorp: This is way to specify the sample of docs
          where you want to find sth. See docs how to set it. Optional.
-        :keyword expand: str, if 'full', all part of doc will be shown. 
+         :keyword expand: str, if 'full', all part of doc will be shown.
          Now it doesn't work.
-        :keyword accent: str or int, with accents on words or not:
+         :keyword accent: str or int, with accents on words or not:
          1 – with, 0 – without. Optional, 0 by default.
-        :keyword marker: function, with which found words will be marked.
+         :keyword marker: function, with which found words will be marked.
          Optional.
 
-        :exception FileExistsError: if csv file is given but json file
+         :exception FileExistsError: if csv file is given but json file
          with config doesn't exist.
-        :exception ValueError: if the query is empty; page count is a negative 
+         :exception ValueError: if the query is empty; page count is a negative
          number; text, out or sort key is wrong.
-        :exception NotImplementedError: if the corpus type in file isn't equal 
+         :exception NotImplementedError: if the corpus type in file isn't equal
          to corpus class type.
-        """
+         """
         # list of examples
         self._data = []
         # http tags to request
@@ -327,7 +327,8 @@ class Corpus(ABC):
             next(reader)
 
             data = [self.ex_type(*row) for row in reader]
-            wordforms = list(map(lambda example: example.found_wordforms, data))
+            wordforms = list(map(lambda example: example.found_wordforms,
+                                 data))
             wordforms = sum(wordforms, [])
             self._add_wordforms(wordforms)
 
@@ -742,7 +743,8 @@ class Corpus(ABC):
             gramm = params.pop('gramm', '')
             if gramm:
                 try:
-                    gram_props = Corpus._parse_lexgramm_params(gramm, '|', True)
+                    gram_props = Corpus._parse_lexgramm_params(
+                        gramm, '|', True)
                 except Exception:
                     raise
                 self._params[f"gramm{word_num}"] = gram_props
@@ -1060,7 +1062,8 @@ class Corpus(ABC):
                   **kwargs) -> None:
         """ Sort the data by using a key.
 
-        :keyword key: func to sort, called to Example objects, by default – len.
+        :keyword key: func to sort, called to Example objects,
+        by default – len.
         :keyword reverse: bool, whether the data will sort in reversed order,
          by default – False.
 
@@ -1516,8 +1519,8 @@ class MultimodalCorpus(Corpus):
         self._params['mode'] = self._MODE
 
     def _parse_example(self,
-                       example: bs4.element.Tag) -> Tuple[
-        str, str, str, list, str]:
+                       example: bs4.element.Tag
+                       ) -> Tuple[str, str, str, list, str]:
         """ Parse example get text, source etc. """
         src = Corpus._get_source(example)
         txt = Corpus._get_text(example)

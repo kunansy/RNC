@@ -417,7 +417,8 @@ async def is_request_correct_async(url: str,
 
     logger.debug("Validating that the last page exists")
     try:
-        last_page = await does_page_exist_async(url, p_count - 1, first_page, **kwargs)
+        last_page = await does_page_exist_async(
+            url, p_count - 1, first_page, **kwargs)
     except ValueError:
         logger.error("Everything is OK, but last page doesn't exist")
         raise LastPageDoesntExist(f"{kwargs}")

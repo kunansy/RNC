@@ -1,7 +1,5 @@
-from time import sleep
 import os
-
-import pytest
+from time import sleep
 
 import rnc.corpora as rnc
 from tests.corpora.template import TemplateCorpusTest

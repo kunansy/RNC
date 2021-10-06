@@ -6,8 +6,8 @@ mycorp = params.Mycorp()
 
 
 def test_get_correct_language_key():
-    assert mycorp.en == mycorp.English == mycorp['en'] == mycorp['English'] == \
-           mycorp.Parallel.English == mycorp.Parallel.en
+    assert mycorp.en == mycorp.English == mycorp['en'] == \
+           mycorp['English'] == mycorp.Parallel.English == mycorp.Parallel.en
 
 
 def test_get_wrong_lang_attr():

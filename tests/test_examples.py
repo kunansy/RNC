@@ -196,7 +196,7 @@ class TestKwicExample(TemplateTestExamples):
 
     def test_ambiguation_getter(self):
         with pytest.raises(NotImplementedError):
-            amb = self.ex.ambiguation
+            self.ex.ambiguation
 
     def test_ambiguation_setter(self):
         with pytest.raises(AttributeError):
@@ -291,7 +291,8 @@ class TestParallelExample(TemplateTestExamples):
             'ru': 'и текст2',
             'en': 'and text2'
         }
-        rhs = expl.ParallelExample(update, 'old src | new src', 'amb', ['test1'])
+        rhs = expl.ParallelExample(
+            update, 'old src | new src', 'amb', ['test1'])
         lhs += rhs
 
         assert lhs.ru == 'текст1 и текст2'

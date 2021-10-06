@@ -1,7 +1,5 @@
 from time import sleep
 
-import pytest
-
 import rnc.corpora as rnc
 from tests.corpora.template import TemplateCorpusTest
 
@@ -20,7 +18,9 @@ class TestAccentologicalCorpus(TemplateCorpusTest):
     def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            mycorp='JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_Rg9GI0LrQuNC9Il0sICJkb2NfaV9sZV9lbmRfeWVhciI6IFsiMTgzMCJdfQ%3D%3D'
+            mycorp='JSONeyJkb2NfYXV0aG9yIjogWyLQkC7QoS4g0J_'
+                   'Rg9GI0LrQuNC9Il0sICJkb2NfaV9sZV9lbmRfeWV'
+                   'hciI6IFsiMTgzMCJdfQ%3D%3D'
         )
         corp.request_examples()
 

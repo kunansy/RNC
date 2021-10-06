@@ -45,14 +45,16 @@ class TemplateCorpusTest:
         sleep(5)
 
     def test_one_form_without_gram(self):
-        corp = self.corp_type({'ты': ''}, 1, marker=str.capitalize, spd=1, dpp=5)
+        corp = self.corp_type(
+            {'ты': ''}, 1, marker=str.capitalize, spd=1, dpp=5)
         corp.request_examples()
 
         assert len(corp) > 1
         sleep(5)
 
     def test_one_form_with_one_gram(self):
-        corp = self.corp_type({'ты': {'gramm': 'nom'}}, 1, marker=str.capitalize, spd=1)
+        corp = self.corp_type(
+            {'ты': {'gramm': 'nom'}}, 1, marker=str.capitalize, spd=1)
         corp.request_examples()
 
         assert len(corp) > 1
@@ -86,14 +88,16 @@ class TemplateCorpusTest:
         sleep(5)
 
     def test_full_query_with_kwic_without_kwsz(self):
-        corp = self.corp_type(self.full_query, 1, marker=str.capitalize, out='kwic')
+        corp = self.corp_type(
+            self.full_query, 1, marker=str.capitalize, out='kwic')
         corp.request_examples()
 
         assert len(corp) > 1
         sleep(5)
 
     def test_full_query_with_kwic_with_kwsz(self):
-        corp = self.corp_type(self.full_query, 1, marker=str.capitalize, out='kwic', kwsz=7)
+        corp = self.corp_type(
+            self.full_query, 1, marker=str.capitalize, out='kwic', kwsz=7)
         corp.request_examples()
 
         assert len(corp) > 1
@@ -113,7 +117,8 @@ class TemplateCorpusTest:
     def test_mycorp(self):
         corp = self.corp_type(
             'ты', 1,
-            mycorp="JSONeyJkb2Nfc2V4IjogWyLQvNGD0LYiXSwgImRvY19pX3RhZ2dpbmciOiBbIjEiXX0%3D"
+            mycorp="JSONeyJkb2Nfc2V4IjogWyLQvNGD0LYiXSwgImR"
+                   "vY19pX3RhZ2dpbmciOiBbIjEiXX0%3D"
         )
         corp.request_examples()
 
