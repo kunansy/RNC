@@ -10,7 +10,7 @@ __all__ = (
 import asyncio
 import logging
 import time
-from typing import List, Tuple
+from typing import List, Optional, Tuple, Union
 
 import aiofiles
 import aiohttp
@@ -38,7 +38,7 @@ class WrongHTTPRequest(BaseRequestError):
 
 async def fetch_html(url: str,
                      ses: aiohttp.ClientSession,
-                     **kwargs) -> Tuple[int, str] or None:
+                     **kwargs) -> Optional[Union[Tuple[int, str], int]]:
     """ Coro, obtaining page's HTML code.
 
     This coro should be awaited from a worker.
@@ -106,7 +106,7 @@ async def worker_fetching_html(worker_name: str,
             f"{worker_name}Received from '{url}' with '{kwargs}'")
         q_args.task_done()
 
-        await q_results.put((res[0], res[1]))
+        await q_results.put((res[0], res[1])) # type: ignore
 
 
 async def get_htmls_coro(url: str,
@@ -123,8 +123,8 @@ async def get_htmls_coro(url: str,
     """
     timeout = aiohttp.ClientTimeout(WAIT)
 
-    q_results = asyncio.Queue(maxsize=-1)
-    q_args = asyncio.Queue(maxsize=-1)
+    q_results = asyncio.Queue(maxsize=-1) # type: ignore
+    q_args = asyncio.Queue(maxsize=-1) # type: ignore
 
     async with aiohttp.ClientSession(timeout=timeout) as ses:
         for p_index in range(start, stop):
@@ -430,7 +430,7 @@ async def is_request_correct_async(url: str,
 
 async def fetch_media_file(url: str,
                            ses: aiohttp.ClientSession,
-                           **kwargs) -> bytes or int:
+                           **kwargs) -> Optional[Union[bytes, int]]:
     """
     Coro, getting media content to write.
 
@@ -497,7 +497,7 @@ async def worker_fetching_media(worker_name: str,
 
         logger.debug(f"{worker_name}Received from '{url}'")
         logger.debug(f"{worker_name}Dumping '{url}' to '{filename}'")
-        await dump(content, filename)
+        await dump(content, filename) # type: ignore
         logger.debug(f"{worker_name}'{filename}' dumped")
 
         q_args.task_done()
@@ -506,7 +506,7 @@ async def worker_fetching_media(worker_name: str,
 async def download_docs_coro(url_to_name: List[Tuple[str, str]]) -> None:
     """ Coro running 5 workers to download media files. """
     timeout = aiohttp.ClientTimeout(WAIT)
-    q_args = asyncio.Queue(maxsize=-1)
+    q_args = asyncio.Queue(maxsize=-1) # type: ignore
 
     async with aiohttp.ClientSession(timeout=timeout) as ses:
         for url, filename in url_to_name:

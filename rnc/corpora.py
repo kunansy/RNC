@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, Callable, List, Any, Tuple, Pattern
+from typing import Dict, Callable, Generator, Iterator, List, Any, Optional, Tuple, Pattern, Union
 
 import bs4
 import ujson
@@ -133,9 +133,9 @@ class Corpus(ABC):
     DATA_FOLDER = Path('data')
 
     def __init__(self,
-                 query: dict or str = None,
-                 p_count: int = None,
-                 file: str or Path = None,
+                 query: Optional[Union[dict, str]] = None,
+                 p_count: Optional[int] = None,
+                 file: Optional[Union[str, Path]] = None,
                  **kwargs) -> None:
         """
          If the file exists, working with a local database.
@@ -175,13 +175,13 @@ class Corpus(ABC):
          to corpus class type.
          """
         # list of examples
-        self._data = []
+        self._data: List[expl.Example] = []
         # http tags to request
-        self._params = {}
+        self._params: Dict[str, Any] = {}
         # found wordforms with their frequency
-        self._found_wordforms = defaultdict(int)
+        self._found_wordforms: Dict[str, int] = defaultdict(int)
         # query, wordforms to find
-        self._query = {}
+        self._query: Dict[str, Any] = {}
         # count of PAGES
         self._p_count = 0
         # type of example should be defined before params init
@@ -190,12 +190,12 @@ class Corpus(ABC):
         # additional info from the first page:
         # amount of docs, contexts, where the query was found,
         # link to the graphic with distribution by years
-        self._add_info = {}
+        self._add_info: Dict[str, Any] = {}
 
         # path to local database
         class_name = self.__class__.__name__.replace('Corpus', '')
         path = file or create_unique_filename(
-            self.DATA_FOLDER, class_name, p_count)
+            self.DATA_FOLDER, class_name, p_count) # type: ignore
         path = Path(path)
         # change or add right extension
         path = path.with_suffix('.csv')
@@ -214,10 +214,10 @@ class Corpus(ABC):
                 raise
         # or work with RNC
         else:
-            self._from_corpus(query, p_count, **kwargs)
+            self._from_corpus(query, p_count, **kwargs) # type: ignore
 
     def _from_corpus(self,
-                     query: dict or str,
+                     query: Union[Dict[str, Any], str],
                      p_count: int,
                      **kwargs) -> None:
         """ Set given values to the object. If the file does not exist.
@@ -230,7 +230,7 @@ class Corpus(ABC):
             msg = f"Query must be not empty, but '{query}' found"
             logger.error(msg)
             raise ValueError(msg)
-        self._query = query
+        self._query = query # type: ignore
 
         if p_count <= 0:
             msg = f"Pages count must be > 0, but '{p_count}' found"
@@ -399,7 +399,7 @@ class Corpus(ABC):
         cls.__MAX = value
 
     @classmethod
-    def set_restrict_show(cls, value: int or bool) -> None:
+    def set_restrict_show(cls, value: Union[int, bool]) -> None:
         """ Set amount of showing examples.
         Show all examples if `False` given.
         """
@@ -467,7 +467,7 @@ class Corpus(ABC):
         return src
 
     @staticmethod
-    def _parse_lexgramm_params(params: dict or str,
+    def _parse_lexgramm_params(params: Union[dict, str],
                                join_inside_symbol: str,
                                with_braces: bool = False) -> str:
         """ Convert lexgramm params to str for HTTP request.
@@ -523,7 +523,7 @@ class Corpus(ABC):
         return self._data
 
     @property
-    def query(self) -> Dict[str, dict] or str:
+    def query(self) -> Union[Dict[str, dict], str]:
         """ Get requested words items (dict of words
         with params or str with words)
         """
@@ -577,21 +577,21 @@ class Corpus(ABC):
         return self._ex_type
 
     @property
-    def amount_of_docs(self) -> int or None:
+    def amount_of_docs(self) -> Optional[int]:
         """ Get amount of documents, where the query was found
         or None if there's no this info.
         """
         return self._add_info.get('docs', None)
 
     @property
-    def amount_of_contexts(self) -> int or None:
+    def amount_of_contexts(self) -> Optional[int]:
         """ Get amount of contexts, where the query was found
         or None if there's no this info.
         """
         return self._add_info.get('contexts', None)
 
     @property
-    def graphic_link(self) -> str or None:
+    def graphic_link(self) -> Optional[str]:
         """ Get the link to the graphic
         or None if there's no this info.
         """
@@ -612,7 +612,7 @@ class Corpus(ABC):
         return res
 
     @staticmethod
-    def _get_graphic_url(content: bs4.element.Tag) -> str or None:
+    def _get_graphic_url(content: bs4.element.Tag) -> Optional[str]:
         """ Get URL to the graphic. """
         a = content.find('a', {'target': '_blank'})
         try:
@@ -650,7 +650,7 @@ class Corpus(ABC):
             self._add_info = additional_info
 
     async def _get_additional_info_async(self,
-                                         first_page: str = None) -> None:
+                                         first_page: Optional[str] = None) -> None:
         """ Get additional info (amount of found
         docs and contexts, link to the graphic).
         """
@@ -684,9 +684,9 @@ class Corpus(ABC):
         """
         if self.out == 'normal':
             # ex_type is defined above in this case
-            self._page_parser = self._parse_page_normal
+            self._page_parser = self._parse_page_normal # type: ignore
         elif self.out == 'kwic':
-            self._page_parser = self._parse_page_kwic
+            self._page_parser = self._parse_page_kwic # type: ignore
             self._ex_type = expl.KwicExample
 
     def _query_to_http(self) -> None:
@@ -875,7 +875,7 @@ class Corpus(ABC):
                          pages: List[str]) -> List:
         """ Parse all pages. """
         parsed = [
-            self._page_parser(page)
+            self._page_parser(page) # type: ignore
             for page in pages
         ]
         return sum(parsed, [])
@@ -1102,8 +1102,8 @@ class Corpus(ABC):
         self._data = filtered_data[:]
 
     def findall(self,
-                pattern: Pattern or str,
-                *args) -> Tuple[expl.Example, List[str]]:
+                pattern: Union[Pattern, str],
+                *args) -> Generator[expl.Example, List[str], None]:
         """ Apply the pattern to the examples' text with re.findall.
         Yield all examples which are satisfy the pattern and match.
         """
@@ -1113,8 +1113,8 @@ class Corpus(ABC):
                 yield example, match
 
     def finditer(self,
-                 pattern: Pattern or str,
-                 *args) -> Tuple[expl.Example, Any]:
+                 pattern: Union[Pattern, str],
+                 *args) -> Generator[expl.Example, Any, None]:
         """ Apply the pattern to the examples' text with re.finditer.
         Yield all examples which are satisfy the pattern and match.
         """
@@ -1173,7 +1173,7 @@ class Corpus(ABC):
         """ All the same to request_examples() """
         self.request_examples()
 
-    def __iter__(self) -> iter:
+    def __iter__(self) -> Iterator:
         return iter(self.data)
 
     def __contains__(self,
@@ -1195,7 +1195,7 @@ class Corpus(ABC):
         )
 
     def __getattr__(self,
-                    item: str) -> str or int or List or None:
+                    item: str) -> Optional[Union[str, int, List]]:
         """ Get request param.
 
         :return: param value or None if it does not exist.
@@ -1206,7 +1206,7 @@ class Corpus(ABC):
             return self.params.get(item, None)
 
     def __getitem__(self,
-                    item: int or slice) -> Any:
+                    item: Union[int, slice]) -> Any:
         r""" Get example from data or create
          new obj with sliced data.
 
@@ -1259,7 +1259,7 @@ class Corpus(ABC):
             raise
 
     def __delitem__(self,
-                    key: int or slice) -> None:
+                    key: Union[int, slice]) -> None:
         """ Delete example at the index or
          remove several ones using slice.
 
@@ -1291,7 +1291,7 @@ class MainCorpus(Corpus):
         self._params['mode'] = self._MODE
 
     def _parse_example(self,
-                       example: bs4.element.Tag):
+                       example: bs4.element.Tag) -> expl.Example:
         """ Parse example to Example object. """
         src = Corpus._get_source(example)
         txt = Corpus._get_text(example)
@@ -1315,7 +1315,7 @@ class MainCorpus(Corpus):
         res = []
 
         for example in doc.find_all('li'):
-            new_ex = self._parse_example(example)
+            new_ex: expl.MainExample = self._parse_example(example)
             res += [new_ex]
             self._add_wordforms(new_ex.found_wordforms)
         return res
@@ -1396,7 +1396,7 @@ class ParallelCorpus(Corpus):
         return new_txt
 
     def _parse_example(self,
-                       tag: bs4.element.Tag) -> Any:
+                       tag: bs4.element.Tag) -> expl.Example:
         """ Parse a pair: original – translation to Example. """
         # this example is expected to have default args
         result_example = self.ex_type()

@@ -22,7 +22,7 @@ import os
 import re
 import webbrowser
 from pathlib import Path
-from typing import List, Callable, Dict, Any
+from typing import List, Callable, Dict, Any, Union
 
 import rnc.corpora_requests as creq
 
@@ -62,7 +62,7 @@ class Example:
                  txt: str,
                  src: str,
                  ambiguation: str,
-                 found_wordforms: List[str] or str,
+                 found_wordforms: Union[List[str], str],
                  doc_url: str) -> None:
         """
         :param txt: str, example's text.
@@ -80,7 +80,7 @@ class Example:
 
         wf = found_wordforms or []
         if isinstance(wf, str):
-            wf = found_wordforms.split(', ')
+            wf = found_wordforms.split(', ') # type: ignore
         self._found_wordforms = wf
 
     @property
@@ -151,7 +151,7 @@ class Example:
         }
         return data
 
-    @txt.setter
+    @txt.setter # type: ignore
     def txt(self,
             other: Any) -> None:
         """ Set text.
@@ -166,7 +166,7 @@ class Example:
 
         self._txt = other
 
-    @src.setter
+    @src.setter # type: ignore
     def src(self,
             other: Any) -> None:
         """ Set source.
@@ -181,7 +181,7 @@ class Example:
 
         self._src = other
 
-    @ambiguation.setter
+    @ambiguation.setter # type: ignore
     def ambiguation(self,
                     other: Any) -> None:
         """ Set ambiguation.
@@ -222,7 +222,7 @@ class Example:
         """
         :return: copied obj.
         """
-        return self.__class__(*self.data.values(), self.doc_url)
+        return self.__class__(*self.data.values(), self.doc_url) # type: ignore
 
     def __eq__(self,
                other: Any) -> bool:
@@ -300,7 +300,7 @@ class KwicExample(Example):
                  center: str,
                  right: str,
                  src: str,
-                 found_wordforms: List[str] or str,
+                 found_wordforms: Union[List[str], str],
                  doc_url: str) -> None:
         """ There is no ambiguation, it set with ''.
 
@@ -366,7 +366,7 @@ class KwicExample(Example):
         }
         return data
 
-    @left.setter
+    @left.setter # type: ignore
     def left(self,
              other: Any) -> None:
         """ Set left context.
@@ -380,7 +380,7 @@ class KwicExample(Example):
                            f"set {type(other)}, str expected")
         self._left = other
 
-    @center.setter
+    @center.setter # type: ignore
     def center(self,
                other: Any) -> None:
         """ Set center context.
@@ -394,7 +394,7 @@ class KwicExample(Example):
                            f"set {type(other)}, str expected")
         self._center = other
 
-    @right.setter
+    @right.setter # type: ignore
     def right(self,
               other: Any) -> None:
         """ Set right context.
@@ -408,7 +408,7 @@ class KwicExample(Example):
                            f"set {type(other)}, str expected")
         self._right = other
 
-    @txt.setter
+    @txt.setter # type: ignore
     def txt(self,
             other: Any) -> None:
         """ Text setter not implemented to KWICExamples """
@@ -450,7 +450,7 @@ class ParallelExample(Example):
                  txt: Dict[str, str] = None,
                  src: str = '',
                  ambiguation: str = '',
-                 found_wordforms: List[str] or str = None,
+                 found_wordforms: Union[List[str], str] = None,
                  doc_url: str = '') -> None:
         """
         :param txt: dict of str, {language tag: text}
@@ -461,7 +461,7 @@ class ParallelExample(Example):
         """
         txt = txt or {}
 
-        super().__init__(txt, src, ambiguation, found_wordforms, doc_url)
+        super().__init__(txt, src, ambiguation, found_wordforms, doc_url) # type: ignore
         self.sort()
 
     @property
@@ -470,7 +470,7 @@ class ParallelExample(Example):
 
         :return: dict of any types.
         """
-        return self._txt
+        return self._txt # type: ignore
 
     @txt.setter
     def txt(self,
@@ -532,7 +532,7 @@ class ParallelExample(Example):
         """
         key = key or (lambda items: items[0])
         data = sorted(self.txt.items(), key=key, reverse=reverse)
-        self._txt = dict(data)
+        self._txt = dict(data) # type: ignore
 
     def copy(self) -> Any:
         """
@@ -636,7 +636,7 @@ class ParallelExample(Example):
             class_name = self.__class__.__name__
             logger.warning(f"As a '{lang}' to {class_name} "
                            f"set {type(txt)}, str expected")
-        self._txt[lang] = txt
+        self._txt[lang] = txt # type: ignore
 
 
 class MultilingualParaExample(ParallelExample):
@@ -668,7 +668,7 @@ class MultimodalExample(Example):
                  txt: str,
                  src: str,
                  ambiguation: str,
-                 found_wordforms: List[str] or str,
+                 found_wordforms: Union[List[str], str],
                  doc_url: str,
                  media_url: str,
                  filename: str) -> None:
@@ -697,7 +697,7 @@ class MultimodalExample(Example):
 
     @filepath.setter
     def filepath(self,
-                 other: str or Path) -> None:
+                 other: Union[str, Path]) -> None:
         """ Set new path to the local file.
 
         ATTENTION: if the file exists it will not be moved to
@@ -752,7 +752,7 @@ class MultimodalExample(Example):
         return self.__class__(
             *self.data.values(), self.doc_url,
             self._media_url, str(self.filepath)
-        )
+        ) # type: ignore
 
 
 class MultiPARCExample(Example):

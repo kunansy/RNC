@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Union
 
 from .corpora import (
     MainCorpus,
@@ -67,9 +68,9 @@ logger.addHandler(file_handler)
 
 
 def set_handler_level(handler_class: type):
-    def wrapped(level: int or str) -> None:
+    def wrapped(level: Union[int, str]) -> None:
         try:
-            level = level.upper()
+            level = level.upper() # type: ignore
         except AttributeError:
             pass
 
@@ -88,9 +89,9 @@ set_stream_handler_level = set_handler_level(logging.StreamHandler)
 set_file_handler_level = set_handler_level(logging.FileHandler)
 
 
-def set_logger_level(level: int or str) -> None:
+def set_logger_level(level: Union[int, str]) -> None:
     try:
-        level = level.upper()
+        level = level.upper() # type: ignore
     except AttributeError:
         pass
     logger.setLevel(level)
