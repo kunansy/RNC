@@ -64,6 +64,8 @@ lxml = "~4.6.3"
 ujson = "~4.1.0"
 
 [tool.poetry.dev-dependencies]
+mypy = "~0.910"
+flake8 = "~3.9.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
