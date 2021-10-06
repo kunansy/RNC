@@ -513,8 +513,7 @@ class Corpus(ABC):
         return [
             tag.text.strip()
             for tag in tag.contents
-            if (isinstance(tag, bs4.element.Tag) and
-                'g-em' in tag.attrs.get('class', ''))
+            if (isinstance(tag, bs4.element.Tag) and 'g-em' in tag.attrs.get('class', ''))
         ]
 
     @property
@@ -658,8 +657,7 @@ class Corpus(ABC):
         params['lang'] = 'ru'
         params.pop('expand', None)
         try:
-            first_page = first_page or \
-                         (await creq.get_htmls_async(RNC_URL, **params))[0]
+            first_page = first_page or (await creq.get_htmls_async(RNC_URL, **params))[0]
         except creq.BaseRequestError:
             raise
 

@@ -95,8 +95,8 @@ async def worker_fetching_html(worker_name: str,
 
         while res == -1:
             logger.debug(
-                    f"{worker_name}429 'Too many requests', "
-                    f"page: {kwargs['p']}; wait {WAIT}s"
+                f"{worker_name}429 'Too many requests', "
+                f"page: {kwargs['p']}; wait {WAIT}s"
             )
 
             await asyncio.sleep(WAIT)
