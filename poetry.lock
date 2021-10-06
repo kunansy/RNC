@@ -217,6 +217,22 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-aiofiles"
+version = "0.1.9"
+description = "Typing stubs for aiofiles"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "types-ujson"
+version = "0.1.1"
+description = "Typing stubs for ujson"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "3.10.0.2"
 description = "Backported and Experimental Type Hints for Python 3.5+"
@@ -260,7 +276,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "3ea9d9eb7cc6b639fbb081e7ff853f640e76f6f3f02ac927215275c9389822db"
+content-hash = "3b765cef4acda2248676f20382d20d607b0d38cedbaf8eaba5757bfab3951102"
 
 [metadata.files]
 aiofiles = [
@@ -540,6 +556,14 @@ typed-ast = [
     {file = "typed_ast-1.4.3-cp39-cp39-win32.whl", hash = "sha256:209596a4ec71d990d71d5e0d312ac935d86930e6eecff6ccc7007fe54d703808"},
     {file = "typed_ast-1.4.3-cp39-cp39-win_amd64.whl", hash = "sha256:9c6d1a54552b5330bc657b7ef0eae25d00ba7ffe85d9ea8ae6540d2197a3788c"},
     {file = "typed_ast-1.4.3.tar.gz", hash = "sha256:fb1bbeac803adea29cedd70781399c99138358c26d05fcbd23c13016b7f5ec65"},
+]
+types-aiofiles = [
+    {file = "types-aiofiles-0.1.9.tar.gz", hash = "sha256:3ccfe55e17a97143c7a3730ed52b24385171212d4bc76c63c867c437512ef55e"},
+    {file = "types_aiofiles-0.1.9-py3-none-any.whl", hash = "sha256:36b806484b4ce1d29327157ba46e4c901cddef522cce6516d229c1f5b54c1ff0"},
+]
+types-ujson = [
+    {file = "types-ujson-0.1.1.tar.gz", hash = "sha256:92042cb7a0ba0ded003642da3367aa2a7b22a7d16ce840336b50977781526ed0"},
+    {file = "types_ujson-0.1.1-py2.py3-none-any.whl", hash = "sha256:f465118573d69c1cf570144de95c11a596abee4b48cf45c9c54abf0613d8956a"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},
