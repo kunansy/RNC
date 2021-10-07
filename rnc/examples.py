@@ -749,10 +749,10 @@ class MultimodalExample(Example):
             raise
 
     def copy(self) -> Any:
-        return self.__class__(
+        return self.__class__( # type: ignore
             *self.data.values(), self.doc_url,
             self._media_url, str(self.filepath)
-        ) # type: ignore
+        )
 
 
 class MultiPARCExample(Example):
