@@ -22,7 +22,7 @@ import os
 import re
 import webbrowser
 from pathlib import Path
-from typing import List, Callable, Dict, Any, Union
+from typing import List, Callable, Dict, Any, Optional, Union
 
 import rnc.corpora_requests as creq
 
@@ -447,10 +447,10 @@ class PaperRegionalExample(Example):
 
 class ParallelExample(Example):
     def __init__(self,
-                 txt: Dict[str, str] = None,
+                 txt: Dict[str, str] = None, # type: ignore
                  src: str = '',
                  ambiguation: str = '',
-                 found_wordforms: Union[List[str], str] = None,
+                 found_wordforms: Union[List[str], str] = None, # type: ignore
                  doc_url: str = '') -> None:
         """
         :param txt: dict of str, {language tag: text}
@@ -521,7 +521,7 @@ class ParallelExample(Example):
         return f_src
 
     def sort(self,
-             key: Callable = None,
+             key: Optional[Callable] = None,
              reverse: bool = False) -> None:
         """ Sort txt dict, allowing the key to
         items() from there.

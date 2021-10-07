@@ -36,7 +36,7 @@ class WrongHTTPRequest(BaseRequestError):
     pass
 
 
-async def fetch_html(url: str,
+async def fetch_html(url: str, # type: ignore
                      ses: aiohttp.ClientSession,
                      **kwargs) -> Optional[Union[Tuple[int, str], int]]:
     """ Coro, obtaining page's HTML code.
@@ -56,7 +56,7 @@ async def fetch_html(url: str,
         logger.error(
             f"{e}\n{worker_name}Cannot get "
             f"answer from '{url}' with {kwargs}")
-        return
+        return # type: ignore
 
     if resp.status == 200:
         text = await resp.text('utf-8')
@@ -428,7 +428,7 @@ async def is_request_correct_async(url: str,
     return first_page, last_page
 
 
-async def fetch_media_file(url: str,
+async def fetch_media_file(url: str, # type: ignore
                            ses: aiohttp.ClientSession,
                            **kwargs) -> Optional[Union[bytes, int]]:
     """
@@ -446,7 +446,7 @@ async def fetch_media_file(url: str,
         logger.error(
             f"{e}\n{worker_name}Cannot get "
             f"answer from '{url}' with {kwargs}")
-        return
+        return # type: ignore
 
     if resp.status == 200:
         content = await resp.read()

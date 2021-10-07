@@ -617,11 +617,11 @@ class Corpus(ABC):
         try:
             link = a['href']
         except (KeyError, TypeError, AttributeError):
-            return
+            return # type: ignore
         return f"{BASE_RNC_URL}/{link}"
 
     def _get_additional_info(self,
-                             first_page: str = None) -> None:
+                             first_page: Optional[str] = None) -> None:
         """ Get additional info (amount of found
         docs and contexts, link to the graphic).
         """
@@ -1101,7 +1101,7 @@ class Corpus(ABC):
 
     def findall(self,
                 pattern: Union[Pattern, str],
-                *args) -> Generator[expl.Example, List[str], None]:
+                *args) -> Generator[Tuple[expl.Example, List[str]], None, None]:
         """ Apply the pattern to the examples' text with re.findall.
         Yield all examples which are satisfy the pattern and match.
         """
@@ -1112,7 +1112,7 @@ class Corpus(ABC):
 
     def finditer(self,
                  pattern: Union[Pattern, str],
-                 *args) -> Generator[expl.Example, Any, None]:
+                 *args) -> Generator[Tuple[expl.Example, Any], None, None]:
         """ Apply the pattern to the examples' text with re.finditer.
         Yield all examples which are satisfy the pattern and match.
         """
@@ -1288,7 +1288,7 @@ class MainCorpus(Corpus):
         super().__init__(*args, **kwargs, ex_type=ex_type)
         self._params['mode'] = self._MODE
 
-    def _parse_example(self,
+    def _parse_example(self, # type: ignore
                        example: bs4.element.Tag) -> expl.Example:
         """ Parse example to Example object. """
         src = Corpus._get_source(example)
@@ -1313,7 +1313,7 @@ class MainCorpus(Corpus):
         res = []
 
         for example in doc.find_all('li'):
-            new_ex: expl.MainExample = self._parse_example(example)
+            new_ex: expl.MainExample = self._parse_example(example) # type: ignore
             res += [new_ex]
             self._add_wordforms(new_ex.found_wordforms)
         return res
@@ -1393,7 +1393,7 @@ class ParallelCorpus(Corpus):
         new_txt.mark_found_words(self.marker)
         return new_txt
 
-    def _parse_example(self,
+    def _parse_example(self, # type: ignore
                        tag: bs4.element.Tag) -> expl.Example:
         """ Parse a pair: original – translation to Example. """
         # this example is expected to have default args
@@ -1516,7 +1516,7 @@ class MultimodalCorpus(Corpus):
         super().__init__(*args, **kwargs, ex_type=expl.MultimodalExample)
         self._params['mode'] = self._MODE
 
-    def _parse_example(self,
+    def _parse_example(self, # type: ignore
                        example: bs4.element.Tag
                        ) -> Tuple[str, str, str, list, str]:
         """ Parse example get text, source etc. """
