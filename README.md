@@ -3,6 +3,8 @@
 ![Tests status](https://github.com/kunansy/rnc/actions/workflows/python-app.yml/badge.svg)
 ![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Latest Release](https://img.shields.io/github/v/release/kunansy/rnc?color=%233D9970)
+![PyPi status](https://img.shields.io/pypi/status/rnc.svg?style=flat-square)
+![Supported python versions](https://img.shields.io/pypi/pyversions/rnc.svg?style=flat-square)
 
 
 ## Installation
