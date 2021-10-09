@@ -5,6 +5,7 @@
 ![Latest Release](https://img.shields.io/github/v/release/kunansy/rnc?color=%233D9970)
 ![PyPi status](https://img.shields.io/pypi/status/rnc.svg?style=flat-square)
 ![Supported python versions](https://img.shields.io/pypi/pyversions/rnc.svg?style=flat-square)
+![Vulnerabilities](https://snyk.io/test/github/kunansy/rnc/badge.svg)
 
 
 ## Installation
