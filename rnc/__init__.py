@@ -2,9 +2,7 @@ __version__ = '0.6.5'
 
 
 import logging
-import os
 import sys
-from pathlib import Path
 from typing import Union
 
 from .corpora import (
@@ -43,9 +41,7 @@ MSG_FMT = "[{asctime},{msecs:3.0f}] [{levelname}] " \
 DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 LOGGER_NAME = "rnc"
-LOG_FOLDER = Path('logs')
-LOG_FILE = LOG_FOLDER / f"{LOGGER_NAME}.log"
-os.makedirs(LOG_FOLDER, exist_ok=True)
+LOG_FILE = f"{LOGGER_NAME}.log"
 
 
 formatter = logging.Formatter(
