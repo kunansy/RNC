@@ -57,7 +57,7 @@ stream_handler.setFormatter(formatter)
 
 file_handler = logging.FileHandler(
     LOG_FILE, delay=True, encoding='utf-8')
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.CRITICAL)
 file_handler.setFormatter(formatter)
 
 logger = logging.getLogger(LOGGER_NAME)
