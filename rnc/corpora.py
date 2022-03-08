@@ -101,8 +101,13 @@ def join_with_plus(item: str) -> str:
 
 
 def str_to_int(value: str) -> int:
-    """ Convert str like '350 000 134' to int. """
-    return int(value.replace(' ', ''))
+    """ Convert str like '350 000 134' or '\t\t\n\n1 167 492 contexts' to int. """
+    clean_str = ''.join(
+        symb
+        for symb in value
+        if symb.isdigit()
+    )
+    return int(clean_str)
 
 
 class Corpus(ABC):
