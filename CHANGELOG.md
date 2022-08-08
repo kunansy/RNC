@@ -183,3 +183,11 @@ Quickfix: stream handler level was set to `WARNING` instead of `NOTSET`.
 2. Use poetry instead of `setup.py`; dependencies updated.
 3. Request validation fixed according to new ruscorpora.ru page structure. 
 4. Python 3.9 support added.
+
+...
+
+### 0.10.0 – 08.08.2022
+1. Setting language in the parallel corpus updated, new values set.
+2. Kwarg `lang` added to ParallelCorpus.
+3. Bumpversion added.
+4. Dependencies updated.
