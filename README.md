@@ -103,6 +103,7 @@ corp = rnc.ParallelCorpus(
     kwsz=5, # if out=kwic, count of words in context
     sort='i_grtagging', # way to sort the results, see HOWTO section below
     mycorp='', # see HOWTO section below
+    lang=rnc.Languages.en,
     accent=0, # with accentology (1) or without (0), if it is available
 )
 ```
@@ -191,7 +192,7 @@ from_2_to_10 = corp[2:10:2]
 corp = rnc.ParallelCorpus(
     'corpus', 5, 
     out='kwic', kwsz=7, 
-    mycorp=rnc.mycorp.en
+    lang=rnc.Languages.en
 )
 corp.request_examples()
 
@@ -298,7 +299,7 @@ There are some sort keys:
 
 ### How to set language in ParallelCorpus?
 ```python
-en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp.en)
+en = rnc.ParallelCorpus('get', 5, lang=rnc.Languages.en)
 ```
 **OR**
 ```python
