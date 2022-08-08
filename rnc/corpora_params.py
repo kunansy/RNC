@@ -67,26 +67,27 @@ class Mycorp:
             except AttributeError as e:
                 raise KeyError(e)
 
+    # TODO: drop this compatibility
     class Parallel:
-        Armenian = arm = 'JSONeyJkb2NfbGFuZyI6IFsiYXJtIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Bashkir = bas = 'JSONeyJkb2NfbGFuZyI6IFsiYmFzaCJdLCAiaXNfcGFyYV9ib3RoX3BhaXJzIjogW3RydWVdfQ=='
-        Belarusian = bel = 'JSONeyJkb2NfbGFuZyI6IFsiYmVsIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Bulgarian = bul = 'JSONeyJkb2NfbGFuZyI6IFsiYnVsIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Buryatian = bur = 'JSONeyJkb2NfbGFuZyI6IFsiYnVhIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Chinese = ch = 'JSONeyJkb2NfbGFuZyI6IFsiemhvIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Czech = cz = 'JSONeyJkb2NfbGFuZyI6IFsiY3plIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        English = en = 'JSONeyJkb2NfbGFuZyI6IFsiZW5nIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Estonian = es = 'JSONeyJkb2NfbGFuZyI6IFsiZXN0Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Finnish = fin = 'JSONeyJkb2NfbGFuZyI6IFsiZmluIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        French = fr = 'JSONeyJkb2NfbGFuZyI6IFsiZnJhIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        German = ger = 'JSONeyJkb2NfbGFuZyI6IFsiZ2VyIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Italian = it = 'JSONeyJkb2NfbGFuZyI6IFsiaXRhIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Latvian = lat = 'JSONeyJkb2NfbGFuZyI6IFsibGF2Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Lithuanian = lit = 'JSONeyJkb2NfbGFuZyI6IFsibGl0Il0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Polish = pol = 'JSONeyJkb2NfbGFuZyI6IFsicG9sIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Spanish = sp = 'JSONeyJkb2NfbGFuZyI6IFsiZXNwIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Swedish = sw = 'JSONeyJkb2NfbGFuZyI6IFsic3ZlIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
-        Ukrainian = ukr = 'JSONeyJkb2NfbGFuZyI6IFsidWtyIl0sICJpc19wYXJhX2JvdGhfcGFpcnMiOiBbdHJ1ZV19'
+        Armenian = arm = 'hye'
+        Bashkir = bas = 'bak'
+        Belarusian = bel = 'bel'
+        Bulgarian = bul = 'bul'
+        Buryatian = bur = 'bua'
+        Chinese = ch = 'zho'
+        Czech = cz = 'ces'
+        English = en = 'eng'
+        Estonian = es = 'est'
+        Finnish = fin = 'fin'
+        French = fr = 'fra'
+        German = ger = 'ger'
+        Italian = it = 'ita'
+        Latvian = lat = 'lav'
+        Lithuanian = lit = 'lit'
+        Polish = pol = 'pol'
+        Spanish = sp = 'spa'
+        Swedish = sw = 'sve'
+        Ukrainian = ukr = 'ukr'
 
         def __getitem__(self, item: str) -> str:
             """ Get attribute from Parallel.
