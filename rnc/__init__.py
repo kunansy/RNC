@@ -1,4 +1,4 @@
-__version__ = '0.9.0'
+__version__ = '0.10.0'
 
 
 import logging
@@ -21,7 +21,7 @@ from .corpora import (
     OUTPUT_FORMATS,
     SEARCH_FORMATS
 )
-from .corpora_params import Mycorp
+from .corpora_params import Mycorp, Languages # noqa: F401
 from .examples import (
     MainExample,
     Paper2000Example,

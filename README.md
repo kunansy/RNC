@@ -103,6 +103,7 @@ corp = rnc.ParallelCorpus(
     kwsz=5, # if out=kwic, count of words in context
     sort='i_grtagging', # way to sort the results, see HOWTO section below
     mycorp='', # see HOWTO section below
+    lang=rnc.Languages.en,
     accent=0, # with accentology (1) or without (0), if it is available
 )
 ```
@@ -191,7 +192,7 @@ from_2_to_10 = corp[2:10:2]
 corp = rnc.ParallelCorpus(
     'corpus', 5, 
     out='kwic', kwsz=7, 
-    mycorp=rnc.mycorp.en
+    lang=rnc.Languages.en
 )
 corp.request_examples()
 
@@ -277,6 +278,7 @@ query = {
 }
 ```
 * If `accent=1`, marker does not work.
+* Do not run `corp.request_examples()` in the running event loop, instead use `await corp.request_examples_async()`
 
 ---
 
@@ -298,32 +300,28 @@ There are some sort keys:
 
 ### How to set language in ParallelCorpus?
 ```python
-en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp.en)
+en = rnc.ParallelCorpus('get', 5, lang=rnc.Languages.en)
 ```
-**OR**
-```python
-en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp['en'])
-```
-Language keys list:
-1. Armenian – 'arm'
-1. Bashkir – 'bas'
-1. Belarusian – 'bel'
-1. Bulgarian – 'bul'
-1. Buryatian – 'bur'
-1. Chinese – 'ch'
-1. Czech – 'cz'
-1. English – 'en'
-1. Estonian – 'es'
-1. Finnish – 'fin'
-1. French – 'fr'
-1. German – 'ger'
-1. Italian – 'it'
-1. Latvian – 'lat'
-1. Lithuanian – 'lit'
-1. Polish – 'pol'
-1. Spanish – 'sp'
-1. Swedish – 'sw'
-1. Ukrainian – 'ukr'
+Languages the corpus supports:
+1. Armenian
+1. Bashkir
+1. Belarusian
+1. Bulgarian
+1. Buryatian
+1. Chinese
+1. Czech
+1. English
+1. Estonian
+1. Finnish
+1. French
+1. German
+1. Italian
+1. Latvian
+1. Lithuanian
+1. Polish
+1. Spanish
+1. Swedish
+1. Ukrainian
 
 If you want to search something by several languages, choose and set the 
 `mycorp` in the site, pass this param to Corpus. 
@@ -346,16 +344,13 @@ Example:
 ru = rnc.MainCorpus('нету', 1, mycorp=rnc.mycorp['Pushkin'])
 ```
 
-
 **OR**
 
 ```python
 ru = rnc.MainCorpus('нету', 1, mycorp=rnc.mycorp.Pushkin)
 ```
 
-
 **OR**
-
  
 ![1](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/1.png)
 ![2](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/2.png)
