@@ -301,30 +301,26 @@ There are some sort keys:
 ```python
 en = rnc.ParallelCorpus('get', 5, lang=rnc.Languages.en)
 ```
-**OR**
-```python
-en = rnc.ParallelCorpus('get', 5, mycorp=rnc.mycorp['en'])
-```
-Language keys list:
-1. Armenian – 'arm'
-1. Bashkir – 'bas'
-1. Belarusian – 'bel'
-1. Bulgarian – 'bul'
-1. Buryatian – 'bur'
-1. Chinese – 'ch'
-1. Czech – 'cz'
-1. English – 'en'
-1. Estonian – 'es'
-1. Finnish – 'fin'
-1. French – 'fr'
-1. German – 'ger'
-1. Italian – 'it'
-1. Latvian – 'lat'
-1. Lithuanian – 'lit'
-1. Polish – 'pol'
-1. Spanish – 'sp'
-1. Swedish – 'sw'
-1. Ukrainian – 'ukr'
+Languages the corpus supports:
+1. Armenian
+1. Bashkir
+1. Belarusian
+1. Bulgarian
+1. Buryatian
+1. Chinese
+1. Czech
+1. English
+1. Estonian
+1. Finnish
+1. French
+1. German
+1. Italian
+1. Latvian
+1. Lithuanian
+1. Polish
+1. Spanish
+1. Swedish
+1. Ukrainian
 
 If you want to search something by several languages, choose and set the 
 `mycorp` in the site, pass this param to Corpus. 
