@@ -21,7 +21,7 @@ from .corpora import (
     OUTPUT_FORMATS,
     SEARCH_FORMATS
 )
-from .corpora_params import Mycorp, Languages
+from .corpora_params import Mycorp, Languages # noqa: F401
 from .examples import (
     MainExample,
     Paper2000Example,
