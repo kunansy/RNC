@@ -278,6 +278,7 @@ query = {
 }
 ```
 * If `accent=1`, marker does not work.
+* Do not run `corp.request_examples()` in the running event loop, instead use `await corp.request_examples_async()`
 
 ---
 
