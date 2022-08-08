@@ -344,16 +344,13 @@ Example:
 ru = rnc.MainCorpus('нету', 1, mycorp=rnc.mycorp['Pushkin'])
 ```
 
-
 **OR**
 
 ```python
 ru = rnc.MainCorpus('нету', 1, mycorp=rnc.mycorp.Pushkin)
 ```
 
-
 **OR**
-
  
 ![1](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/1.png)
 ![2](https://raw.githubusercontent.com/kunansy/RNC/master/docs/How%20to%20set%20subcorpus/2.png)
