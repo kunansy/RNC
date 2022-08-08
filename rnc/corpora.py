@@ -35,6 +35,7 @@ import ujson
 
 import rnc.corpora_requests as creq
 import rnc.examples as expl
+from rnc import corpora_params
 
 logger = logging.getLogger("rnc")
 
@@ -1368,11 +1369,15 @@ class PaperRegionalCorpus(MainCorpus):
 class ParallelCorpus(Corpus):
     _MODE = 'para'
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self,
+                 *args,
+                 lang: corpora_params.Languages = corpora_params.Languages.en,
+                 **kwargs) -> None:
         # for descendants
         ex_type = kwargs.pop('ex_type', expl.ParallelExample)
         super().__init__(*args, **kwargs, ex_type=ex_type)
-        self._params['mode'] = self._MODE
+
+        self._params['mode'] = f"{self._MODE}-{lang.value}"
 
     def _parse_text(self,
                     lang: str,
