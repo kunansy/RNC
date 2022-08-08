@@ -2,6 +2,7 @@ __all__ = (
     'Mycorp'
 )
 
+from enum import Enum
 from typing import Any
 
 
@@ -96,3 +97,25 @@ class Mycorp:
                 return getattr(self, item)
             except AttributeError as e:
                 raise KeyError(e)
+
+
+class Languages(Enum):
+    Armenian = arm = 'hye'
+    Bashkir = bas = 'bak'
+    Belarusian = bel = 'bel'
+    Bulgarian = bul = 'bul'
+    Buryatian = bur = 'bua'
+    Chinese = ch = 'zho'
+    Czech = cz = 'ces'
+    English = en = 'eng'
+    Estonian = es = 'est'
+    Finnish = fin = 'fin'
+    French = fr = 'fra'
+    German = ger = 'ger'
+    Italian = it = 'ita'
+    Latvian = lat = 'lav'
+    Lithuanian = lit = 'lit'
+    Polish = pol = 'pol'
+    Spanish = sp = 'spa'
+    Swedish = sw = 'sve'
+    Ukrainian = ukr = 'ukr'
