@@ -21,7 +21,7 @@ from .corpora import (
     OUTPUT_FORMATS,
     SEARCH_FORMATS
 )
-from .corpora_params import Mycorp
+from .corpora_params import Mycorp, Languages
 from .examples import (
     MainExample,
     Paper2000Example,
